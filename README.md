@@ -11,4 +11,4 @@
 
 ## 🏞️ 生活感悟
 
-* [读 *透视* 有感]()
+* [读 *透视* 有感](https://github.com/DrLightko/DrLightko/blob/main/life-insights/perspective.md)
