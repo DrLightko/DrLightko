@@ -12,3 +12,5 @@
 ## 🏞️ 生活感悟
 
 * [读 *透视* 有感](https://github.com/DrLightko/DrLightko/blob/main/life-insights/perspective.md)
+
+* [24年春节自驾游](https://github.com/DrLightko/DrLightko/blob/main/life-insights/2024%E5%B9%B4%E6%97%85%E6%B8%B8%E8%AF%A6%E6%83%85.pdf)
