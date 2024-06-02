@@ -6,6 +6,10 @@
 
 - [如何下载Spotify上面的歌曲（PC + 安卓）](https://github.com/DrLightko/DrLightko/blob/main/digital_handbook/sopify_downloader.md)
 
+- [红米3刷机](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/redmi3.md)
+
+- [Win10 LTSC 激活](https://github.com/DrLightko/DrLightko/blob/main/life-insights/Install_Win10LTSC.md)
+
 ## ⌨️ Hello 系列
 
 
@@ -17,4 +21,3 @@
 
 - [清明游小记](https://github.com/DrLightko/DrLightko/blob/main/life-insights/%E6%B8%85%E6%98%8E%E6%B8%B8%E5%BA%94%E5%8E%BF.md)
 
-- [Win10 LTSC 激活](https://github.com/DrLightko/DrLightko/blob/main/life-insights/Install_Win10LTSC.md)
