@@ -4,7 +4,7 @@
 
 ## 💾 数码使用手册
 
-- [如何下载Spotify上面的歌曲（PC + 安卓）](https://github.com/DrLightko/DrLightko/blob/main/digital_handbook/sopify_downloader.md)
+- [如何下载Spotify上面的歌曲（PC + 安卓）](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/sopify-downloader.md)
 
 - [红米3刷机](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/redmi3.md)
 
