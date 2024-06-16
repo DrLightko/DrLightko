@@ -8,7 +8,9 @@
 
 - [红米3刷机](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/redmi3.md)
 
-- [Win10 LTSC 激活](https://github.com/DrLightko/DrLightko/blob/main/life-insights/Install_Win10LTSC.md)
+- [Win10 LTSC 激活](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/Install_Win10LTSC.md)
+
+- [小米手机开启调频 FM](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/XiaomiFM.md)
 
 ## ⌨️ Hello 系列
 
