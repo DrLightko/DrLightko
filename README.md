@@ -14,6 +14,13 @@
 
 ## ⌨️ Hello 系列
 
+- [HelloPython Python 入门](https://github.com/DrLightko/DrLightko/blob/main/hello/HelloPy.md)
+
+- [Hello C C 语言入门](https://github.com/DrLightko/DrLightko/blob/main/hello/HelloC.md)
+
+- [Hello Java Java 入门](https://github.com/DrLightko/DrLightko/blob/main/hello/HelloJava.md)
+
+- [HHello Kotlin Kotlin 入门](https://github.com/DrLightko/DrLightko/blob/main/hello/HelloKotlin.md)
 
 ## 🏞️ 生活感悟
 
