@@ -936,11 +936,14 @@ fun func() {
 
 - 操作符就是符号，用于对变量进行简单快速的操作，这里介绍 Kotlin 里的数字操作符
 
+> 这里没讲 Kotlin 操作符的优先级，因为我觉得没用，你用上几个括号读者也能明白，不过这里
+> 这里没讲 Kotlin 操作符的优先级，因为我觉得没用，你用上几个括号读者也能明白，不过[这里](https://www.jianshu.com/p/962a093097d3) 可以看到
+
 #### 4.1.1 加减乘除
 
 - ***`+` 加 `-` 减 `*` 乘 `/` 除  `%` 除法求余***
 
-    > 以下是他们对应的方法
+    > 以下是他们对应的方法，注意***调用 a.plus(b) 不会改变 a 本身的值***，你要把结果接走
 
     - 加 + ：plus
     - 减 -：minus
@@ -949,6 +952,8 @@ fun func() {
     - 取余 %：rem
 
 > Kotlin 没有原生的乘方，但是 math 包里面有
+
+> ***加号和减号也用于字面量的正负值，减号也可以改变数字的正负***
 
 - ***两个整数间的除法结果总会返回整数，对于任何整数都是，若想要返回带有精度的结果请将其中一个除数显性的转换为小数***
 
@@ -1388,13 +1393,9 @@ loop@ for (i in 1..5) {
 // 打印结果说明当 j 和 i == 3 的时候，整个循环都被终止
 ```
 
-## 第五章：类和函数
+## 第五章：函数
 
-> 这是入门的最后一章，也是内容最多的一章
-
-### 5.1 函数
-
-#### 5.1.1 函数的创建和使用
+### 5.1 函数的创建和使用
 
 > 函数用于执行一系列运算，并返回结果，函数最重要的是里面的函数体
 
@@ -1449,13 +1450,54 @@ println(add_int(2,3))
 
 > 理论上函数名应该符合驼峰命名法，如 addInt，但是现在在讲函数式编程，我喜欢蛇形命名法就用蛇形命名法，到了类再说
 
-#### 5.1.2 函数的参数
+### 5.2 函数的参数
 
 > 先科普一下，函数的参数可以叫做***实参和形参***，***形参指的是函数参数声明里面的那个参数类型，实参指的是你传进来的那个值***
 
-- 
+- Kotlin 里面函数的参数是不可改变的，也就是你没法改变传进来的参数的值，***函数参数是 `val` 的***
 
-##### 5.1.2.1 参数的格式
+```kt
+fun main() {
+    var n = 10
+
+    my_func(n)
+}
+
+
+
+fun my_func(n: Int): Int {
+    n = 20
+    // error: 'val' cannot be reassigned.
+    return n
+}
+```
+
+> 回忆一下，***在 Java 里面，函数参数传递都是值传递的，基本类型把自己值复制一份传进去，引用类型把自己的值 (也就是自己指向内存堆中对象的地址) 复制一份传进去，导致基本类型的变量在函数里面修改不会影响到外面的实参，但是引用类型的变量可以直接修改外部的对象的属性***，如果不明白可以看[这篇文章](https://blog.csdn.net/asd0356/article/details/95747524)
+
+- Kotlin 里面虽然没有了基本类型，但是因为不能在函数里修改参数，所以也只能依靠***传入引用变量的方法修改参数***
+
+```kt
+fun main() {
+    val fooc = foo()
+
+    println(my_func(fooc))
+    println(fooc.n)
+}
+
+
+
+fun my_func(fooc: foo): Int {
+    fooc.n = 40
+
+    return fooc.n
+}
+
+class foo {
+    var n: Int = 30
+}
+```
+
+#### 5.1.2 参数的格式
 
 - ***Kotlin 里函数参数的命名规范是 `name: type` ，每一个参数都必须显性指定类型，参数用逗号隔开***，当调用者传入类型不正确的参数或是参数数量不对都会报错
 
@@ -1487,7 +1529,7 @@ fun func(l: Int,
 }
 ```
 
-##### 5.1.2.2 缺省参数
+#### 5.1.2 缺省参数
 
 - ***函数参数也可以有默认值，只要在参数类型的后面加上 `=` 等号指定缺省值***，如果调用者没有为此参数指定值就使用缺省值
 
@@ -1504,7 +1546,7 @@ fun times(a: Int, b: Int = 2): Int {
 
 - ***注意缺省参数一定在没有缺省值参数的后面***，不然调用时候传进来的值是没法赋给没有默认值的参数的
 
-##### 5.1.2.3 具名参数
+#### 5.1.2 具名参数
 
 - ***在调用函数的时候，除了遵守默认参数的顺序传参外，还可以自己手动通过 `参数名 = 实参` 的方式传值，这叫具名参数***
 
@@ -1526,7 +1568,7 @@ fun add_int_and_byte(int_arguments: Int,
 }
 ```
 
-##### 5.1.2.4 可选参数
+#### 5.1.2 可选参数
 
 > 如果我有一个函数未来可能接受很多的参数，那么我该怎样写出函数的参数？难道是根据参数数量的不同写上几十个？
 
@@ -1567,7 +1609,7 @@ fun say_hello(vararg names: String) {
 }
 ```
 
-#### 5.1.3 递归函数
+### 5.3 递归函数
 
 - ***递归函数不是什么特殊函数，他就是函数内部又调用了自己，这就叫递归函数***
 
@@ -1583,7 +1625,8 @@ fun main() {
 fun fibonacci(a: Int, b: Int, limit: Int) {
     println(a)
     println(b)
-    
+    println(b/a.toDouble())
+
     if (b < limit) {
         fibonacci(a + b, b + a + b, limit) // 如果没有 limit 那么栈会溢出
     } else {
@@ -1594,8 +1637,377 @@ fun fibonacci(a: Int, b: Int, limit: Int) {
 
 - 因为递归会消耗栈导致性能下降，Kotlin 还准备了一个 ***`tailrec` 修饰符，可以用于优化递归，但是函数必须将其自身调用作为它执行的最后一个操作***
 
-#### 5.1.4 高级函数
+### 5.4 高级函数
 
-> 高阶函数并不是什么特殊函数，Kotlin 里的函数只不过是功能丰富一些，本质上他们都一样
+> ***Kotlin 函数都是头等的，这意味着它们可以存储在变量与数据结构中，并可以作为参数传给其他高阶函数以及从其他高阶函数返回。可以像操作任何其他非函数值一样对函数进行操作***
 
-##### 5.1.4.1 
+> 这一节涉及到类和对象，如果听不懂可以看完 5.2 再回来看
+
+#### 5.4.1 高阶函数
+
+- ***高阶函数就是指将函数类型用作参数或返回值的函数***，没错在 Kotlin 里面函数是可以作为参数或返回值的
+
+> 指针函数和函数指针的阴影又回来了
+
+- 因为***不同的函数参数类型、参数列表、返回值类型都不一样***，所以声明函数类型的参数或返回值请写全，使用 `(参数) -> 返回值` 的语法声明
+
+> ***Unit 不能省略***
+
+```kt
+// 把函数当作参数
+
+fun my_func(func1:(Int) -> String):String {
+    // 这是一个接受参数为一个 Int 返回 String 的 func1 函数当作参数并且自己返回 Strirng 的函数
+
+    // my_func() 是函数名，func1 是参数名，(Int) -> String表示 func1 这个参数是一个接受 Int 返回 String 的函数类型，:String 是 my_func 的返回值
+
+    // func1 不是这个函数类型的名字，只是这个参数的名字，它叫 arg 也可以
+}
+
+
+// 把函数当作返回值
+
+fun my_func():Int, Byte, Short -> Unit {
+    // 这是一个没有参数，但是返回一个参数为 Int、Byte、Short 返回 Unit 的函数当返回值的函数
+
+    // my_func(): 是函数名，此函数没有参数，但是返回值 Int, Byte, Short -> Unit 是一个函数类型
+}
+```
+
+> 注意到***函数类型是参数，那么必须有参数名，参数名: 后面才是函数类型；函数名是返回值则没有名字***
+
+- ***还可以有接受函数的函数的函数，使用 `( )` 括号可以区分多个参数和返回值，不过箭头表示法是右结合的***，所以
+
+```kt
+(Int) -> ((Int) -> Unit) == (Int) -> (Int) -> Unit != ((Int) -> (Int)) -> Unit
+```
+
+> 那怎么传入函数？直接传名字？带不带括号？
+
+- ***若想将一个函数作为参数或者返回值传入，请在函数名左侧加上 `::` 双冒号，这叫函数引用***
+
+```kt
+fun main() {
+    my_func1(::my_func2)
+}
+
+
+fun my_func1(func: (Unit) -> Int) {
+    println(func(Unit)) // 你这里的确传入了 Unit
+}
+
+
+fun my_func2(Unit: Unit): Int {
+    // 左边的 Unit 是参数名，右面的是形参
+    return 1
+
+}
+```
+> 这里为什么有这么多 Unit？，这是大坑，如果你写成下面的是会报错的
+
+```kt
+fun main() {
+    my_func1(::my_func2)
+}
+
+
+fun my_func1(func: (Unit) -> Int) {
+    println(func())
+}
+
+
+fun my_func2(): Int {
+    return 1
+
+}
+
+// no value passed for parameter 'p1
+// inapplicable candidate(s): fun my_func2(): Int
+
+// 这是因为 my_func2 你没有写 Unit 参数，你以为编译器会自动加上，但是他在调用的时候会发现：欸？明明有一个 Unit 参数的啊？为什么你调用的时候什么都没有呢？包括在::my_func2 的时候也会发现明明接受的是一个有 Unit 参数的函数，你这里却是什么都没有的 my_func2
+```
+
+> 这样已经算好的，之前讲过 Unit 消除了有无返回值函数的区别，即使是这样还是建议写上 Unit 像上面那样
+
+- 好，回到主题，***`::` 表示为此函数创建一个对象，这也是 Kotlin 能实现高阶函数的原因，他把函数当作对象包装起来传入函数***
+
+```kt
+fun main() {
+    val func3: (Unit) -> Int = ::my_func2   // 这样也是可以的 func3 是一个指向函数类型的对象的引用变量
+
+    // func3() == my_func2()
+    // (::my_func2)() = my_func2()
+
+    my_func1(func3) // 也可以，func3 已经是函数类型的对象了
+}
+
+
+fun my_func1(func: (Unit) -> Int) {
+    println(func(Unit))
+}
+
+
+fun my_func2(Unit: Unit): Int {
+    return 1
+
+}
+```
+
+- 这个***函数类型的对象与普通函数没什么区别，你对它调用 `()`，其实就是在调用它的 `invoke()` 方法***
+
+> 但是你不能对函数调用 `invoke()`
+
+```kt
+val func3: (Unit) -> Int = ::my_func2
+
+// func3() == my_func2() == func3.invoke() != my_func2.invoke()
+
+my_func1(func3)
+```
+
+> 这样的话看看下面
+
+```kt
+val func3: (Unit) -> Int = ::my_func2
+
+func4 = func3   // ok?
+
+// 当然可以，因为 func3 已经是对象了，这下 func4 也是函数类型的对象了
+```
+
+- 记住，***函数不是函数类型的对象，函数能干的函数类型的对象也能干***
+
+- ***如果高阶函数的参数是一个可能为空的函数类型 (也就是可能是一个函数，可能是 `null`) ，对于这个可空的参数，请用括号 `()` 括起来整个类型并在右面加上 `?`***
+
+```kt
+fun my_func1(func: ((Unit) -> Int)?) {
+    println(func(Unit))
+}
+```
+
+> 注意这是***参数可能为空，可能为函数***，不等于***参数是一个包含可空参数或返回值的函数***
+
+```kt
+fun my_func1(func: (Int?) -> Int?) {
+    println(func(2))
+}
+```
+
+#### 5.4.2 匿名函数
+
+- 既然可以把函数赋给变量，还有更简易的写法，可以***直接把函数体放在变量赋值的右面，这叫匿名函数***，这样就可以省略函数名了，而且 ***Kotlin 也不允许匿名函数有函数名***
+
+```kt
+val func3 = fun (Unit: Unit): Int {
+    return 1
+}
+
+// 注意参数列表前面没有函数名，val 后面的是变量名
+// 支持类型推断
+```
+
+> 那么就可以用使用匿名函数用于不想创建一个函数的地方，直接使用匿名函数传入
+
+```kt
+fun main() {
+    val func1 = fun (func: (Unit) -> Int) {
+        println(func(Unit)) // 这是函数声明的函数体
+    }
+
+    func1(fun (Unit: Unit): Int {
+        return 1    // 调用函数，这里是函数的参数的函数体
+    })
+}
+
+// 等价于
+
+
+fun main() {
+    val func3 = fun (Unit: Unit): Int {
+        return 1
+    }
+
+    val func1 = fun (func: (Unit) -> Int) {
+        println(func(Unit))
+    }
+
+    func1(func3)
+}
+
+// 等价于
+
+
+fun main() {
+    val func3 = fun (Unit: Unit): Int {
+        return 1
+    }
+
+    my_func1(func3)
+}
+
+
+fun my_func1(func: (Unit) -> Int) {
+    println(func(Unit))
+}
+
+```
+
+- 同理 Kotlin 的***匿名函数也区分可空类***
+
+```kt
+val sum_1 = fun (a: Int?, b: Int?): Int? {
+
+    return when {   // when 当作表达式
+        a == null -> null   // a is null 不对，因为 null 不是类型，null 是值
+        b == null -> null
+        else -> a + b
+    }
+}
+
+println(sum_1(2,null))  // null
+```
+
+#### 5.4.3 lambda
+
+- 其实还有一种更简单的语法：***`lambda` 表达式***
+
+> lambda 就是匿名函数，不要被这个希腊字母 `λ` 吓到
+
+```kt
+val sum: (Int, Int) -> Int = { x: Int, y: Int -> x + y }
+```
+
+- lambda 的语法如下：
+    - ***lambda 表达式总是括在花括号中***
+    - ***完整语法形式的参数声明放在花括号内，并有可选的类型标注***，没错类型可写可不写，只要你前面声明了
+    - ***函数体跟在一个 -> 之后***
+    - ***如果该 lambda 的返回类型不是 Unit，那么该 lambda 主体中的最后一个 (或可能是单个)  表达式会视为返回值***
+
+    > ***lambda 不能用 return 语句返回，用了 return 会直接把最外面的函数结束掉***
+
+```kt
+fun main() {
+    val func1 = fun (func: (Unit) -> Int) {
+        println(func(Unit))
+    }
+
+    func1({Unit: Unit ->
+        1   // 不要加 return ，return 会直接结束外面的函数，至于更详细的见下文
+    })
+}
+```
+
+- ***如果 lambda 是函数的最后一个参数，可以把 lambda 写在函数参数括号外面，这叫拖尾 lambda 表达式***
+
+```kt
+val print_resault = fun (a: Int, b: Int, func: (Int, Int) -> Int) {
+    println(func(a,b))
+}
+
+print_resault(2,4) { a: Int, b: Int -> 
+    a.plus(b)
+}
+```
+
+- ***如果 lambda 是函数唯一的参数，你还可以直接把括号去了***
+
+```kt
+func1 {Unit: Unit ->
+    1
+}
+```
+
+- ***如果 lambda 本身是单参数的，这个参数也可以直接不写，如果想要调用的话直接 `it` 就行***
+
+> 没错，***在 lambda 的里面 it 也是一个关键字，在外面不是***
+```kt
+val print_resault = fun (func: (String) -> Int) {
+    println(func("asdf"))
+}
+
+print_resault() {
+    it.length   // Kotlin 里面 length 不是方法，而是属性，请不要加上括号，否则
+
+    // error: expression 'length' of type 'kotlin.Int' cannot be invoked as a function. Function 'invoke()' is not found.
+
+}
+
+```
+
+> 这个 lambda 这么简洁，不会有什么问题吧？你像它是怎么知道自己的参数类型和返回值类型的
+
+- ***上下文推断，你在声明匿名函数的地方和调用匿名函数的地方，总有一个地方要显式指明参数类型和返回值才可以，都不写也是不行的***
+
+```kt
+val print_resault = { func:(String) -> Int ->   // 你这里可能会觉得 Kotlin 会把两种箭头搞混，如果你给 func 加上括号发现报错，所以不用担心
+    println(func("asdf"))
+}
+
+print_resault() { 
+    it.length
+}
+
+
+// 你可以注意到如果在变量类型声明函数类型是不需要参数名的 (你就是参数类型声明参数名称干什么)
+// 但是在匿名函数里面声明是需要参数名的，因为你可能会用到他
+
+
+val print_resault: ((String) -> Int) -> Unit = {
+    println(it("asdf"))
+}
+
+// 既然你这右面不是匿名函数，那么左面的变量就应该声明类型方便编译器
+
+print_resault() { 
+    it.length
+}
+
+// 当然下面的不可以，编译器不知道你到底接受什么类型
+
+val print_resault = {
+    println(it("asdf"))
+}
+
+print_resault() { 
+    it.length
+}
+```
+
+- ***如果 lambda 表达式的参数未使用，那么可以用下划线 `_` 取代其名称***
+
+```kt
+val sum_2: (Int, Int) -> Int = { _, a ->
+    a
+}
+
+println(sum_2(3,4))
+```
+
+> 个人不建议把 lambda 写的太紧凑，像是下面的那样你一眼看过去根本不知道这是什么，一个 Tab 就说明了我这是一个函数
+
+```kt
+val print_resault = { func:(String) -> Int -> println(func("asdf")) }
+
+// 上面是写在一行，下面是缩进写法
+
+val print_resault = { func:(String) -> Int ->
+    println(func("asdf"))
+}
+```
+- ***在 Kotlin 里面，有三种函数类型的变量：函数引用、匿名函数和 lambda***
+
+```kt
+val sum_1 = fun (a: Int, b: Int) = a + b
+val sum_2 = fun (a: Int, b: Int) = { a + b }    // 你这里是把 lambda 传给了匿名函数
+
+println(sum_1(2,3))
+println(sum_2(3,4))
+println(sum_2(3,4).invoke())
+```
+
+> 关于 lambda 其实就是这些，Kotlin 在这方面提供了丰富的语法糖方便使用，但是轻松的时候也不要忘了规范格式。记住***函数名加上括号一定是在使用函数，无论 lambda 还是匿名函数都是函数体，函数体不调用是不会执行的。函数名加上双冒号是创建了一个函数类型的对象，匿名函数和 lambda 都是在创建对象。传递一个函数类型的对象，接收者就可以调用它，记住传值时没有括号也没有冒号***
+
+> 如果还不明白，可以看下 [Google 的文档](https://developer.android.google.cn/codelabs/basic-android-kotlin-compose-function-types-and-lambda?hl=zh-cn#0)，通俗易懂
+#### 5.4.4 return 
+
+### 5.5 闭包
