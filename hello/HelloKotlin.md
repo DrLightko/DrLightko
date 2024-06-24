@@ -40,9 +40,9 @@ kotlinc
 // 这样会进入 Kotlin 的即时命令行编译
 ```
 
-5. 因为这是 JatBrains 的语言，所以建议使用 [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) (其他的IDE使用体验均不如它) 来开发，或者 [VSCode](https://code.visualstudio.com/) 免费开源
+5. 因为这是 JatBrains 的语言，所以建议使用 [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) (其他的IDE使用体验均不如它) 来开发，或者 [VSCode](https://code.visualstudio.com/) 免费开源，在或是 Notepad++
 
-> 如果使用 VSCode 一定要找一个好用一点的插件，体验还是不如 IntelliJ ，这是我们目前用的[插件](https://marketplace.visualstudio.com/items?itemName=mathiasfrohlich.Kotlin)
+> 如果使用 VSCode 一定要找一个好用一点的插件，体验还是不如 IntelliJ ，这是我目前用的[插件](https://marketplace.visualstudio.com/items?itemName=mathiasfrohlich.Kotlin)
 
 ## 第二章：简述
 
@@ -1871,19 +1871,19 @@ println(sum_1(2,null))  // null
 
 - 其实还有一种更简单的语法：***`lambda` 表达式***
 
-> lambda 就是匿名函数，不要被这个希腊字母 `λ` 吓到
+> `lambda` 就是匿名函数，不要被这个希腊字母 `λ` 吓到
 
 ```kt
 val sum: (Int, Int) -> Int = { x: Int, y: Int -> x + y }
 ```
 
-- lambda 的语法如下：
-    - ***lambda 表达式总是括在花括号中***
+- `lambda` 的语法如下：
+    - ***`lambda` 表达式总是括在花括号中***
     - ***完整语法形式的参数声明放在花括号内，并有可选的类型标注***，没错类型可写可不写，只要你前面声明了
-    - ***函数体跟在一个 -> 之后***
-    - ***如果该 lambda 的返回类型不是 Unit，那么该 lambda 主体中的最后一个 (或可能是单个)  表达式会视为返回值***
+    - ***函数体跟在一个 `->` 之后***
+    - ***如果该 `lambda` 的返回类型不是 `Unit`，那么该 `lambda` 主体中的最后一个 (或可能是单个)  表达式会视为返回值***
 
-    > ***lambda 不能用 return 语句返回，用了 return 会直接把最外面的函数结束掉***
+    > ***`lambda` 不能用 `return` 语句返回，用了 return 会直接把最外面的函数结束掉***
 
 ```kt
 fun main() {
@@ -1897,7 +1897,7 @@ fun main() {
 }
 ```
 
-- ***如果 lambda 是函数的最后一个参数，可以把 lambda 写在函数参数括号外面，这叫拖尾 lambda 表达式***
+- ***如果 `lambda` 是函数的最后一个参数，可以把 `lambda` 写在函数参数括号外面，这叫拖尾 `lambda` 表达式***
 
 ```kt
 val print_resault = fun (a: Int, b: Int, func: (Int, Int) -> Int) {
@@ -1909,7 +1909,7 @@ print_resault(2,4) { a: Int, b: Int ->
 }
 ```
 
-- ***如果 lambda 是函数唯一的参数，你还可以直接把括号去了***
+- ***如果 `lambda` 是函数唯一的参数，你还可以直接把括号去了***
 
 ```kt
 func1 {Unit: Unit ->
@@ -1917,9 +1917,9 @@ func1 {Unit: Unit ->
 }
 ```
 
-- ***如果 lambda 本身是单参数的，这个参数也可以直接不写，如果想要调用的话直接 `it` 就行***
+- ***如果 `lambda` 本身是单参数的，这个参数也可以直接不写，如果想要调用的话直接 `it` 就行***
 
-> 没错，***在 lambda 的里面 it 也是一个关键字，在外面不是***
+> 没错，***在 `lambda` 的里面 `it` 也是一个关键字，在外面不是***
 ```kt
 val print_resault = fun (func: (String) -> Int) {
     println(func("asdf"))
@@ -1934,7 +1934,7 @@ print_resault() {
 
 ```
 
-> 这个 lambda 这么简洁，不会有什么问题吧？你像它是怎么知道自己的参数类型和返回值类型的
+> 这个 `lambda`这么简洁，不会有什么问题吧？你像它是怎么知道自己的参数类型和返回值类型的
 
 - ***上下文推断，你在声明匿名函数的地方和调用匿名函数的地方，总有一个地方要显式指明参数类型和返回值才可以，都不写也是不行的***
 
@@ -1973,7 +1973,7 @@ print_resault() {
 }
 ```
 
-- ***如果 lambda 表达式的参数未使用，那么可以用下划线 `_` 取代其名称***
+- ***如果 `lambda` 表达式的参数未使用，那么可以用下划线 `_` 取代其名称***
 
 ```kt
 val sum_2: (Int, Int) -> Int = { _, a ->
@@ -1983,7 +1983,7 @@ val sum_2: (Int, Int) -> Int = { _, a ->
 println(sum_2(3,4))
 ```
 
-> 个人不建议把 lambda 写的太紧凑，像是下面的那样你一眼看过去根本不知道这是什么，一个 Tab 就说明了我这是一个函数
+> 个人不建议把 `lambda` 写的太紧凑，像是下面的那样你一眼看过去根本不知道这是什么，一个 Tab 就说明了我这是一个函数
 
 ```kt
 val print_resault = { func:(String) -> Int -> println(func("asdf")) }
@@ -1994,20 +1994,166 @@ val print_resault = { func:(String) -> Int ->
     println(func("asdf"))
 }
 ```
-- ***在 Kotlin 里面，有三种函数类型的变量：函数引用、匿名函数和 lambda***
+- ***在 Kotlin 里面，有三种函数类型的变量：函数引用、匿名函数和 `lambda`***
+
+> 请看下面的实例
 
 ```kt
 val sum_1 = fun (a: Int, b: Int) = a + b
-val sum_2 = fun (a: Int, b: Int) = { a + b }    // 你这里是把 lambda 传给了匿名函数
+val sum_2 = fun (a: Int, b: Int) = { a + b }
 
 println(sum_1(2,3))
-println(sum_2(3,4))
-println(sum_2(3,4).invoke())
+println(sum_1(2,3)) // ?
+println(sum_2(3,4)())   // ?
+
+
+// 首先 sum_1 就是一个简单的函数，可以直接写在一行
+// 第二个也是，写在一行的依据是该函数只有一个返回值，等号的右面直接就是返回值
+// 所以该函数返回什么？返回另一个函数？是返回一个函数类型的 lambda
+// 所以先调用 sum_2() ，返回一个函数而不是结果，再调用 sum_2()() 才行
 ```
 
 > 关于 lambda 其实就是这些，Kotlin 在这方面提供了丰富的语法糖方便使用，但是轻松的时候也不要忘了规范格式。记住***函数名加上括号一定是在使用函数，无论 lambda 还是匿名函数都是函数体，函数体不调用是不会执行的。函数名加上双冒号是创建了一个函数类型的对象，匿名函数和 lambda 都是在创建对象。传递一个函数类型的对象，接收者就可以调用它，记住传值时没有括号也没有冒号***
 
 > 如果还不明白，可以看下 [Google 的文档](https://developer.android.google.cn/codelabs/basic-android-kotlin-compose-function-types-and-lambda?hl=zh-cn#0)，通俗易懂
-#### 5.4.4 return 
 
-### 5.5 闭包
+#### 5.4.4 内联函数
+
+##### 5.4.4.1 inline
+
+> 乍一听很恐怖的名字，其实很简单
+
+- 如上面所说， Kotlin 能将函数作为参数传递，函数引用的原理是他创建了一个跟函数同样功能的类型，那么你可能会想：***每一次调用函数就生成一个类型，有点耗资源吧***
+
+- Kotlin 也想到了，因此出现了***内联函数修饰符 `inline`，内联函数标记这个函数的函数体在调用处展开，包括如果自己的参数是一个函数类型，也展开到调用处，这样执行起来不用创建一堆函数类型的对象，不太占用性能***
+
+> 这个主要是为了解决函数类型的参数带来的性能消耗，如果函数被放在循环里，函数本身调用带来的栈消耗不算什么，但是函数类型的参数就很恐怖了
+
+```kt
+fun main() {
+    my_func_1 { println("Hello") }
+    
+    // 相当于
+    // println("Hello")
+    // println("world")
+}
+
+
+inline fun my_func_1(func: (Unit) -> Unit) {
+    func(Unit)  // 这里会被替换为 println("Hello")
+    println("World!")
+}
+```
+
+- 再说一遍，***`inline` 是修饰函数用的，表示这个函数的函数体和函数参数的函数体被展开到调用处***
+
+##### 5.4.4.2 noinline
+
+- 既然这样，那么***就没法再使用函数类型的参数当作对象来操作了，因为他不再是一个函数类型的对象了***
+
+```kt
+fun main() {
+    val func = my_func_1 { println("Hello") }
+    func(Unit)  // 想象中的，但是不行
+}
+
+
+inline fun my_func_1(func: (Unit) -> Unit): (Unit) -> Unit {
+    func(Unit)
+    println("World!")
+
+    return func   // 这里会报错，因为把代码展开后编译器根本不知道这个 func 是什么
+    // 不用 :: ，因为 func 本身已经是对象了
+}
+```
+
+- 那么我就想要函数类型的参数怎么办？***给一个函数类型的参数加上 `noinline` ，这个函数类型的参数就不会加入内联了，可以用把它当作对象来传递***
+
+> ***`noinline` 是给参数修饰的，`inline` 是给函数修饰的***
+
+##### 5.4.4.3 crossinline
+
+- 但是仔细一想，如果***我的函数类型的参数 (`lambda`) 里面有 `return` 怎么办？不就直接把调用它的函数 (调用它指的是调用内联函数的函数，比如 `main`) 给结束了？***
+
+```kt
+fun main() {
+    
+    my_func_1 { 
+        println("Hello") 
+        return
+    }
+
+    println("cant print")
+}
+
+
+inline fun my_func_1(func: (Unit) -> Unit) {
+    func(Unit)
+    println("World!")
+}
+```
+
+> ***这种 `return` 叫非局部返回，指的就是他直接结束了外面的外面的函数***
+
+- 所以 Kotlin 直接***不允许 `lambda` 里面有 `return` (像上面说的那样)，除非这个 `lambda` 是 `inline` 函数的参数，这样 `lambda` 里面的 `return` 实际上是结束了外面的调用者函数***
+
+> 注意这个限制只是针对 `lambda` ，匿名函数没有，当然具名函数也没有
+
+```kt
+fun main() {
+    
+    val func = ::my_func_1
+
+    func(fun (Unit): String {
+        println("Hello")
+
+        return "World!"
+    })
+
+    println("can print")
+}
+
+
+inline fun my_func_1(func: (Unit) -> String) {
+    println(func(Unit))
+}
+```
+
+- ***使用 `crossinline` 可以指示这个函数类型的参数不允许非局部返回***
+
+```kt
+fun main() {
+
+    my_func_1 {
+        println("Hello")       
+    }
+}
+
+
+inline fun my_func_1(crossinline func: (Unit) -> Unit) {
+    val do_some: (Unit) -> Unit = {
+        func(Unit)
+
+        println("World")
+    }
+
+    do_some(Unit)
+}
+```
+
+> 最后梳理一下:
+
+| 参数 | inline | noinline | crossinline|
+|---|:---:|:---:|:---:|
+|能否非局部返回|✓|✕|✕|
+|是函数类型的对象?|✕|✓|✓|
+
+> ***`inline` 修饰的函数，自己本身和自己函数类型的参数都会被打开平铺在调用 `inline` 函数的地方，节省资源。但是这样的参数不能被间接的以一个函数类型的对象来使用 (因为已经铺平了)，支持非局部返回***
+
+> ***`noinline` 是修饰 `inline` 函数的参数，表示该参数不会被拆开，仍然以函数类型的对象来传递，不支持非局部返回***
+
+> ***`crossinline` 不支持非局部返回，但是支持间接调用 (也就是该参数仍以一个函数类型的对象来传递)***
+
+
+### 5.5 局部函数
+
