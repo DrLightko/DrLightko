@@ -2019,8 +2019,6 @@ println(sum_2(3,4)())   // ?
 
 #### 5.4.4 内联函数
 
-##### 5.4.4.1 inline
-
 > 乍一听很恐怖的名字，其实很简单
 
 - 如上面所说， Kotlin 能将函数作为参数传递，函数引用的原理是他创建了一个跟函数同样功能的类型，那么你可能会想：***每一次调用函数就生成一个类型，有点耗资源吧***
@@ -2045,9 +2043,9 @@ inline fun my_func_1(func: (Unit) -> Unit) {
 }
 ```
 
-- 再说一遍，***`inline` 是修饰函数用的，表示这个函数的函数体和函数参数的函数体被展开到调用处***
+> 内联的意思就像是 `编译时常量` 一样，`const` 这个常量的值会被编译器在每个调用的地方复制一份过去，就像 C 的宏一样，这个内联函数也是同理，把函数体复制过去
 
-##### 5.4.4.2 noinline
+- 再说一遍，***`inline` 是修饰函数用的，表示这个函数的函数体和函数参数的函数体被展开到调用处***
 
 - 既然这样，那么***就没法再使用函数类型的参数当作对象来操作了，因为他不再是一个函数类型的对象了***
 
@@ -2071,89 +2069,163 @@ inline fun my_func_1(func: (Unit) -> Unit): (Unit) -> Unit {
 
 > ***`noinline` 是给参数修饰的，`inline` 是给函数修饰的***
 
-##### 5.4.4.3 crossinline
+```kt
+
+fun main() {
+
+    val func = print_hello({ println("World") ; "World" })
+
+    println("test here")
+    
+    func(Unit)
+}
+
+
+inline fun print_hello(noinline func: (Unit) -> String): (Unit) -> String {
+    println("Hello")
+
+    return func // 可以把函数作为返回值返回而无需内联
+}
+```
 
 - 但是仔细一想，如果***我的函数类型的参数 (`lambda`) 里面有 `return` 怎么办？不就直接把调用它的函数 (调用它指的是调用内联函数的函数，比如 `main`) 给结束了？***
 
 ```kt
 fun main() {
-    
-    my_func_1 { 
-        println("Hello") 
-        return
-    }
 
-    println("cant print")
+    println(print_hello({ println("World") ; return })) // 这里不能返回 String ，因为这个 return 实际上是 main 的 return
+
+    println("test here")    // 不会发生
 }
 
 
-inline fun my_func_1(func: (Unit) -> Unit) {
-    func(Unit)
-    println("World!")
+inline fun print_hello(func: (Unit) -> Unit): String {
+    println("Hello")
+
+    println(func(Unit))
+
+    return "Wjkasd"
+}
+```
+
+> 仔细观察下面这个与上面的区别
+
+```kt
+fun main() {
+
+    println(print_hello({ println("World") ; "World" }))
+
+    println("test here")
+}
+
+
+inline fun print_hello(func: (Unit) -> String): String {
+    println("Hello")
+
+    return "Wjkasd" // 在内联函数本身里面加上 return 是可以的
+
+    println(func(Unit))
+
 }
 ```
 
 > ***这种 `return` 叫非局部返回，指的就是他直接结束了外面的外面的函数***
 
-- 所以 Kotlin 直接***不允许 `lambda` 里面有 `return` (像上面说的那样)，除非这个 `lambda` 是 `inline` 函数的参数，这样 `lambda` 里面的 `return` 实际上是结束了外面的调用者函数***
+- 所以 Kotlin 直接***不允许 `lambda` 里面有 `return` (像上面说的那样)，除非这个 `lambda` 是 `inline` 函数的参数，这样 `lambda` 里面的 `return` 实际上是结束了外面的调用者函数***，相当于利用了这个非局部返回
 
-> 注意这个限制只是针对 `lambda` ，匿名函数没有，当然具名函数也没有
+> ***注意这个限制只是针对 `lambda`*** ，匿名函数没有，当然具名函数也没有
 
 ```kt
+// 匿名函数
+
 fun main() {
-    
-    val func = ::my_func_1
 
-    func(fun (Unit): String {
-        println("Hello")
+    println(print_hello(fun (Unit): String {
+        println("World")
 
-        return "World!"
-    })
+        return "Hi"
+    }))
 
-    println("can print")
+    println("test here")
 }
 
 
-inline fun my_func_1(func: (Unit) -> String) {
+inline fun print_hello(func: (Unit) -> String): String {
+    println("Hello")
+
     println(func(Unit))
+
+    return "Earth"
 }
 ```
 
-- ***使用 `crossinline` 可以指示这个函数类型的参数不允许非局部返回***
+```kt
+// 具名函数
+
+fun main() {
+
+    println(print_hello(::print_world))
+
+    println("test here")
+}
+
+
+inline fun print_hello(func: (Unit) -> String): String {
+    println("Hello")
+
+    println(func(Unit))
+
+    return "Earth"
+}
+
+
+fun print_world(Unit: Unit):String {
+    println("World")
+
+    return "World2"
+}
+```
+
+- ***使用 `crossinline` 可以指示这个函数类型的参数不允许非局部返回，同时 `crossinline` 允许参数内联***
 
 ```kt
 fun main() {
 
-    my_func_1 {
-        println("Hello")       
-    }
+    println(print_hello({ println("World") ; return }))
+    println("test here")
 }
 
 
-inline fun my_func_1(crossinline func: (Unit) -> Unit) {
-    val do_some: (Unit) -> Unit = {
-        func(Unit)
+inline fun print_hello(crossinline func: (Unit) -> Unit): (Unit) -> Unit {
+    println("Hello")
 
-        println("World")
-    }
-
-    do_some(Unit)
+    return func
 }
+
+// error: 'return' is prohibited here.
+// 告诉你 crossinline 不允许 return
+
+// error: illegal usage of inline parameter 'crossinline func: (Unit) -> Unit'. Add 'noinline' modifier to the parameter declaration.
+// 告诉你 crossinline 修饰的参数是内联的，如果不内联请使用 noinline
+
 ```
 
 > 最后梳理一下:
 
-| 参数 | inline | noinline | crossinline|
-|---|:---:|:---:|:---:|
-|能否非局部返回|✓|✕|✕|
-|是函数类型的对象?|✕|✓|✓|
+| 函数类型的参数 | inline | noinline | crossinline|
+|:---:|:---:|:---:|:---:|
+|内联吗?|✓|✕|✓|
+|能否非局部返回?|✓|✕|✕|
+|还是函数类型的对象吗?|✕|✓|✕|
 
 > ***`inline` 修饰的函数，自己本身和自己函数类型的参数都会被打开平铺在调用 `inline` 函数的地方，节省资源。但是这样的参数不能被间接的以一个函数类型的对象来使用 (因为已经铺平了)，支持非局部返回***
 
 > ***`noinline` 是修饰 `inline` 函数的参数，表示该参数不会被拆开，仍然以函数类型的对象来传递，不支持非局部返回***
 
-> ***`crossinline` 不支持非局部返回，但是支持间接调用 (也就是该参数仍以一个函数类型的对象来传递)***
+> ***`crossinline` 不支持非局部返回，支持内联***
 
+- 还有一句，***无论是 `noinline` 还是 `crossinline`，只能在已经声明了 `inline` 的函数的参数里面用***，没有 `inline` 你别想了
 
 ### 5.5 局部函数
 
+- 
