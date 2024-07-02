@@ -12,6 +12,8 @@
 
 - [小米手机开启调频 FM](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/XiaomiFM.md)
 
+- [Windows 常用微软商店软件提取](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/WindowsApps.md)
+
 ## ⌨️ Hello 系列
 
 - [🐍 HelloPython 入门](https://github.com/DrLightko/DrLightko/blob/main/hello/HelloPy.md)
