@@ -4,7 +4,7 @@
 
 > 本文是面向零基础用户进行讲解 (但最好看过 Java 或 C 哪怕一点，简单入门后再来看这篇，简单 10 倍)，我也不会以特别简单的语气讲，有些地方是假设你已经知道了类和函数的知识了的
 
-> 有一些在引用块里面 (就像这样) 的小提示可能需要下文的知识，请多多回顾
+> 有一些在引用块里面（就像这样）的小提示可能需要下文的知识，请多多回顾
 
 
 # 第一章：认识 Kotlin
@@ -15,7 +15,7 @@
 
 ## 1.2 安装
 
-1. 在 Github 上面的 [Kotlin](https://github.com/JetBrains/kotlin/releases) 编译器仓库下载最新版，Kotlin 基于 Java，所以你必须要有 [JDK](https://learn.microsoft.com/zh-cn/java/openjdk/download) 才行
+1. 在 Github 上面的 [Kotlin](https://github.com/JetBrains/kotlin/releases) 编译器仓库下载最新版，Kotlin 基于 Java，所以你必须要有 [JDK](https://learn.microsoft.com/zh-cn/java/openjdk/download) 才行，这个微软打包的版本，你也可以到 OpenJDk 官网下载
 
 2. **把 JDK 添加到环境变量** (Windows 打开图形界面，Linux 打开 /etc/profile) ，添加
     - *JAVA_HOME* = jdk/ 到用户变量
@@ -40,7 +40,7 @@ kotlinc
 // 这样会进入 Kotlin 的即时命令行编译
 ```
 
-5. 因为这是 JatBrains 的语言，所以建议使用 [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) (其他的IDE使用体验均不如它) 来开发，或者 [VSCode](https://code.visualstudio.com/) 免费开源，在或是 Notepad++
+5. 因为这是 JatBrains 的语言，所以建议使用 [IntelliJ IDEA](https://www.jetbrains.com/idea/download/)（其他的IDE使用体验均不如它）来开发，或者 [VSCode](https://code.visualstudio.com/) 免费开源，在或是 Notepad++
 
 > 如果使用 VSCode 一定要找一个好用一点的插件，体验还是不如 IntelliJ ，这是我目前用的[插件](https://marketplace.visualstudio.com/items?itemName=mathiasfrohlich.Kotlin)
 
@@ -247,7 +247,7 @@ num = 9.2
 
 #### 3.4.1.1 整数
 
-- ***Kotlin 的整数有 `Byte`、`Short`、`Int`、`Long` 这四类***，注意他们不是 Java 的小写 int ··· 等基本类，也不是 Java 的 Integer 等包装类，是 Kotlin 自己的
+- ***Kotlin 的整数有 `Byte`、`Short`、`Int`、`Long` 这四类***，注意他们不是 Java 的小写 int ··· 等基本类，也不是 Java 的 Integer 等包装类，具体怎样实现要看 Kotlin 编译器
 
 |类型|大小 (比特数)|最小值|最大值|
 |---|---|---|---|
@@ -301,7 +301,7 @@ val a2 = 100000000000u // ULong
 
 #### 3.4.1.3 浮点数
 
-- Kotlin 提供了**基于 IEEE-754 的两种浮点数**，***`Float`(单精度) 和 `Double`(双精度)***
+- Kotlin 提供了**基于 IEEE-754 的两种浮点数**，***`Float`（单精度）和 `Double`（双精度）***
 
 |类型|大小 (比特数)|有效数字比特数|指数比特数|十进制位数|
 |---|---|---|---|---|
@@ -714,7 +714,7 @@ println(str)
 
 ## 3.5 空安全
 
-> 首先回忆一下，在 Java 里面有一个特殊的值，`null`，它是所有引用类型的默认值，你可以把任何一个引用类型的变量的值设为 `null`，也可以把 `null` 转化为任何类型的值，我们今天讨论的是 ***`null` 导致的空指针异常***
+> 首先回忆一下，在 Java 里面有一个特殊的值，**`null`，它是所有引用类型的默认值，你可以把任何一个引用类型的变量的值设为 `null`，也可以把 `null` 转化为任何类型的值**，我们今天讨论的是 ***`null` 导致的空指针异常***
 
 - 如果对一个空对象访问或调用它的属性和方法，运行时的虚拟机就会抛出 `NoPointerException`，Kotlin 在编译时就加入了对空指针的规避，所以***在 Kotlin 里面所有的变量默认都不能赋值为 `null`***
 
@@ -731,7 +731,7 @@ num = null
 val num: Int? = null
 ```
 
-- 在 Kotlin 里面，因为没有了基本类型，所以所有的变量、类和函数都是类型，***变量的共同父类叫 `Any` (可以看作是 Java 的 Object)，所有可空变量的父类是 `Any?`***
+- 在 Kotlin 里面，因为没有了基本类型，所以所有的变量、类和函数都是类型，***变量的共同父类叫 `Any`（可以看作是 Java 的 Object），所有可空变量的父类是 `Any?`***
 
 ```kt
 val any1 = Any()
@@ -882,7 +882,7 @@ class Test {
 }
 ```
 
-### 3.7.2 const 修饰符
+### 3.7.2 const 修饰符和顶层声明
 
 - 之前说过 `val` 修饰的是一个常量，但***其实 `val`  表示的是你只能让它初始化一次 (只能指向一次对象)，但是可以通过修改它指向的对象修改它，或是自定义 getter***，并不代表 `val` 就是常量
 
@@ -950,7 +950,27 @@ fun func() {
 
 - 操作符就是符号，用于对变量进行简单快速的操作，这里介绍 Kotlin 里的数字操作符
 
-> 这里没讲 Kotlin 操作符的优先级，因为我觉得没用，你用上几个括号读者也能明白，***不过[这里](https://www.jianshu.com/p/962a093097d3) 可以看到 Kotlin 里的操作符优先级***
+- 这里 ***Kotlin 操作符的优先级***，不用记因为我觉得没用，你用上几个括号读者也能明白
+
+
+|类型|符号|
+|---|---|
+|后置|`++` `--` `.` `?.` `?`|
+|前置|`-` `+` `++` `--` `!` `labelDefinition@`|
+|类型转换|`:` `as` `as?`|
+|乘除余|`*` `/` `%`|
+|加减|`+` `-`|
+|范围运算符|`..`|
+|中缀函数||
+|Elvis 运算符|`?:`|
+|Named checks|`in` `!in` `is` `!is`|
+|比较|`<` `>` `<=` `>=`|
+|相等判断|`==` `!==`|
+|逻辑与|`&&`|
+|逻辑或|`\|\|`|
+|赋值|`=` `+=` `-=` `*=` `/=` `%=`|
+
+> 从上至下优先级变低
 
 ### 4.1.1 加减乘除
 
@@ -1515,6 +1535,27 @@ fun abs(num: Num) {
 class Num (var num: Int = 10)
 ```
 
+- 不要搞混了引用传递和值传递，比如下面，**Java 里面把以一个引用类型的变量传值传入和引用传递是两个概念**
+
+```kt
+/*
+
+    User 对象，存储在堆中
+    ^           ^
+    |           |
+    |           |
+实参 user -> 值传递给函数参数，因为拿到了 user 的拷贝值，也指向 User
+
+
+    User 对象
+    ^
+    |
+    |
+实参 user <-- 如果是引用传递，那么函数应该是拿到的 user 的地址而不是 User 的地址
+
+*/
+```
+
 ### 5.2.1 参数的格式
 
 - ***Kotlin 里函数参数的命名规范是 `name: type` ，每一个参数都必须显性指定类型，参数用逗号隔开***，当调用者传入类型不正确的参数或是参数数量不对都会报错
@@ -1797,7 +1838,7 @@ func4 = func3   // ok?
 
 - 记住，***函数不是函数类型的对象，但是函数能干的函数类型的对象也能干***
 
-- ***如果高阶函数的参数是一个可能为空的函数类型 (也就是可能是一个函数，可能是 `null`) ，对于这个可空的参数，请用括号 `()` 括起来整个类型并在右面加上 `?`***
+- ***如果高阶函数的参数是一个可能为空的函数类型（也就是可能是一个函数，可能是 `null`） ，对于这个可空的参数，请用括号 `()` 括起来整个类型并在右面加上 `?`***
 
 ```kt
 fun my_func1(func: ((Unit) -> Int)?) {
@@ -1901,7 +1942,7 @@ val sum: (Int, Int) -> Int = { x: Int, y: Int -> x + y }
     - ***`lambda` 表达式总是括在花括号中***
     - ***完整语法形式的参数声明放在花括号内，并有可选的类型标注***，没错类型可写可不写，只要你前面声明了
     - ***函数体跟在一个 `->` 之后***
-    - ***如果该 `lambda` 的返回类型不是 `Unit`，那么该 `lambda` 主体中的最后一个 (或可能是单个)  表达式会视为返回值***
+    - ***如果该 `lambda` 的返回类型不是 `Unit`，那么该 `lambda` 主体中的最后一个（或可能是单个）表达式会视为返回值***
 
     > ***`lambda` 不能用 `return` 语句返回，用了 return 会直接把最外面的函数结束掉***，见下文
 
@@ -2087,7 +2128,7 @@ inline fun my_func_1(func: (Unit) -> Unit): (Unit) -> Unit {
 
 - 那么我就想要函数类型的参数怎么办？***给一个函数类型的参数加上 `noinline` ，这个函数类型的参数就不会加入内联了，可以用把它当作对象来传递***
 
-> ***`noinline` 是给参数修饰的，`inline` 是给函数修饰的***
+> ***`noinline` 是给参数修饰的，`inline` 是给函数修饰的***，当然只有 `inline` 存在 `noinline` 才能修饰参数
 
 ```kt
 
@@ -2108,7 +2149,7 @@ inline fun print_hello(noinline func: (Unit) -> String): (Unit) -> String {
 }
 ```
 
-- 但是仔细一想，如果***我的函数类型的参数 (`lambda`) 里面有 `return` 怎么办？不就直接把调用它的函数 (调用它指的是调用内联函数的函数，比如 `main`) 给结束了？***
+- 但是仔细一想，如果***我的函数类型的参数 (`lambda`) 里面有 `return` 怎么办？不就直接把调用它的函数（调用它指的是调用内联函数的函数，比如 `main`）给结束了？***
 
 ```kt
 fun main() {
@@ -2157,7 +2198,7 @@ inline fun print_hello(func: (Unit) -> Unit): String {
 
 > ***这种 `return` 叫非局部返回，指的就是他直接结束了外面的外面的函数***
 
-- 所以 Kotlin 直接***不允许 `lambda` 里面有 `return` (像上面说的那样)，除非这个 `lambda` 是 `inline` 函数的参数，这样 `lambda` 里面的 `return` 实际上是结束了外面的调用者函数***，相当于利用了这个非局部返回
+- 所以 Kotlin 直接***不允许 `lambda` 里面有 `return`（像上面说的那样），除非这个 `lambda` 是 `inline` 函数的参数，这样 `lambda` 里面的 `return` 实际上是结束了外面的调用者函数***，相当于利用了这个非局部返回
 
 > ***注意这个限制只是针对 `lambda`*** ，匿名函数没有，当然具名函数也没有
 
@@ -2445,6 +2486,8 @@ import com.*    // 导入这个包下面的所有
 import com.User as Person   // 可能会有命名空间冲突，使用 as 重命名
 ```
 
+- 注意，***所有的顶层声明（顶层变量，顶层函数，类）都属于包而不是这个文件***，导入的时候直接包名 `.` 就好了，只有你想导入类里面的函数才需要多重名称
+
 ```kt
 // User.kt
 
@@ -2512,7 +2555,7 @@ kotlin com/MainKt.class         // 运行
 
 # 第七章：类和对象
 
-> 这是第一部分最难也最多知识点的部分
+> 这是第一部分最难也最多知识点的部分，笔者真的很幸苦不妨点个赞再走
 
 - ***面向对象编程 (OOP) 是一种重要的思想，对于代码的可复用性和维护性有着重要的作用***，虽然 Kotlin 基于 Java (后者是一门强制面向对象语法的语言) ，但是在之前的文章里我们并没有使用面向对象的概念 (倒是简单使用了方法和对象) ，所以在本章会系统的对面向对象的概念和使用进行讲解。同时，Kotlin 是一门一切皆对象的语言，因此一些操作可能跟 Java 不太一样，详见下文
 
@@ -3070,6 +3113,8 @@ class User (val name: String, var age: Int)
 
 - `getter` `setter` 只是名称的区别，实际作用和 Java 的 `XXXget()` `XXXset()` 是一样的，***`getter` 叫读访问器，`setter` 叫写访问器***
 
+> 因为在编译后 Kotlin 会自动给属性加上访问器，并且这个访问器的名称都是 getXXX，所以***不能自己定义一个 getXXX 方法了，会导致编译时命名冲突***
+
 - ***自定义 `getter` `setter` 的语法如下***：
 
 ```kt
@@ -3263,7 +3308,9 @@ class Example // 从 Any 隐式继承
 
 - ***Any 有三个方法：equals()、 hashCode() 与 toString()***。因此，为所有 Kotlin 类都定义了这些方法
 
-- ***默认情况下，Kotlin 类是最终 (final) 的不能被继承，使用 open 关键字标记类使其开放继承***
+- ***默认情况下，Kotlin 类是最终 `final` 的不能被继承，使用 open 关键字标记类使其开放继承***
+
+> Kotlin 里面 **`final` 唯一的作用就是标记该类或者方法、属性不能被继承**
 
 ```kt
 open class Base // 该类开放继承
@@ -3285,7 +3332,7 @@ class Zi : Fu() // 这表示在调用父类的无参构造
 
 > 也对，*强制要求覆盖方法方便辨认*
 
-- 父类的***属性和方法默认是不能被覆盖的，使用 `open` 关键字使其可被覆盖***
+- 父类的***属性和方法默认是 `final` 不能被覆盖的，使用 `open` 关键字使其可被覆盖***
 
 > 下面的 fill 方法**没有 open 修饰，子类里面不允许定义一个同名的函数，无论加不加 override**
 
@@ -3300,6 +3347,12 @@ class Circle() : Shape() {
 }
 ```
 - ***`override` 本身也是开放的，使用 `final` 使其不能再被继承***
+
+```kt
+class Circle() : Shape() {
+    final override fun draw() { /*……*/ }
+}
+```
 
 - 属性也是可以被覆盖的，唯一注意的一点就是 ***`var` 可以覆盖原来 `val` 的属性，反之则不行***
 
@@ -3321,6 +3374,8 @@ class Square : Rectangle() {    // 注意实际上有一个默认的无参构造
 
 - **`override` 也可以写在主构造里面作为属性声明的一部分**，见下文
 
+> **构造方法不继承**
+
 - 请注意，***覆盖方法总是使用与父类相同的缺省参数，当覆盖一个有默认实参值的方法时，必须从参数列表中省略默认实参值***
 
 ```kt
@@ -3332,6 +3387,8 @@ class B : A() {
     override fun foo(i: Int) { /*……*/ }  // 不能有默认值
 }
 ```
+
+- ***注意覆盖时必须完全一样 不然就重载了（重载可以跨代），覆盖之后原来的父类并不影响但是子类里面已经是新的方法了***
 
 ### 7.4.3 super
 
@@ -3595,4 +3652,260 @@ class Zi(num: Int) : Fu(num) {
 - 上面也讲过，**Kotlin 已经把属性的字段隐藏起来了**，使用 getter 和 setter 也能达到效果而且**大幅省略字数**
 
 ## 7.6 多态
+
+> 对于从 Java 过来的人来说其实不用讲，但是为了知识的完整性还是补全了面向对象的最后一章
+
+### 7.6.1 概念
+
+>  以下成立吗？
+
+```kt
+val dad: Father = Son()
+
+// 小汽车是汽车吗？
+```
+
+- ***一个父类类型的引用类型的变量，允许把一个子类的对象赋值给它***
+
+> 那么如果父类里面和子类里面都有相同名称的属性和方法（覆盖），通过这个父类的引用类型调用时调用的是谁的？
+
+```kt
+fun main() {
+    val dad: Father = Son()
+
+    dad.num = 40
+    dad.printNum()
+}
+
+
+open class Father (open var num: Int = 10) {
+
+    open fun printNum() {
+        println("Father $num")
+    }
+}
+
+open class Son (override var num: Int = 20) : Father() {
+
+    override fun printNum() {
+        println("Son $num")
+    }
+}
+```
+
+> 在 Java 里面，上面的代码不会跟 Kotlin 获得一样的结果
+
+```java
+class X {
+    public int id;
+    public void out() {
+        System.out.println(id);
+    }
+}
+
+
+class S extends X {
+    public int id;
+    public void out() {
+        System.out.println(id);
+    }
+}
+
+
+class C extends S {
+    public int id;
+    public void out() {
+        System.out.println(id);
+    }
+}
+
+// main
+X f1 = new C();
+
+f1.id = 12; // 实际上是给 X 的 id 赋值
+f1.out();   // int 属性默认值是 0
+```
+
+> 不像 Java 的属性是看引用，Kotlin 里**因为不允许直接对字段读写，所有的赋值语句都会包装成 getter 和 setter 两个方法**，在这两个方法里面都是**调用的属性名称**，而根据***变量本地优先的法则，`局部变量 > 成员变量 > 父类的成员变量 > ··· > Any` ，所以会优先获取对象的属性***
+
+> 所以 ***Kotlin 里面：通过引用调方法和属性，都是看对象而不是引用***
+
+> 这是一个很有意思的特性
+
+- ***在把一个父类的引用指向一个子类的对象的时候，通过属性和方法优先获得的是子类的同名覆盖属性和方法，这种特性叫做多态***
+
+> 记住是**父类和子类必须同时具有覆写方法和属性才行**，对于一个子类里面多了方法和属性的对象，你把他赋给父类引用是不行的
+
+```kt
+fun main() {
+    val dad: Father = Son()
+
+    dad.num = 40
+    dad.printNum()
+    dad.doSomething()   // 如果你不使用这个子类独有的方法的话也是可以编译运行的
+}
+
+
+open class Father (open var num: Int = 10) {
+
+    open fun printNum() {
+        println("Father $num")
+    }
+}
+
+open class Son (override var num: Int = 20) : Father() {
+
+    override fun printNum() {
+        println("Son $num")
+    }
+
+    fun doSomething() {
+        println("Haha")
+    }
+}
+
+```
+
+### 7.6.2 动态绑定
+
+> 在 Java 入门这篇文章里的 7.8 动态绑定一章，我详细介绍了 Java 里面的动态绑定机制，建议没有看过的朋友先看过那一章再过来，因为懒所以我就直接搬过来了
+
+```md
+- ***绑定就是一个方法的调用与调用这个方法的类连接在一起的过程被称为绑定***，绑定可以发生在编译时也可以发生在运行时
+    - ***静态绑定：前期绑定，编译时绑定***
+    - ***动态绑定：后期绑定，运行时绑定***
+- 在程序运行前，也就是***编译时期 JVM 就能够确定方法由谁调用，这种机制称为静态绑定***，如果一个方法由***private、static、final任意一个关键字所修饰***，那么这个方法是前期绑定的，***构造方法也是前期绑定***
+> private只能被自己调用，static可以只通过类名加方法名的方式调用，final方法不会被覆写，详情请见下文*类的高级特性*
+- 除了由private、final、static 所修饰的方法和构造方法外，***JVM在运行期间决定方法由哪个对象调用的过程称为动态绑定***
+```
+
+- 简单来说，***对于多态当中的同名覆写方法，在编译之后并不知道最终在使用的时候会去调用谁，而在运行时这个方法会跟真正的对象的地址绑定，这种现象就叫动态绑定***
+
+> 下面的程序，注释掉 1 和 2 处的代码会发生什么？
+
+```kt
+fun main() {
+    val dad: Father = Son()
+
+    dad.num = 40
+    println(dad.addNum())
+    println(dad.addNumber())
+}
+
+
+open class Father (open var num: Int = 10) {
+
+    open fun printNum() {
+        println("Father $num")
+    }
+
+    open fun getNumber(): Int = num + 500 // 不能是 getNum，因为 Kotlin 默认就有了，这里会有命名冲突
+
+    open fun addNum(): Int = num + 100
+    open fun addNumber(): Int = getNumber() + 200
+}
+
+open class Son (override var num: Int = 20) : Father() {
+
+    override fun printNum() {
+        println("Son $num")
+    }
+
+    override fun getNumber(): Int = num + 50
+
+    override fun addNum(): Int = num + 1000 // 1
+    override fun addNumber(): Int = getNumber() + 2000 // 2
+
+}
+```
+
+> 注释掉 Son 的 addNum 方法，会去找父类的 addNum ，问题是 addNum 里面的 num 是谁？记住 num 其实是 getNum 这个自动加上的访问器，因为动态绑定的存在这个方法会去调用子类里面的 getNum ，而因为变量本地优先，子类里面的方法肯定优先访问到子类里面的属性，所以这里访问的是子类的属性而不是父类的
+
+> 注释掉 Son 的 addNumber 方法，父类里面的 addNumber 的 getNumber 调用的谁的，因为动态绑定的存在会去调用子类的，结果就是 290
+
+> 动态绑定就是这样，有点绕，不过一定牢记 **Kotlin 里属性都是在调用方法而不是访问真正的字段**，动态绑定我们还会再见
+
+- 多态是一个非常好用的特性，他可以大大简化代码的抽象程度，比如下面
+
+```kt
+fun main() {
+
+    val pet_1: Animal = Cat("Lily")
+    val pet_2: Animal = Dog("Talen")
+    val pet_3: Animal = Cat("Octavia")
+    val pet_4: Animal = Dog("Kaladin")
+
+    val petsList = listOf(pet_1, pet_2, pet_3, pet_4)
+    for (pet in petsList) {
+        printPetsName(pet)
+    }
+
+}
+
+
+fun printPetsName(animal: Animal) {
+    
+    println(animal.myNameIs())
+}
+
+open class Animal (open val name: String) {
+
+    open fun myNameIs() = "Animal name is $name"
+}
+
+class Cat (override val name: String) : Animal(name) {
+
+    override fun myNameIs() = "Cat's name is $name"
+}
+
+class Dog (override val name: String) : Animal(name) {
+
+    override fun myNameIs() = "Dog's name is $name"
+}
+```
+
+### 7.6.3 父子类的转换
+
+> 在上文我们看到一个父类的引用可以指向子类的对象，并且可以调用那些父子类共享的方法和属性，如果我想使用那些子类独有的呢？直接使用会报错，所以要进行类型转换
+
+- ***指向子类对象的父类引用类型变量是可以转换为子类的引用的，前提是二者是父子关系***
+
+- **这叫向下转型，相反的多态就是向上转型**
+
+```kt
+fun main() {
+    val dad: Father = Son()
+
+    dad.num = 40
+    dad.printNum()
+    
+    val child: Son = dad as Son
+    child.doSomething()
+}
+
+
+open class Father (open var num: Int = 10) {
+
+    open fun printNum() {
+        println("Father $num")
+    }
+}
+
+open class Son (override var num: Int = 20) : Father() {
+
+    override fun printNum() {
+        println("Son $num")
+    }
+
+    fun doSomething() {
+        println("Haha")
+    }
+}
+```
+
+- 但是，***子类的引用类型是不能接受一个父类的对象的***
+
+> 就像汽车不一定都是小轿车一样，在逻辑上行不通
+
+## 7.7 抽象类
 
