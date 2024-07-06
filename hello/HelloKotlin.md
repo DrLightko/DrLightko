@@ -243,7 +243,7 @@ num = 9.2
 
 ## 3.4 基本数据类型
 
-### 3.4.1 数字 ( Numbers )
+### 3.4.1 数字 ( Number )
 
 #### 3.4.1.1 整数
 
@@ -445,7 +445,7 @@ val v5 = b + s + i + l + f // Float
 val v6 = b + s + i + l + f + d // Double
 ```
 
-### 3.4.2 布尔值 ( Booleans )
+### 3.4.2 布尔值 ( Boolean )
 
 - ***表示为布尔类型的值只能有 `true` 和 `false` 两个值***
 
@@ -456,7 +456,7 @@ bool = false
 
 > ***也有可以为 `null` 的布尔变量***
 
-### 3.4.3 字符 ( Charaters )
+### 3.4.3 字符 ( Character )
 
 - ***字符用 `char` 类型标识，是包括在单括号 `' '`里的单个字符***
 
@@ -496,7 +496,7 @@ println(i)
 // -include-runtime -d hello.jar 不受影响
 ```
 
-### 3.4.4 字符串 ( Strings )
+### 3.4.4 字符串 ( String )
 
 #### 3.4.4.1 简介
 
@@ -1354,14 +1354,16 @@ fun main() {
 fun type_dectec(a: Any) {
     
     when (a) {
-        is String -> println("this is a String")
-        is Byte -> println("this is a Byte")
-        is Short -> println("this is a Short")
-        is Boolean -> println("this is a Boolean")
-        is Number -> println("this is a Number")    // 你不能把 Number 放在前面，否则 Byte 和 Short 永远访问不到
-        is Character -> println("this is a Chharater")
-        else -> println("i dont what this is")
-    }
+        is Int -> println("is int")
+        is Byte -> println("is byte")
+        is Short -> println("is short")
+        is Long -> println("is long")
+        is UInt -> println("is unsigned int")
+        is Number -> println("is num")  // 你不能把 Number 放在 Int 前面，否则永远访问不到
+        is Boolean -> println("is bool")
+        is Character -> println("is char")
+        is String -> println("is string")
+    } 
 }
 ```
 
