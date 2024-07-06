@@ -37,7 +37,7 @@ kotlic -version
 
 kotlinc 
 
-// 这样会进入 Kotlin 的即时命令行编译
+// 这样会进入 Kotlin 的命令式终端
 ```
 
 5. 因为这是 JatBrains 的语言，所以建议使用 [IntelliJ IDEA](https://www.jetbrains.com/idea/download/)（其他的IDE使用体验均不如它）来开发，或者 [VSCode](https://code.visualstudio.com/) 免费开源，在或是 Notepad++
@@ -1676,25 +1676,40 @@ fun say_hello(vararg names: String) {
 
 ```kt
 fun main() {
-    fibonacci(1,1,10000)    // 计算斐波那契数列
+    println(fibonacci(1,1,10000))
 }
 
 
 
-tailrec fun fibonacci(a: Int, b: Int, limit: Int) {
-    println(a)
-    println(b)
-    println("ratio is ${b/a.toDouble()}")
+tailrec fun fibonacci(a: Int, b: Int, limit: Int): Double {
 
-    if (b < limit) {
-        fibonacci(a + b, b + a + b, limit) // 如果没有 limit 那么栈会溢出
-    } else {
-        
+    if (b >= limit) {   // 这个 limit 就是精度限制
+        return b / a.toDouble() // 除法显性指定返回值类型
     }
+
+    return fibonacci(a + b, a + b + b, limit) 
 }
 ```
 
 - 因为递归会消耗栈导致性能下降，Kotlin 还准备了一个 ***`tailrec` 修饰符，可以用于优化递归，但是函数必须将其自身调用作为它执行的最后一个操作***
+
+```kt
+fun main() {
+    println(factorial(12UL))
+}
+
+
+tailrec fun factorial(num: ULong): ULong {
+
+    if (num < 2UL) {
+        return 1UL
+    } else {
+        return num * factorial(num - 1UL)
+    }
+}
+```
+
+> 上面的编译器会**警告说尾递归的函数必须将递归作为函数的最后一步执行，而上面的阶乘其实是把乘法当作了函数的最后一步**
 
 ## 5.4 高级函数
 
@@ -2426,8 +2441,8 @@ fun main() {
     val f = func()
 
     println(f("Bob")(20000))    // 这个双括号代表函数再调函数
-    println(f("Jack")(30000))
-    println(f("Tomy")(10))
+    println(f("Jack")(30000))   // 这种写法叫柯里化 Currying 是一个数学上的概念
+    println(f("Tomy")(10))      // 个人觉得没用
 }
 
 
@@ -2476,82 +2491,139 @@ fun add(a: Double, b: Double) = a + b + 0.001
 
 > 上一章和下一章很难，讲一点轻松的
 
-- **为了方便代码的管理和复用**，Java 里使用了包管理，Kotlin 里面的基本一样
+- 为了方便代码的管理和复用，Java 里使用了包管理，Kotlin 里面的基本一样
 
-- ***使用 `package` 声明该文件位于的包，使用 `import` 导入其他包下面的类、变量和函数，对于命名冲突的可以使用 `as` 重命名***
+- ***使用 `package` 声明该文件位于的包，`package` 必须位于顶层***，对于位于同一包下面的文件可以有如下的方式导入
 
-```kt
-import com.User // 导入单个类
-import com.*    // 导入这个包下面的所有
-import com.User as Person   // 可能会有命名空间冲突，使用 as 重命名
-```
+    1. ***直接使用包名.文件名的方式导入***
+    ```kt
+    // User.kt
 
-- 注意，***所有的顶层声明（顶层变量，顶层函数，类）都属于包而不是这个文件***，导入的时候直接包名 `.` 就好了，只有你想导入类里面的函数才需要多重名称
+    package com.domin
 
-```kt
-// User.kt
+    const val PI = 3.14f
 
-package com // 包声明一般位于最顶层
+    class User(name: String) {
 
-const val PI = 3.14f
+        val name = name
 
-class User(name: String) {
-
-    val name = name
-
-    fun printName() {
-        println("name is $name")
+        fun printName() {
+            println("name is $name")
+        }
     }
-}
 
-fun func() {
-    println("Hello World!")
-}
+    fun func() {
+        println("Hello World!")
+    }
+    ```
+    ```kt
+    // Hello.kt
 
+    package com
 
-// Main.kt
+    fun main() {
+        func1()
+        func2()
+    }
 
-package com
+    fun func1() {
+        println(com.domin.PI)
+        com.domin.func()
 
-import com.User
-import com.PI   // 注意不是 com.User.PI
-import com.func
+        val user = com.domin.User("Jordan")
 
-fun main() {
-    func1()
-    func2()
-}
-
-fun func1() {
-    println(com.PI)
-    com.func()
-
-    val user = User("Jordan")
-
-    user.printName()
-}
+        user.printName()
+    }
 
 
 
-fun func2() {
-    func()
+    fun func2() {
+        com.domin.func()
 
-    println(PI)
-}
-```
+        println(com.domin.PI)
+    }
+    ```
 
-```kt
-kotlinc com/main.kt com/User.kt // 编译
+    - ***编译器多文件编译的语法***：
 
-kotlin com/MainKt.class         // 运行
+    ```kt
+    // 在编译时需把所有的文件引入，在运行时只需要执行带有 main 的就行
 
-// Kotlin 不需要目录与包名吻合
-```
+    kotlinc Hello.kt User.kt
+
+    kotlin com/HelloKt.class
+    ```
+
+    2. ***使用 `import` 可以使包下面的类、变量和函数不需要界定符就能访问，对于命名冲突的可以使用 `as` 重命名***
+
+    ```kt
+    import com.User // 导入单个类，这个类就不需要 com.User 才能访问了
+    import com.*    // 导入这个包下面的所有类、函数等顶层
+    import com.User as Person   // 可能会有命名空间冲突，使用 as 重命名
+    ```
+
+    ```kt
+    // Hello.kt
+
+    package com
+
+    import com.domin.User
+    import com.domin.PI     // 这里一定注意
+    import com.domin.func   // 顶层声明是属于包的
+    // import com.domin.User.printName 这跟这个是不一样的
+    // 不过你要是真的这么干了，你会得到
+    // error: cannot import 'printName'. Functions and properties can only be imported from packages or objects.
+
+
+
+    fun main() {
+        func1()
+        func2()
+    }
+
+    fun func1() {
+        println(PI)
+        func()
+
+        val user = User("Jordan")
+
+        user.printName()
+    }
+
+
+
+    fun func2() {
+        func()
+
+        println(PI)
+    }
+    ```
+
+- 一定注意，***所有的顶层声明都直接属于包***，所以上面的 `import` 导入的常量和函数不需要加上 User 的界定
 
 - 能看出，Kotlin ***不仅能导入其他文件的类，还可以导入其他文件中的函数、顶层变量***，但是这些***直接属于包而不是其他文件***
 
-> 根据它生成的文件也能知道，上面的 User 文件编译后生成了 User.class UserKt.class 两个文件，其实 **Kotlin 是帮你把单独的这些东西放在了一个独立的文件里**
+> 根据它生成的文件也能知道，上面的 User 文件编译后生成了 User.class UserKt.class 两个文件，其实 **Kotlin 是帮你把单独的这些东西放在了一个独立的文件里**，符合Java 命名规范的就放在文件名同名 class 下面，使用了顶层声明的放在带有 Kt 后缀的里面
 
+- **Kotlin 会默认导入如下的包**：
+```kt
+kotlin.*
+kotlin.annotation.*
+kotlin.collections.*
+kotlin.comparisons.*
+kotlin.io.*
+kotlin.ranges.*
+kotlin.sequences.*
+kotlin.text.*
+
+// 根据平台也会导入以下的包
+
+JVM:
+    java.lang.*
+    kotlin.jvm.*
+JS:
+    kotlin.js.*
+```
 
 # 第七章：类和对象
 
@@ -2567,7 +2639,7 @@ kotlin com/MainKt.class         // 运行
 
 - 如此一来一系列有关的函数和变量就不需要用户手动的在 main 里面创建，只需要一个该类的对象，而且在方法里面也可以约束用户的操作，同时类还有一些更高级的操作
 
-## 7.2 对象的创建
+## 7.2 对象的初始化
 
 - Kotlin 里***使用 `class` 关键字创建一个类，使用 `类名()` 的方式创建一个类的对象，使用 `.` 点号引用对象的属性和方法***
 
@@ -3563,6 +3635,8 @@ public var bar: Int = 5 // 该属性随处可见
 internal val baz = 6    // 相同模块内可见
 
 public open class Fu(open var name: String, open var age: Int) // 该类随处可见
+
+// 有一点，权限修饰符总是最前面，比如上面的 public 比 open 前
 ```
 
 - 对于***类内部声明的成员***：
@@ -3570,7 +3644,7 @@ public open class Fu(open var name: String, open var age: Int) // 该类随处�
     2. ***`protected` 意味着该成员具有与 `private` 一样的可见性，但也在子类中可见***
     3. ***`internal` 意味着能见到类声明的本模块内的任何客户端都可见其成员***
 
-    > 模块可以理解为就是一个项目，比如 IntelliJ、Gradle
+    > 模块可以理解为就是一个项目，比如 IntelliJ 生成的一个···
 
     4. ***`public` 意味着能见到类声明的任何地方都可见其成员***
 
@@ -3610,6 +3684,67 @@ class Unrelated(o: Outer) {
 class C private constructor(a: Int) { …… }
 
 // 构造为 private 导致没办法生成类的对象
+```
+
+### 7.5.3 反引号的妙用
+
+- 这个 `internal` ，其实没什么用，而且在跟 Java 互操作时***Java 会把 `internal` 理解成 `public`***，本来限制模块的作用也没起到，不过有一种方式可以限制 Java 无法使用
+
+- Kotlin 里面有一个反引号（键盘左上角跟波浪在一块的符号），使用***反引号可以把不合法的标识符变为合法***，它的出现本是为了与 Java 互操作时避免关键字的冲突
+
+> 这个 ` 无法打出来，因为在 markdown 里面这也是一个标识
+
+
+```kt
+fun main() {
+    `fun`()
+    ` `()
+    `  `()
+    `   `()
+}
+
+
+fun `fun`() {
+    println("i'm `fun`")
+}
+
+fun ` `() {
+    println("! !")
+}
+
+fun `  `() {
+    println("!  !")
+}
+
+fun `   `() {
+    println("!   !")
+}
+```
+
+>比如 Java 没有 fun 关键字，可以调用一个叫 fun 的函数，但是 Kotlin 不行
+
+- 可是**可以使用这个反引号创造出一些 Java 根本识别不了的标识符，从而避免这个 `internal` 被外部的 Java 调用**
+
+```kt
+// app/Hello.kt
+
+package app
+
+internal fun `class`(num: Int) {
+    println("num is $num")
+}
+
+// app/Hello.java
+
+package app;
+
+public class Hello {
+    
+    public static void main(String[] args) {
+        app.HelloKt.class(213);     // 报错
+        app.HelloKt.`class`(213);   // 报错
+    }
+}
 ```
 
 ### 7.5.2 语法习惯
@@ -3864,7 +3999,186 @@ class Dog (override val name: String) : Animal(name) {
 }
 ```
 
-### 7.6.3 父子类的转换
+### 7.6.3 调用优先级
+
+> 请看如下的例子，注意这是一个子类的引用指向子类的对象，父类里面的同名函数调用的是谁的？
+
+```kt
+fun main() {
+
+    val son: Zi = Zi()
+    son.render()
+}
+
+
+open class Fu {
+    
+    open fun render() {
+        println("Fu render")
+        render2()
+        // 按照正常逻辑应该本地优先
+    }
+
+    open fun render2() {
+        println("Fu render2")
+    }
+}
+
+
+class Zi : Fu() {
+
+    override fun render() {
+        println("Zi render")
+        super.render()
+    }
+
+    override fun render2() {
+        println("Zi render2")
+    }
+}
+```
+
+- 没错，***父类的函数体里面如果调用了一个被继承的方法或属性，那么这个同名方法和属性调用的是子类的而不是父类的***，即便这个情况发生在子类的引用子类的对象中
+
+> 当然父类自己的对象是会调用自己的方法的
+
+> 为什么这个动态绑定也会发生在属性上？还是那句话，**所有的属性都是一个访问的方法，因为方法会多态指定为子类的访问器，所以结果就是子类里面的属性被拿到了**
+
+```kt
+fun main() {
+
+    val son = Zi("Joeth")
+    son.render()
+
+    println()
+    
+    val dad = Fu("Tang")
+    dad.render()
+}
+
+
+open class Fu (open val name: String) {
+    
+    open fun render() {
+        println("Fu render")
+        render2()
+        println("Fu $name")
+    }
+
+    open fun render2() {
+        println("Fu render2 $name")
+    }
+
+    init {
+        render2()
+    }
+}
+
+
+class Zi (override val name: String) : Fu(name + "Fu") {
+
+    override fun render() {
+        println("Zi render")
+        super.render()
+    }
+
+    override fun render2() {
+        println("Zi render2 $name")
+    }
+}
+```
+
+- 所以，***父类的构造器里面最好不要去调用 `open` 的方法，因为很可能此时这一个属性或方法还没有被子类初始化***
+
+```kt
+fun main() {
+
+    val son = Zi("Joeth")
+    son.render()
+}
+
+
+open class Fu (open val name: String) {
+    
+    open fun render() {
+        println("Fu render")
+        render2()
+    }
+
+    open fun render2() {
+        println("Fu render2 $name")
+    }
+
+    init {
+        render2()
+    }
+}
+
+
+class Zi (override val name: String) : Fu(name) {
+
+    override fun render() {
+        println("Zi render")
+        super.render()
+    }
+
+    override fun render2() {
+        println("Zi render2 $name")
+    }
+}
+```
+
+> 没想到竟然是 null ，Kotlin 花了大功夫的空安全设计在这里失效了
+
+- 这个问题在 Java 里面也存在，***如果父类构造器调用了被子类重写的方法，且通过子类构造函数创建子类对象，调用了这个父类构造器（无论显示还是隐式），就会导致父类在构造时实际上调用的是子类覆盖的方法***
+
+- **优点就是实现了多态**，继承于同一父类下面的不同子类在父类的构造里面调用的是子类的方法，而缺点就是***如果这个被覆写的方法，在子类里面的实现涉及了子类的成员变量，恰恰这个时候子类的成员变量还没有被初始化，那么就会得到空指针异常***
+
+```kt
+fun main() {
+    val son = Zi()
+}
+
+
+
+open class Fu  {
+
+    open val name = "Fu"
+
+    val id = getID()    // 这也是构造器的一部分。这个 getID 调用了子类的 getID
+    
+    init {
+        println("Fu: id is $id, name is $name")
+    }
+
+    open fun getID(): Int {
+        return 1000
+    }
+}
+
+
+class Zi : Fu() {
+
+    override val name = "Zi"
+
+    init {
+        println("Zi: id is $id, name is $name")
+    }
+
+    override fun getID(): Int {
+        return name.length  // 这个 name 哪里来？
+        // return super.name.length
+        // return 1
+        // 这两者均可以
+    }
+
+}
+```
+
+- 所以请注意，***父类的构造器不要调用可被继承的方法***，你不知道你的子类会不会访问一个自己无法初始化的属性
+
+> 这还是一个运行时问题，编译时 Kotlin 不会指出你的问题，当然智能的 IDE 可以，但如果不注意这会是一个相当难找的问题
+### 7.6.4 父子类的转换
 
 > 在上文我们看到一个父类的引用可以指向子类的对象，并且可以调用那些父子类共享的方法和属性，如果我想使用那些子类独有的呢？直接使用会报错，所以要进行类型转换
 
@@ -3907,5 +4221,143 @@ open class Son (override var num: Int = 20) : Father() {
 
 > 就像汽车不一定都是小轿车一样，在逻辑上行不通
 
-## 7.7 抽象类
+## 7.7 特殊类
 
+### 7.7.1 抽象类
+
+- 当我们**需要一个方法却不知道它的具体表现形式，只能知道它的具体实例怎样使用它，我们可以干脆不构造它，这个叫抽象方法**
+
+```kt
+abstract fun func(num: Int): String
+
+// 我只知道这个函数参数为 Int 返回值为 String，但是我不知道他怎样实现
+```
+
+- ***抽象类就是一个可以包含抽象方法和抽象属性的类，定义语法如下***
+
+```kt
+<修饰符> abstract class <类名字> {
+    ···
+}
+```
+
+- ***抽象类不能被构造***，所以***抽象类的继承就成了唯一使用途径***，抽象类的特点有：
+    - ***抽象类不能构造对象***，但是可以有构造方法，问题是只能由子类来构造
+    - ***抽象类当中不一定有抽象方法或属性，但是有抽象方法或属性的类必须被申明为抽象类***
+    - ***一个类继承抽象类，那么这个类中必须实现抽象类中所有的方法。如果没有，那么这个类也要声明为抽象类***，也就是子类实现了父类的抽象方法，也就是***父类成了规范***，子类必须要实现（覆写）父类的全部抽象方法，否则它自己也是抽象的没法实例化
+    - ***抽象类不能被申明为 final 类型***的，否则又要继承又不能继承岂不自相矛盾
+
+- ***抽象的类、属性和方法默认都是 `open`*** 的，可以直接被继承
+
+```kt
+open abstract class myClass {
+    oprn abstract fun func(num: Int): String
+}
+
+>>>warning: modifier 'open' is redundant in presence of 'abstract'.
+
+// 他只是 warning ，不会拒绝编译
+```
+
+- **抽象类中可以定义正常的属性和方法**，使用上跟正常的类完全一样
+
+- ***抽象方法不能有函数体，抽象属性可以为 `var` 和 `val`，不可以有 `getter` `setter` ，不能有初始值***
+
+```kt
+abstract class myClass {
+
+    abstract fun abstractFunc(num: Int): String
+
+    fun figurativeFunc(num: Int): String {
+        return "num is $num in figurative func"
+    }
+
+    abstract var varNum: Int
+    abstract val valNum: Int    // 因为没有初始值所以必须显示指定类型
+
+    var num: Int = 21
+        get() {
+            return field + 100
+        }
+        set(value) {
+            field = value + 200
+        }
+}
+```
+
+- ***抽象类可以继承抽象类，也可以继承正常类，抽象方法可以覆盖具象方法也可以覆盖抽象方法***
+
+```kt
+open class myClass {
+
+    open var varNum = 10
+    open val valNum = 30
+
+    open fun abstractFunc(num: Int): String {
+        return "func"
+    }
+}
+
+
+abstract class abstractClass : myClass() {
+
+    override abstract var varNum: Int
+    override abstract val valNum: Int
+
+    var num: Int = 21
+        get() {
+            return field + 100
+        }
+        set(value) {
+            field = value + 200
+        }
+
+    override abstract fun abstractFunc(num: Int): String
+
+    fun figurativeFunc(num: Int): String = "num is $num in figurative func"
+
+}
+```
+
+```kt
+fun main() {
+    
+    val kt = Kotlin()
+    kt.sayHello()
+
+    val coffee = Java()
+    coffee.sayHello()
+}
+
+
+abstract class Language {
+    
+    abstract val name: String
+
+    abstract fun sayHello()
+
+}
+
+
+class Kotlin : Language() {
+
+    override val name = "Kotlin"
+
+    override fun sayHello() {
+        println("I'm $name, hello world!")
+    }
+}
+
+class Java: Language() {
+
+    override val name = "Java"
+
+    override fun sayHello() {
+        println("I'm Java, hello world!")
+    }
+}
+```
+
+### 7.7.2 接口
+
+- ***接口就是一个完全抽象的抽象类***
