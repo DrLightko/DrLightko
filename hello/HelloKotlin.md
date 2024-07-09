@@ -4244,7 +4244,7 @@ abstract fun func(num: Int): String
 ```
 
 - ***抽象类不能被构造***，所以***抽象类的继承就成了唯一使用途径***，抽象类的特点有：
-    - ***抽象类不能构造对象***，但是可以有构造方法，问题是只能由子类来构造
+    - ***抽象类不能构造对象***，但是**可以有构造方法**，问题是只能由子类来构造
     - ***抽象类当中不一定有抽象方法或属性，但是有抽象方法或属性的类必须被申明为抽象类***
     - ***一个类继承抽象类，那么这个类中必须实现抽象类中所有的方法。如果没有，那么这个类也要声明为抽象类***，也就是子类实现了父类的抽象方法，也就是***父类成了规范***，子类必须要实现（覆写）父类的全部抽象方法，否则它自己也是抽象的没法实例化
     - ***抽象类不能被申明为 final 类型***的，否则又要继承又不能继承岂不自相矛盾
@@ -4362,4 +4362,219 @@ class Java: Language() {
 
 ### 7.7.2 接口
 
-- ***接口就是一个完全抽象的抽象类***
+- ***接口就是一个完全抽象的抽象类，使用 `interface` 声明，默认 `open` 修饰***，可以直接被继承
+
+```kt
+<修饰符> interface <类名字> {
+    ···
+}
+
+// 默认 open
+```
+
+- ***接口中不允许定义属性，除非它没有幕后字段，或者是抽象的***（没错 Kotlin 支持抽象属性），属性默认 `open`
+
+- ***接口中的方法的方法体也是可选的***，你可以写上然后在继承的时候就不用写了，方法默认 `open`，没有方法体的方法默认 `abstract open`
+
+> 这种接口中的普通方法，本质上是创建了一个 $DefaultImpls.class ，在这个类里面实现了你在 Kotlin 接口里面的方法体
+
+- ***接口不允许有构造方法***，所以在继承的时候***不能在接口名后面写括号***
+
+> 抽象类是允许有构造函数的，只不过要交给子类去构造
+
+```kt
+fun main() {
+
+    val myclass = MyClass()
+    myclass.printNum()
+    println(myclass.age)
+}
+
+interface User {
+    abstract val num: Int
+
+    // 抽象属性，不允许有初始值
+    // 不用写这个 abstract 也行，因为属性默认就是 abstract 的
+
+    val age: String
+        get() = "age"
+
+    // 这样就没有幕后字段了，也不能使用 field 了
+
+    fun printNum() {
+        println(num)
+
+        // 方法体也是可选的，这样子其实这就是一个正常函数
+        // 如果写成 abstract fun printNum 就不能有函数体了
+    }
+}
+
+
+class MyClass : User {
+
+    override val num = 20
+    override val age = "48"
+
+    /*
+    override fun printNum() {
+        println(num)
+    }
+    */
+
+    // 因为接口中的这个方法不是抽象的，那么不覆盖也可以
+}
+```
+
+- ***接口也可以继承接口，还可以实现覆写其他接口的实现，那么继承这个接口的类就不用覆写了***
+
+> 接口中的覆写仅限于方法覆写，接口中还是不能定义属性
+
+```kt
+
+fun main() {
+    val guy = Employee("Peter", "Benny", 40)
+
+    println(guy.name)
+}
+
+
+interface Named {
+    val name: String
+}
+
+interface Person : Named {
+    val firstName: String
+    val lastName: String
+
+    override val name: String
+        get() = "$firstName $lastName"
+
+        // 对于这个 name ，它仍然是抽象的，只不过 get 被覆写了
+}
+
+class Employee(
+    // 不必实现“name”
+    override val firstName: String,
+    override val lastName: String,
+    val age: Int
+) : Person
+```
+
+- 类和抽象类不支持多继承，因为无法避免冲突问题，但是接口里面都是抽象的方法和属性，所以***接口支持多继承***
+
+```kt
+fun main() {
+
+    val myclass = MyClass()
+
+    println(myclass.func(12))
+    println(myclass.func(120L))
+}
+
+interface A {
+    fun func(a: Int): String
+}
+
+
+interface B {
+    fun func(b: Int): String
+
+    fun func(c: Long): String
+}
+
+
+class MyClass : A , B { // 同时继承 A 和 B
+    
+    override fun func(num: Int): String = "$num in func(Int)"
+
+    // 这个是两个里面共有的同名方法，一同覆盖掉
+
+    override fun func(num: Long): String = "$num in func(Long)"
+
+    // 加上这个后成了重载
+}
+```
+
+- 上文中的方法都是抽象的，但如果两个方法是已经实现的，那么在调用的时候是分不清楚的，所以***使用 `super<接口名>.方法名(参数)` 的形式区分每个接口中已经实现的同名方法***
+
+> 这个格式只能调用方法，不能覆写了，它的本质是：因为两个方法已经实现了，所以必须同时覆盖这两个，在覆写的方法体中去分别调用两个方法（不调用也行），就可以避免命名冲突
+
+```kt
+fun main() {
+
+    val myclass = MyClass()
+
+    println(myclass.func(12))
+}
+
+interface A {
+    fun func(a: Int): String  = "$a in A.func(Int)"
+}
+
+
+interface B {
+    fun func(b: Int): String = "$b in B.func(Int)"
+}
+
+
+class MyClass : A , B {
+
+    override fun func(num: Int): String {
+        val str1 = super<A>.func(num - 10)
+        val str2 = super<B>.func(num + 10)
+
+        println("override")
+
+        return "$str1\n$str2"
+    }
+}
+```
+
+- ***这种方法适用于任何实现了方法的接口***，都可以指定接口中方法的实现
+
+> 比如我的类里面就想使用接口里面的方法体，我不想覆盖，但又想添加一些东西，就可以这样调用
+
+```kt
+fun main() {
+
+    val myclass = MyClass()
+
+    println(myclass.func(12))
+    println()
+
+    myclass.function()
+}
+
+interface A {
+    fun func(a: Int): String  = "$a in A.func(Int)"
+}
+
+
+interface B {
+    fun func(b: Int): String = "$b in B.func(Int)"
+
+    fun function() {
+        println("interface")
+    }
+}
+
+
+class MyClass : A , B {
+
+    override fun func(num: Int): String {
+        val str1 = super<A>.func(num - 10)
+        val str2 = super<B>.func(num + 10)
+
+        println("override")
+
+        return "$str1\n$str2"
+    }
+
+    override fun function() {
+        super<B>.function()
+
+        println("class")
+    }
+}
+```
+
