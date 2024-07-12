@@ -1431,6 +1431,8 @@ loop@ for (i in 1..5) {
 
 # 第五章：函数
 
+> 这里的函数章就是类的方法篇，只不过为了内容不要太挤放在了单独的一章，本质上方法就是函数
+
 ## 5.1 函数的创建和使用
 
 > 函数用于执行一系列运算，并返回结果，函数最重要的是里面的函数体
@@ -2081,7 +2083,8 @@ val sum_1 = fun (a: Int, b: Int) = a + b
 val sum_2 = fun (a: Int, b: Int) = { a + b }
 
 println(sum_1(2,3))
-println(sum_1(2,3)) // ?
+println(sum_2(2,3)) // ?
+// HelloKt$$Lambda$12/0x00000231b000cc18@4c98385c 这个就是 Kotlin lambda 的本质东西
 println(sum_2(3,4)())   // ?
 
 
@@ -2411,6 +2414,35 @@ fun func(): (String) -> String {
 > ***不同的闭包对象之间互不干扰，因为是存了各自的一个环境***
 
 - 这种特性叫***闭包，指一个局部函数使用自己外部函数中变量的组合，如果将一个闭包的局部函数作为返回值返回出去，那么实际上编译器会把整个函数的上下文环境和局部函数包起来返回出去***，这样外部的变量在调用函数的时候有一些内部的变量他是访问不到的，被很好的封装起来
+
+> 什么叫函数的上下文被包装起来，请看下面的例子
+
+```kt
+
+
+fun main() {
+
+    val func = fun (): (Unit) -> Int {
+        var count = 0
+
+        return {
+            ++count
+        }
+    }
+
+    val addCount = func()
+    // 闭包发生，func 变量把自己的上下文都返回了出去
+
+    for (i in 1..10) {
+        println(addCount(Unit))
+
+        // 可以看到 count 在变化，说明 count 没有重新赋值，而是一直使用一块区域内 count 的值
+    }
+}
+
+```
+
+> 利用闭包可以实现很多方便的操作
 
 ```kt
 // 比如这里我不希望每一个函数的调用者可以用修改工资数量，所以直接返回一个函数回去让他们填上自己的名字，至于金额他们根本摸不到
@@ -4227,6 +4259,8 @@ open class Son (override var num: Int = 20) : Father() {
 
 ### 7.7.1 抽象类
 
+#### 7.7.1.1 抽象类
+
 - 当我们**需要一个方法却不知道它的具体表现形式，只能知道它的具体实例怎样使用它，我们可以干脆不构造它，这个叫抽象方法**
 
 ```kt
@@ -4240,6 +4274,12 @@ abstract fun func(num: Int): String
 ```kt
 <修饰符> abstract class <类名字> {
     ···
+
+    abstract fun func1() // 抽象方法
+
+    fun func2() {
+        // 方法
+    }
 }
 ```
 
@@ -4360,7 +4400,7 @@ class Java: Language() {
 }
 ```
 
-### 7.7.2 接口
+#### 7.7.1.2 接口
 
 - ***接口就是一个完全抽象的抽象类，使用 `interface` 声明，默认 `open` 修饰***，可以直接被继承
 
@@ -4499,6 +4539,8 @@ class MyClass : A , B { // 同时继承 A 和 B
 
 > 这个格式只能调用方法，不能覆写了，它的本质是：因为两个方法已经实现了，所以必须同时覆盖这两个，在覆写的方法体中去分别调用两个方法（不调用也行），就可以避免命名冲突
 
+- Kotlin 里的继承规则是：***如果一个类从它的直接超类继承相同成员的多个实现， 它必须覆盖这个成员并提供其自己的实现（也许用继承来的其中之一）***
+
 ```kt
 fun main() {
 
@@ -4578,3 +4620,203 @@ class MyClass : A , B {
 }
 ```
 
+### 7.7.3 内部类
+
+#### 7.7.3.1 嵌套类
+
+- ***类可以定义在另一个类的内部，这个时候这个类叫做嵌套类***
+
+> 嵌套类本质上***就是 Java 里的静态内部类***，因为 Kotlin 没有 `static` 关键字，所以把它改名叫做了嵌套类
+
+- ***因为嵌套类是静态的，所以无需构造外部类的对象即可使用，嵌套类不能访问外部类的方法和属性，但是是可以访问其他嵌套类的***
+
+```kt
+fun main() {
+    val nes1 = Outer.Nested1(99)
+    val nes2 = Outer.Nested2(nes1, 88)
+
+    // 记住这里外部类不需要构造
+
+    nes2.printNum()
+}
+
+
+class Outer (val int: Int = 10) {
+    
+    fun printInt() {
+        println(int)
+    }
+
+
+    open class Nested1 (open val num: Int = 20) {
+
+        open fun printNum() {
+            println(num)
+            // printInt(int) 是不行的，因为它在静态区域，它不能保证自己被创建的时候外部类已经被创建了
+        }
+    }
+
+    // 嵌套类当然可以继承嵌套类
+    class Nested2 (val clas: Nested1, override val num: Int) : Nested1(num - 11) {
+        override fun printNum() {
+            clas.printNum()
+            println(num)
+            println(super.num)
+        }
+    }
+}
+```
+
+- ***还可以使用带有嵌套的接，所有类与接口的组合都是可能的***：可以将接口嵌套在类中、将类嵌套在接口中、将接口嵌套在接口中
+
+
+```kt
+fun main() {
+    
+    val outer = OuterClass()
+    val inner = OuterClass.InnerClass()
+
+    outer.printMessage()
+    inner.printMessage()
+}
+
+
+interface OuterInterface {
+
+    class InnerClass {
+
+        fun printMessage() {
+            println("OuterInterface.InnerClass")
+        }
+    }
+
+    interface InnerInterface {
+
+        fun printMessage() {
+            println("OuterInterface.InnerInterface")
+        }
+    }
+
+    open fun printMessage() {
+        println("OuterInterface")
+    }
+}
+
+
+class OuterClass : OuterInterface {
+    class InnerClass : OuterInterface , InnerInterface { // 可以不加 OuterClass 的前缀，因为它可以访问到
+
+        override fun printMessage() {
+            super<OuterInterface>.printMessage() // 注意 OuterInterface 会被打印两边，因为他同时被 OuterClass 和 InnerClass 调用
+            super<InnerInterface>.printMessage()
+            println("OuterClass.InnerClass")
+        }
+    }
+
+    interface InnerInterface {
+
+        fun printMessage() {
+            println("OuterClass.InnerInterface")
+        }
+    }
+
+    override fun printMessage() {
+        super<OuterInterface>.printMessage()
+        println("OuterClass")
+    }
+}
+```
+
+#### 7.7.3.2 内部类
+
+> 内部类才是真正 Java 里的成员内部类
+
+- ***内部类需要使用 `inner` 修饰，定义在类的内部与属性和方法同级***，本质上内部类会带有一个对外部类的对象的引用，***作为外部类的成员是可以访问外部类的 `private` 属性和方法，使用他之前必须先构造外部类的对象***
+
+> 外部类不能访问内部类，因为它不能保证自己被创建的时候内部类也被创建了，但是它可以声明一个内部类的对象
+
+```kt
+fun main() {
+    println(Outer().Inner().foo())
+    // 外部类必须有构造
+}
+
+
+class Outer (private val bar: Int = 1) {
+    
+    inner class Inner {
+        fun foo() = bar
+    }
+}
+```
+
+- 那**如果内部类的属性和外部类的属性同名该怎样区分？** Kotlin 里的 `this` 功能很强大，***在 `this` 后面加上隐性的标签就可以指定类访问***
+
+```kt
+fun main() {
+    Outer().Inner().foo(3)
+    Outer().inn.foo(4)
+    Outer().useInner()
+
+    // 其实不建议写成这样，但是这里方便演示写成了表达式的样子
+}
+
+
+class Outer (private val bar: Int = 1) {  // 类名就是隐式的 @Outer
+    
+    val inn = Inner()
+
+
+    inner class Inner { // @Inner
+        private val bar = 2
+
+        fun foo(bar: Int) {
+            val a = this@Outer.bar  // 指定外部类的this，所以调用的是外部类的私有属性
+            val b = this@Inner.bar  // 指定 this 为Inner
+            val c = bar             // 不指定本地优先，选择函数的本地变量，也就是参数
+
+            println("a is $a\nb is $b\nc is $c\n")
+        }
+    }
+
+    fun useInner() {
+        inn.foo(5)
+        // println(inn.bar)
+        // 内部类可以访问外部类的私有属性，可是反过来不行
+    }
+}
+```
+
+#### 7.7.3.3 局部内部类
+
+- 除此以外，还可以***把类定义在方法（函数）内***，这样的类***叫做局部内部类***，他***只能在函数内部定义和创建***，因此也***不能有权限修饰符***，出了函数后就访问不到了
+
+```kt
+fun main() {
+
+    abstract class LocalInnerClass {
+        // 可以有局部抽象类，但是不能有局部接口
+        abstract fun printMsg()
+        // 抽象类可不会自动给方法加上抽象前缀 
+    }
+
+    class LocalInnerClassDerive : LocalInnerClass() {
+
+        override fun printMsg() {
+            println("LocalInnerClass")
+        }
+    }
+
+
+    val lic = LocalInnerClassDerive()
+    lic.printMsg()
+}
+```
+
+### 7.7.4 匿名类
+
+#### 7.7.4.1 对象表达式
+
+#### 7.7.4.2 单例对象
+
+## 7.8 扩展
