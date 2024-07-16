@@ -11,11 +11,13 @@
 
 ## 1.1 简介
 
-- Kotlin 是由著名的 ***Jet Brains 公司开发***，融入了他们对于 Java 语言的改进与想法。***Kotlin 继承了 Java 的优点的同时还拥有了一些高级语言的新功能***，最重要的是 Kotlin ***对于安卓开发有着重要的作用***，所以文章后面会专门有一章讲述安卓开发，同时也会有**跨平台图形界面**的内容，笔者与大家一块学习
+- Kotlin 是由著名的 ***Jet Brains 公司开发***，是一门***基于 `JVM` 的高级静态强类型语言***，融入了他们对于 Java 语言的改进与想法。***Kotlin 继承了 Java 的优点的同时还拥有了一些高级语言的新功能***，最重要的是 Kotlin ***对于安卓开发有着重要的作用***，所以文章后面会有**跨平台图形界面**的内容，笔者与大家一块学习
 
 ## 1.2 安装
 
-1. 在 Github 上面的 [Kotlin](https://github.com/JetBrains/kotlin/releases) 编译器仓库下载最新版，Kotlin 基于 Java，所以你必须要有 [JDK](https://learn.microsoft.com/zh-cn/java/openjdk/download) 才行，这个微软打包的版本，你也可以到 OpenJDk 官网下载
+1. 在 Github 上面的 [Kotlin](https://github.com/JetBrains/kotlin/releases) 编译器仓库下载最新版，Kotlin 基于 JVM，所以你必须要有 [JDK](https://learn.microsoft.com/zh-cn/java/openjdk/download) 才行，这个微软打包的版本，你也可以到 OpenJDk 官网下载
+
+> 现在也有了 Native 版本，可以自己尝试
 
 2. **把 JDK 添加到环境变量** (Windows 打开图形界面，Linux 打开 /etc/profile) ，添加
     - *JAVA_HOME* = jdk/ 到用户变量
@@ -26,7 +28,7 @@
 
 4. 打开命令行，输入
 
-```kt
+```
 java -version
 
 javac -version
@@ -59,7 +61,7 @@ fun main() {
 
 - 首先，***fun 用于声明一个函数，main 函数是程序的入口***，在函数章之前所有的语句都发生在 main 里面，**函数的正文写在大括号里面**
 
-> 见过 def、func 和函数类型开头的，没见过用 fun 声明的
+> 见过 def、func、fn 和函数类型开头的，没见过用 fun 声明的
 
 > 在函数章以前，所有的代码都发生在 main 函数里面，所以会省略 main 不写望周知
 
@@ -154,6 +156,38 @@ java HelloKt
 */
 ```
 
+- Kotlin 的***注释支持 `Markdown` 语法***，比如 IDEA 里面可以直接看块级注释的 md 格式，别的 IDE 能不能看不知道
+
+```kt
+/**
+ *
+ * # 一级标题
+ * ## 二级标题
+ *
+ * - 单行
+ * > 简单描述
+ *
+ * ```java
+ * // 代码块
+ *
+ * public class Test {
+ *
+ *     public static void main(String[] args) {
+ *
+ *         System.out.println("Hello World!");
+ *     }
+ * }
+ * ```
+ *
+ * - $x - 9$ `latex` 格式好像不太行
+ * 
+ * - 表格：
+ * 
+ * |头标题|头标题|
+ * |-|-|
+ * |内容|内容|
+ */
+```
 
 # 第三章：变量与*基本类型*
 
@@ -196,7 +230,7 @@ val i: Int = 12
 ## 3.2 标识符
 
 - **变量、函数、类的名字叫标识符**，Kotlin 的标识符***命名规定与 Java 相同***：
-    1. 标识符可以***由字母、数字、下划线_ 组成***
+    1. 标识符可以***由字母、数字、下划线 `_` 组成***
     2. 标识符***不能以数字开头***
     3. ***区分大小写***，因此 myvar 和 MyVar 是两个不同的标识符
     4. **不可以使用关键字和保留字作为标识符**，但标识符中能包含关键字和保留字
@@ -1770,6 +1804,25 @@ fun main() {
 }
 
 
+fun my_func1(func: () -> Int) {
+    println(func())
+}
+
+
+fun my_func2(): Int {
+    return 1
+
+}
+```
+
+> 还可以把所有的 `Unit` 都写上，不过注意，这方面编译器不会把空的函数参数理解为 Unit，只是认为你没有参数而不是 `Unit`
+
+```kt
+fun main() {
+    my_func1(::my_func2)
+}
+
+
 fun my_func1(func: (Unit) -> Int) {
     println(func(Unit)) // 你这里的确传入了 Unit
 }
@@ -1781,37 +1834,12 @@ fun my_func2(Unit: Unit): Int {
 
 }
 ```
-> 这里为什么有这么多 `Unit`？，这是大坑，这方面编译器不会把空的函数参数理解为 Unit，只是认为你没有参数而不是 `Unit`
-
-```kt
-fun main() {
-    my_func1(::my_func2)
-}
-
-
-fun my_func1(func: (Unit) -> Int) {
-    println(func())
-}
-
-
-fun my_func2(): Int {
-    return 1
-
-}
-
-// no value passed for parameter 'p1
-// inapplicable candidate(s): fun my_func2(): Int
-
-// 这是因为 my_func2 你没有写 Unit 参数，你以为编译器会自动加上，但是他在调用的时候会发现：欸？明明有一个 Unit 参数的啊？为什么你调用的时候什么都没有呢？包括在::my_func2 的时候也会发现明明接受的是一个有 Unit 参数的函数，你这里却是什么都没有的 my_func2
-```
-
-> 样还是建议写上 Unit 像上面那样
 
 - 好，回到主题，***`::` 表示为此函数创建一个对象，这也是 Kotlin 能实现高阶函数的原因，他把函数当作对象包装起来传入函数***
 
 ```kt
 fun main() {
-    val func3: (Unit) -> Int = ::my_func2   // 这样也是可以的 func3 是一个指向函数类型的对象的引用变量
+    val func3: () -> Int = ::my_func2   // 这样也是可以的 func3 是一个指向函数类型的对象的引用变量
 
     // func3() == my_func2()
     // (::my_func2)() = my_func2()
@@ -1820,12 +1848,12 @@ fun main() {
 }
 
 
-fun my_func1(func: (Unit) -> Int) {
-    println(func(Unit))
+fun my_func1(func: () -> Int) {
+    println(func())
 }
 
 
-fun my_func2(Unit: Unit): Int {
+fun my_func2(): Int {
     return 1
 
 }
@@ -1836,7 +1864,7 @@ fun my_func2(Unit: Unit): Int {
 > 但是你不能对函数调用 `invoke()`，***函数不是函数类型的对象***，函数就是函数
 
 ```kt
-val func3: (Unit) -> Int = ::my_func2
+val func3: () -> Int = ::my_func2
 
 // func3() == my_func2() == func3.invoke() != my_func2.invoke()
 
@@ -1846,7 +1874,7 @@ my_func1(func3)
 > 这样的话看看下面
 
 ```kt
-val func3: (Unit) -> Int = ::my_func2
+val func3: () -> Int = ::my_func2
 
 func4 = func3   // ok?
 
@@ -2475,8 +2503,8 @@ fun main() {
     val f = func()
 
     println(f("Bob")(20000))    // 这个双括号代表函数再调函数
-    println(f("Jack")(30000))   // 这种写法叫柯里化 Currying 是一个数学上的概念
-    println(f("Tomy")(10))      // 个人觉得没用
+    println(f("Jack")(30000))
+    println(f("Tomy")(10))
 }
 
 
@@ -2499,6 +2527,8 @@ fun func(): (String) -> (Int) -> String {   // 箭头表示法是右结合的，
     return ::get_money
 }
 ```
+
+> 上面的写法在数学里面有一个专有的名词叫**柯里化**，指的是$f(x,y,z)$ 转化为  $f(x)(y)(z)$ 的形式，个人觉得没用
 
 ## 5.6 函数重载
 
@@ -3496,6 +3526,8 @@ class B : A() {
 
 - ***注意覆盖时必须完全一样 不然就重载了（重载可以跨代），覆盖之后原来的父类并不影响但是子类里面已经是新的方法了***
 
+> 还有一点，理解覆盖不要用字面上的 "覆盖" 来理解，比如一个子类覆盖了父类的属性，不要以为是父类的这个属性字段就变了，而是子类新建了一个同名属性，父类的属性永远可以通过 super 来访问
+
 ### 7.4.3 super
 
 - 如果子类继承了父类，子类里面的属性由子类的构造初始化，那么对于那些从父类继承而来的呢？JVM 认为应该是自己初始化自己。所以所有***子类在初始化对象的时候，都要显性或隐性的调用父类的构造***
@@ -4400,9 +4432,13 @@ class Java: Language() {
 }
 ```
 
+> 因为抽象类本身也是个类，所以不支持多继承，简言之一个子类不能同时继承类和抽象类
+
 #### 7.7.1.2 接口
 
 - ***接口就是一个完全抽象的抽象类，使用 `interface` 声明，默认 `open` 修饰***，可以直接被继承
+
+> 接口本质上也是类，所以以一个引用类型的变量需要一个接口类型，如果你用这个接口的实现类传给他是可以的，如果是新手可能有点困惑
 
 ```kt
 <修饰符> interface <类名字> {
@@ -4500,7 +4536,9 @@ class Employee(
 ) : Person
 ```
 
-- 类和抽象类不支持多继承，因为无法避免冲突问题，但是接口里面都是抽象的方法和属性，所以***接口支持多继承***
+- 类和抽象类不支持多继承，因为无法避免冲突问题，但是接口里面都是抽象的方法和属性，所以***接口支持多继承***，**使用逗号 `,` 分隔不同的父类**
+
+> Kotlin 只支持单继承的意思是一个**子类的超类列表里只能有一个有实例的父类**，也就是**抽象类和类只能二选一且唯一**，但是**可有无限多的接口**
 
 ```kt
 fun main() {
@@ -4571,6 +4609,8 @@ class MyClass : A , B {
     }
 }
 ```
+
+> 有没有多重继承的意思
 
 - ***这种方法适用于任何实现了方法的接口***，都可以指定接口中方法的实现
 
@@ -4815,8 +4855,516 @@ fun main() {
 
 ### 7.7.4 匿名类
 
-#### 7.7.4.1 对象表达式
+> 我们经常会遇到一种情况，有一个函数需要一个接口的实现，那么难道我们还要声明一个只使用一次的类？可以使用匿名类
 
-#### 7.7.4.2 单例对象
+- Kotlin ***使用对象表达式创建一个匿名类的对象***
 
-## 7.8 扩展
+> 这个 object 是关键字不是 Java 里面那个，在后面的花括号里面写上类体，注意***不能有构造***
+
+```kt
+fun main() {
+    val helloWorld = object {
+        val hello = "Hello"
+        val world = "World"
+
+        override fun toString() = "$hello $world"
+
+        // 因为任何没有显式声明超类的类默认继承 Any，所以对于 toString 方法需要覆盖
+    }
+
+    print(helloWorld)
+    
+    // 一样，打印一个东西是在调用 toString 方法
+}
+```
+
+- 也**可以声明匿名类的父类**，声明方法跟类的继承一样，多继承接口用逗号隔开，类的构造在括号里写明
+
+```kt
+fun main() {
+    val helloWorld = object : Message,  Printer("Printer") {
+
+        override val hello: String = "Hello"
+        override val world: String = "World"
+
+
+        override fun printSomething() {
+            println(super.hello)
+            
+            // 这个 super 拿到的是父类 Printer 的，接口根本没有实例不会有冲突
+            // 对于同时继承接口和抽象类或类的子类，使用 super 拿到的一定是非接口的那个
+            println(hello)
+        }
+    }
+
+    helloWorld.printSomething()
+}
+
+
+open class Printer(open val hello: String) {
+
+    open fun printSomething() {
+        println(hello)
+    }
+}
+
+
+interface Message {
+
+    val hello: String
+    val world: String
+}
+```
+
+- 当***匿名对象用作本地或私有但不是内联（函数或属性）的类型时，其所有成员都可以通过该函数或属性进行访问***
+
+```kt
+class C {
+    private fun getObject() = object {
+        val x: String = "x"
+    }
+
+    fun printX() {
+        println(getObject().x)
+    }
+}
+```
+
+- 但如果该***函数或属性是公开或私有内联***的，则它实际的类型是：
+    1. ***`Any` 如果匿名对象没有声明的超类型***
+    2. ***匿名对象的声明超类型***（如果正好有一个这样的类型）
+    3. ***显式声明的类型***（如果有多个已声明的超类型）
+
+- 在所有这些情况下，***匿名对象中添加的成员都无法访问***，但是**可以访问被覆盖的成员**
+
+```kt
+interface A {
+
+    fun funcFromA() {
+        println("funcFromA")
+    }
+}
+
+
+interface B {
+
+    fun funcFromB() {
+        println("funcFromB")
+    }
+}
+
+
+class C {
+    
+    // 实际类型为 Any ，x 无法访问
+    fun getObject() = object {
+        val x = "x"
+    }
+
+    
+    // 实际类型是 A 的子类，所以没有在 A 中出现的 x 访问不到    
+    fun getObjectA() = object : A {
+        override fun funcFromA() {
+            println("get object A ${super<A>.funcFromA()}")
+        }
+
+        val x = "x"
+    }
+
+    // 实际类型是 B ，所以 funcFromA 和 x 都访问不到
+    fun getObjectB(): B = object : A, B{
+        override fun funcFromA() {
+            println("get object B ${super<A>.funcFromA()}")
+        }
+
+        override fun funcFromB() {
+            println("get object B ${super<B>.funcFromB()}")
+        }
+        
+        val x = "x"
+    }
+}
+```
+
+- 还有一点，**对象表达式中的代码可以访问并修改来自包含它的作用域的变量**
+
+```kt
+fun countClicks(window: JComponent) {
+    var clickCount = 0
+    var enterCount = 0
+
+    window.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+            clickCount++
+        }
+
+        override fun mouseEntered(e: MouseEvent) {
+            enterCount++
+        }
+    })
+    // ……
+}
+```
+
+### 7.7.5 单例类
+
+#### 7.7.5.1 对象声明
+
+> 有的时候我们想限制一个类只能产生一个实例对象，那么在 Java 里面我们可能会使用什么懒汉式或是饿汉式的写法，Kotlin 里面很简单
+
+> 回忆一下 Java 里面单例的特点，构造私有导致无法外部 new，一个静态属性指向对象（饿汉式直接 new ，懒汉式先是 null），静态的 getInstance 方法获取静态属性的指向
+
+- ***使用 `object` 后面接上类名，就创建了一个只能创建一个对象的单例类***，这种写法也叫***对象声明***
+
+- 如果使用的话*直接类名加属性或方法名*，就**跟静态写法一样**，无需创建对象
+
+> 这个 `object` 可不是对象表达式里面的那个，那个没有类名是匿名类，这个是单例类，这个因为是语句所以不能放在赋值语句的右面
+
+- 这种写法**不会立即初始化**，直到你第一次访问的时候，但是缺点就是***不能有构造方法***，可以把需要初始执行的语句放在 `init` 里面简单代替下
+
+```kt
+fun main() {
+    println("not initialized yet")
+
+    Singleton.name = "Peter"
+    // 在你第一次访问的时候初始化，可以看到 init 先被打印出来，然后是 set 里面的 print
+    Singleton.printName()
+}
+
+object Singleton {
+
+    var name: String = "name"
+        set(value) {
+            field = value
+            println("name set")
+        }
+
+    fun printName() {
+        println("$this name is $name")
+    }
+
+    init {
+        println("$this is initialize")
+    }
+}
+```
+
+> 通过反编译的源码可以看到，实际上这是一个我们所谓饿汉式的写法，并且里面的成员已经成了静态的，并且**线程安全**
+
+
+```java
+public final class Singleton {
+   @NotNull
+   public static final Singleton INSTANCE = new Singleton();
+   @NotNull
+   private static String name = "name";
+
+   private Singleton() {
+   }
+
+   @NotNull
+   public final String getName() {
+      return name;
+   }
+
+   public final void setName(@NotNull String value) {
+      Intrinsics.checkNotNullParameter(value, "value");
+      name = value;
+   }
+
+   public final void printName() {
+      System.out.println(this + " name is " + name);
+   }
+
+   static {
+      System.out.println(INSTANCE + " is initialize");
+   }
+}
+
+```
+
+- ***对象声明不能在局部作用域***（即不能直接嵌套在函数内部），但是它们可以嵌套到其他对象声明或非内部类中
+
+- ***`object` 也是可以继承的***，无论是接口还是类
+
+```kt
+
+interface A {
+    fun interfaceFunc()
+}
+
+open class B() {
+    open fun classFunc() {
+        println("classFunc")
+    }
+}
+
+object Singleton : A, B(){
+
+    override fun classFunc() {
+        println("classFunc impl")
+    }
+
+    override fun interfaceFunc() {
+        println("interfaceFunc impl")
+    }
+}
+
+```
+
+#### 7.7.5.2 伴生对象
+
+> 因为有顶层函数，顶层变量（常量），对象声明，所以 Kotlin 取消了 ststic 关键字，可是有些时候我们还是需要 static，比如在一个类的里面既有非静态的方法和属性，又有静态方法和属性，这个时候使用对象声明就不够用了
+
+- 我们可以***把对象声明在一个类里面，那么这个对象声明里面的所有成员都可以看作是这个类的静态成员***
+
+```kt
+fun main() {
+
+    val sing = SingletonClass("Hanson")
+    sing.name
+
+    val single = SingletonClass("Douglas")
+    single.name
+
+    println("Singleton class is loaded ${SingletonClass.Static.times} times total")
+    // 可以直接通过类名的方式访问，这不就是静态成员？
+}
+
+
+class SingletonClass(name: String) {
+
+    val name: String = name
+        get() {
+            println("name is $field, it's loaded ${Static.times}")
+            
+            return field
+        }
+
+    init {
+        println("Singleton class is loaded ${Static.times} before")
+        Static.times++
+        // 类里面的其他地方也可以访问到对象里面的静态成员
+    }
+
+
+    object Static {
+        var times = 0   // 静态属性
+
+        // 这就是静态初始化块，它只会在类的第一次初始化时被加载
+        init {
+            println("static init is loaded")
+        }
+    }
+}
+```
+
+> 这个对象声明不要把它看作是类里面的单例类，就把他看作是静态成员就行，虽然它也可以嵌套
+
+```kt
+object Sta1 {
+    object Sta2 {
+        object Sta3 {
+            const val greeting = "congregations you have found me"
+        }
+    }
+}
+
+println(SingletonClass.Static.Sta1.Sta2.Sta3.greeting)
+```
+
+- 如果觉得限定名很麻烦，可以加上 ***`companian object` （伴生对象） 的前缀，这样就可以省略掉限定名直接用类名访问***
+
+> 这个**伴生对象默认的对象名是 `Companion`**
+
+- 一个***类里面只能有一个伴生对象***，但是**可以有无数多的具名对象，二者也都可以内部再定义对象**（见上）
+
+```kt
+class TopLevelClass {
+
+    companion object {
+        fun doSomeStuff() {
+            // ...
+        }
+    }
+
+    object FakeCompanion1 {
+        fun doOtherStuff() {
+            // ...
+        }
+    }
+
+    object FakeCompanion2 {
+        fun doOtherStuff() {
+            // ...
+        }
+    }
+}
+
+fun testCompanion() {
+    TopLevelClass.doSomeStuff()
+    TopLevelClass.Companion.doSomeStuff()
+    TopLevelClass.FakeCompanion1.doOtherStuff()
+    TopLevelClass.FakeCompanion2.doOtherStuff()
+}
+```
+
+```kt
+fun main() {
+
+    // 不用创建对象就可以访问函数
+    println("Singleton class is loaded ${SingletonClass.times} times total")
+
+    val sing = SingletonClass("Hanson")
+    sing.name
+
+    val single = SingletonClass("Douglas")
+    single.name
+
+    println("Singleton class is loaded ${SingletonClass.times} times total")
+}
+
+
+class SingletonClass(name: String) {
+
+    val name: String = name
+        get() {
+            println("name is $field")
+
+            return field
+        }
+
+    init {
+        println("Singleton init ${times} before")
+        times++
+    }
+
+
+    companion object {
+        var times = 0
+
+        init {
+            println("static init")
+        }
+    }
+}
+```
+> 到此，Kotlin 里面为了使用顶层声明、对象声明和伴生对象彻底干掉了 static 关键字
+
+> 还有一点，对于 `val` 的静态变量，可以声明为 `const val`，这点上面讲过只不过那时候还只能声明在顶层，现在多了两个选择，声明在对象声明里和伴生对象里，这三种情况下都是静态的
+
+- 上面说过，`object` 声明的单例类，一旦访问其中的成员就会初始化，而且不能有普通成员，现在有了 `companion object` 之后可以对其改进
+
+```kt
+fun main() {
+    val sing = Singleton.getIns()
+    sing.name = "Peter"
+    sing.age = 30
+    sing.printMsg()
+
+    val sing1 = Singleton.getIns()
+    sing1.name = "Joe"
+    sing1.age = 40
+    sing1.printMsg()
+    // 说明指向的是同一个对象。单例
+    sing.printMsg()
+}
+
+
+class Singleton private constructor() {
+
+    var name = "null"
+    var age = 0
+
+    fun printMsg() {
+        println("name is $name, age is $age")
+    }
+
+    companion object {
+        private var instance: Singleton? = null
+            get() {
+                if (field == null) {
+                    field = Singleton()
+                } else {
+                    println("singleton has been created")
+                }
+                return field
+            }
+
+        // 因为 get 里面可能会出先多线程同时创建，所以在这里可以加上互斥锁保证线程安全
+        fun getIns(): Singleton {
+            return instance!!
+            // 这里如果不是断言的话，那么 main 里面所有的都要该
+            // 反正也永远不可能返回一个空的出去，所以直接!!
+        }
+    }
+}
+```
+
+- 而且可以做到**带参数**的单例，成功解决了之前 `object` 的问题
+
+```kt
+fun main() {
+    val sing = Singleton.getIns("Peter", 30)
+    sing.printMsg()
+
+    val sing1 = Singleton.getIns()
+    sing1.name = "Jo"
+    sing1.age = 35
+    sing1.printMsg()
+    sing.printMsg()
+}
+
+
+class Singleton private constructor(var name: String, var age: Int) {
+
+    fun printMsg() {
+        println("name is $name, age is $age")
+    }
+
+    companion object {
+        private var instance: Singleton? = null
+
+        fun getIns(name: String, age: Int): Singleton {
+            if (instance == null) {
+                instance = Singleton(name, age)
+            } else {
+                println("singleton has been created")
+            }
+
+            return  instance!!
+        }
+        
+        // 方便重载
+        fun getIns(): Singleton {
+            return instance!!
+        }
+    }
+}
+
+// 如果你不加锁的话，这种写法是可能遇到多次创建的情况，前提时多线程
+// 关于双重线程锁的单例，后面会讲
+```
+
+- 虽然伴生对象看起来就是静态成员，但是它实际上还是 Kotlin 的对象，比如**伴生对象可以继承接口**
+
+```kt
+interface Factory<T> {
+    fun create(): T
+}
+
+class MyClass {
+    companion object : Factory<MyClass> {
+        override fun create(): MyClass = MyClass()
+    }
+}
+
+val f: Factory<MyClass> = MyClass
+```
+
+- 对象表达式和对象声明之间有一个重要的语义差别：
+    1. ***对象表达式是在使用他们的地方立即执行（及初始化）的***
+    2. ***对象声明是在第一次被访问到时延迟初始化的***
+    3. ***伴生对象的初始化是在相应的类被加载（解析）时***，与 Java 静态初始化器的语义相匹配
+
+> 说实话，**反正静态成员也不能访问正常成员，你还不如写成顶层声明的样子**，反正除非是单例我估计不用伴生对象了
