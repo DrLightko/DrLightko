@@ -293,6 +293,8 @@ num = 9.2
 
 - ***Kotlin 的整数有 `Byte`、`Short`、`Int`、`Long` 这四类***，注意他们不是 Java 的小写 int ··· 等基本类，也不是 Java 的 Integer 等包装类，具体怎样实现要看 Kotlin 编译器
 
+> **Kotlin 在编译前都是没有基本类型**的，但是编译后编译器会决定 Int 会变成 int 还是 Integer
+
 |类型|大小 (比特数)|最小值|最大值|
 |---|---|---|---|
 |Byte|8|-128|127|
@@ -777,6 +779,8 @@ num = null
 
 ```kt
 val num: Int? = null
+
+// Java 里 int 是基本类型，是不能赋值为引用类型的值 null 的，但是 Kotlin 可以，因为它没有基本类型
 ```
 
 - 在 Kotlin 里面，因为没有了基本类型，所以所有的变量、类和函数都是类型，***变量的共同父类叫 `Any`（可以看作是 Java 的 `Object`），所有可空变量的父类是 `Any?`***
@@ -821,6 +825,8 @@ println(num?.plus(1))
 val num: Int? = 2
 
 println(num!!.plus(1))
+
+// 我保证这个变量不为空，如果真的是空编译器也不会帮你了
 ```
 
 > 也跟 Java 没什么区别了
@@ -1549,7 +1555,7 @@ println(add_int(2,3))
 
 ## 5.2 函数的参数
 
-> 先科普一下，函数的参数可以分为***实参和形参***，***形参指的是函数参数声明里面的那个参数类型，实参指的是你传进来的那个值***
+- 我们可以定义拥有参数（parameters）的函数，**参数是特殊变量，是函数签名的一部分。当函数拥有参数（形参）时，可以为这些参数提供具体的值（实参）**。技术上讲，这些具体值被称为参数（arguments）
 
 - Kotlin 里面函数的参数是不可改变的，也就是你没法改变传进来的参数的值，***函数参数是 `val` 的***
 
@@ -1713,7 +1719,7 @@ fun say_hello(vararg names: String) {
 }
 ```
 
-- 既然 `vararg` 的实现原理是保存在数组里，那么我就***不能传入一个数组当可变参数***了吧？对的，不过可以***使用 `*` 星号把数组拆开，一个一个传入***
+- 既然 `vararg` 的实现原理是保存在数组里，那么我就***不能传入一个数组当可变参数***了吧？对的，不过可以***使用 `*` 展开操作符把数组拆开，一个一个传入***
 
 > 这就是 Kotlin 的语法糖，当你熟悉的时候你就离不开了
 
@@ -2707,6 +2713,8 @@ fun add(a: Double, b: Double) = a + b + 0.001
 - 能看出，Kotlin ***不仅能导入其他文件的类，还可以导入其他文件中的函数、顶层变量***，但是这些***直接属于包而不是其他文件***
 
 > 根据它生成的文件也能知道，上面的 User 文件编译后生成了 User.class UserKt.class 两个文件，其实 **Kotlin 是帮你把单独的这些东西放在了一个独立的文件里**，符合Java 命名规范的就放在文件名同名 class 下面，使用了顶层声明的放在带有 Kt 后缀的里面
+
+> ***所有的顶层声明都是静态的***，位于 `文件名Kt.class` 的类中
 
 - **Kotlin 会默认导入如下的包**：
 ```kt
@@ -3721,11 +3729,9 @@ class Zi(override var name: String, override var age: Int, var height: Float) : 
 
 ### 7.5.1 权限修饰符
 
-- **类、对象、接口、构造函数、方法与属性及其 setter 都可以有可见性修饰符**，Kotlin 里面有四种顶层***权限修饰符，`private` `protected` `internal` `public`***
+- **类、对象、接口、构造函数、方法与属性及其 setter 都可以有可见性修饰符**，Kotlin 里面有四种***权限修饰符，`private` `protected` `internal` `public`***
 
-
-
-- 前面说过，Kotlin 里面变量、函数可以直接在文件内的顶层声明，你***不作说明的话顶层声明默认为 `public`***，如果你声明为 ***`private` ，它只会在声明它的文件内可见***。如果你声明为 ***`internal`，它会在相同模块内随处可见***
+- 前面说过，Kotlin 里面变量、函数可以直接在文件内的顶层声明，你***不作说明的话顶层声明默认为 `public` 随处可见***，如果你声明为 ***`private` ，它只会在声明它的文件内可见***。如果你声明为 ***`internal`，它会在相同模块内随处可见***
 
 > `protected` 修饰符不适用于顶层声明
 
@@ -5742,6 +5748,90 @@ fun Int.sum(end: Int): Int{
 > [Kotlin 操作符对应方法](https://book.kotlincn.net/text/operator-overloading.html)，在这里了解每一个操作符自己对应的方法名称
 
 ```kt
+// 一个坐标类
+
+import kotlin.math.abs
+import kotlin.math.sqrt
+import kotlin.math.pow
+
+// 这些导入的包之后讲
+
+class Coordinate (val x: Double, val y: Double) {
+
+    override fun toString(): String {
+        return "Coordinate at $x , $y, The distance from the origin is ${sqrt(abs(x).pow(2) + abs(y).pow(2))}"
+    }
+
+    // 直接打印距离原点的距离
+}
+```
+
+- 比如对上面的坐标类，我们想实现对两个对象间的运算不使用方法调用的格式，就可以使用操作符重载
+
+```kt
+fun main() {
+
+    val point = Coordinate(12.434, 321.432)
+    println(point)
+}
+
+
+class Coordinate (val x: Double, val y: Double) {
+
+    //加法(+)
+    operator fun plus(other: Coordinate): Coordinate {
+        return Coordinate(x + other.x, y + other.y)
+    }
+
+    //减法(-)
+    operator fun dec(): Coordinate {
+        return Coordinate(x - other, y - other)
+    }
+
+    //乘法(*)
+    operator fun times(other: Coordinate): Coordinate {
+        return Coordinate(x * other.x, y * other.y)
+    }
+
+    //除法(/)
+    operator fun div(other: Coordinate): Coordinate {
+        return Coordinate(x / other.x, y / other.y)
+    }
+
+    //取模(%)
+    operator fun rem(other: Coordinate): Coordinate {
+        return Coordinate(x % other.x, y % other.y)
+    }
+
+}
+```
+
+- 在调用时，可以直接使用运算符操作二者
+
+```kt
+fun main() {
+
+    val point1 = Coordinate(12.1, 2.5)
+    val point2 = Coordinate(5.4, 7.9)
+    println(point1)
+    println(point2)
+
+    println("--------------------------------")
+
+    println("加: ${point1 + point2}")
+    println("减: ${point1 - point2}")
+    println("乘: ${point1 * point2}")
+    println("除: ${point1 / point2}")
+}
+```
+
+> 关于每一种操作符的重载，可以见这篇[CSDN 文章](https://blog.csdn.net/yuzhiqiang666/article/details/86706874)，这种重复量高的工作我就不复制了，这篇文章里对于每一种操作符都做了说明，应该是容易理解的
+
+> 文章错误较多，我也不校正它了，看的时候不要照抄，还是建议看上面的官方文档
+
+> `[]` `..` `.invoke()` 都可以重载
+
+```kt
 import kotlin.math.abs
 import kotlin.math.sqrt
 import kotlin.math.pow
@@ -5802,7 +5892,7 @@ class TwoDimensionalCoordinateSystem(val x: Double, val y: Double) {
     // 如果不重写，那么上面的结果会是 point2 == point3 是 false
     override fun equals(another: Any?): Boolean {
 
-        if (another is TwoDimensionalCoordinateSystem) {
+        if (another is TwoDimensionalCoordinateS ystem) {
             if (another.x == this.x && another.y == this.y) {
                 // 这里前面判断过可以保证这里的 another 一定非空而且是 TDCS 的类或子类
                 return true
@@ -5828,8 +5918,19 @@ class TwoDimensionalCoordinateSystem(val x: Double, val y: Double) {
 }
 ```
 
-> `[]` `..` `.invoke()` 都可以重载，见后文
+- 同理**也可以使用扩展函数对现有的类进行操作符重载**
 
 ```kt
-
+operator fun Point.plusAssign(other: Point) {
+        x += other.x
+        y += other.y
+}
 ```
+
+## 7.10 委托模式
+
+> 委托是一种设计模式，有些时候我们想在继承的时候只关心自己新方法的定义，而不关心被覆写方法的实现，就可以使用委托模式，它能把内部方法或属性的实现交给外部，自己只需要关心自己的新方法
+
+> Kotlin 原生支持委托模式，一个关键字就能很做到在 Java 里面几十行的代码才完成的功能
+
+- 
