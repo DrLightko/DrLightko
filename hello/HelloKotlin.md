@@ -59,7 +59,7 @@ fun main() {
 
 - 这是 Kotlin 里面 Hello World 的写法，确实**相比 Java 来说简洁很多**，而且像是**函数式编程**
 
-- 首先，***fun 用于声明一个函数，main 函数是程序的入口***，在函数章之前所有的语句都写在 main 里面，**函数的正文写在大括号里面**
+- 首先，***fun 用于声明一个函数，main 函数是程序的入口***，在函数章之前所有的语句都写在 main 里面，**函数的正文写在大括号里面（Curly Braces）**
 
 > 见过 def、func、fn 和函数类型开头的，没见过用 fun 声明的
 
@@ -205,7 +205,7 @@ java HelloKt
 
 ## 3.1 变量的声明
 
-- Kotlin ***使用 `val` 和 `var` 声明一个变量***
+- Kotlin ***使用 `val` 和 `var` 声明一个变量（Variable）***
 
 ```kt
 fun main() {
@@ -239,7 +239,7 @@ val i: Int = 12
 
 ## 3.2 标识符
 
-- **变量、函数、类的名字叫标识符**，Kotlin 的标识符***命名规定与 Java 相同***：
+- **变量、函数、类的名字叫标识符（Identifier）**，Kotlin 的标识符***命名规定与 Java 相同***：
     1. 标识符可以***由字母、数字、下划线 `_` 组成***
     2. 标识符***不能以数字开头***
     3. ***区分大小写***，因此 myvar 和 MyVar 是两个不同的标识符
@@ -399,7 +399,7 @@ println(d2)
 ```
 #### 3.4.1.5 JVM 的存储方式
 
-- ***在 JVM 平台数字存储为原生类型 int、 double 等。 例外情况是当创建可空数字引用如 Int? 或者使用泛型时， 在这些场景中，数字会装箱为 Java 类 Integer、 Double 等，对相同数字的可为空引用可能会引用不同的对象***
+- ***在 JVM 平台数字存储为原生类型 `int`、 `double` 等。 例外情况是当创建可空数字引用如 `Int?` 或者使用泛型时， 在这些场景中，数字会装箱为 Java 类 Integer、 Double 等，对相同数字的可为空引用可能会引用不同的对象***
 
 > 引用官网的一句话，具体见下面
 
@@ -758,7 +758,7 @@ println(str)
 
 #### 3.4.4.6 字符串常用方法
 
-> 我不想粘贴复制了，常用的就那些，可以到[这篇文章](https://www.cnblogs.com/weizhxa/p/9982565.html)中看一下
+> 我不想粘贴复制了，常用的就那些，可以到[这篇文章](https://www.cnblogs.com/weizhxa/p/9982565.html)中看一下，不过那是 Java 里的，有一些方法是过时的请注意
 
 - 唯一需要注意的就是 `str.length` 是属性而不是方法
 
@@ -780,7 +780,7 @@ num = null
 ```kt
 val num: Int? = null
 
-// Java 里 int 是基本类型，是不能赋值为引用类型的值 null 的，但是 Kotlin 可以，因为它没有基本类型
+// Java 里 int 是基本类型，是不能赋值为引用类型的值 null 的，但是 Kotlin 可以这样写
 ```
 
 - 在 Kotlin 里面，因为没有了基本类型，所以所有的变量、类和函数都是类型，***变量的共同父类叫 `Any`（可以看作是 Java 的 `Object`），所有可空变量的父类是 `Any?`***
@@ -911,7 +911,7 @@ val x: String? = y as? String
 
 ### 3.7.1 本地和成员变量
 
-> 在 Java 里只有两种变量，本地变量和成员变量
+> 在 Java 里只有两种变量，本地变量（local variable）和成员变量（member variable）
 
 - 在 Kotlin 里面也大致相同，***定义在类里面很好方法同一级的叫成员变量 (属性)，定义在方法、函数内部或流程控制语句内部的叫本地变量 (局部变量)，成员变量有效范围是整个类范围 (包括方法内)，本地变量出了所在的花括号就失效了***
 
@@ -1004,7 +1004,7 @@ fun func() {
 
 ## 4.1 操作符
 
-- 操作符就是符号，用于对变量进行简单快速的操作，这里介绍 Kotlin 里的数字操作符
+- 操作符（oprator）就是符号，用于对变量进行简单快速的操作，这里介绍 Kotlin 里的数字操作符
 
 - 这里 ***Kotlin 操作符的优先级***，不用记因为我觉得没用，你用上几个括号读者也能明白
 
@@ -1279,7 +1279,7 @@ for (i in 1..5) println(i)
 ```
 
 ```kt
-// .. 和 ..< 的区别如下
+// .. 和 ..< 的区别如下，`..` 含首含尾，`..<` 含首不含尾
 
 val str = "Hello"
 
@@ -1300,6 +1300,8 @@ for (i in 0..<8 step 2) print(i)
 
 for (i in 8 downTo 0 step 2) print(i)
 // 86420
+
+// 在所有的编程语言中，默认都是以 0 为基准
 ```
 
 > 最后一个元素是根据：  
@@ -1494,7 +1496,7 @@ loop@ for (i in 1..5) {
 
 > 函数用于执行一系列运算，并返回结果，函数最重要的是里面的函数体
 
-- ***Kotlin 使用 `fun` 关键字创建函数，后面是函数名 (遵循标识符命名法则) ，再后面是参数和返回值，和花括号里的函数体***
+- ***Kotlin 使用 `fun` 关键字创建函数（Function），后面是函数名 (遵循标识符命名法则) ，再后面是参数和返回值，和花括号里的函数体***
 
 - ***对于有返回值的函数，你必须要通过 `return` 语句返回一个符合返回值类型的值，`return` 后函数是直接结束的，在 `return` 后面的语句是不会被访问到的***
 ，具有返回值的函数的返回值就可以被变量或者其他函数接走
@@ -1555,7 +1557,7 @@ println(add_int(2,3))
 
 ## 5.2 函数的参数
 
-- 我们可以定义拥有参数（parameters）的函数，**参数是特殊变量，是函数签名的一部分。当函数拥有参数（形参）时，可以为这些参数提供具体的值（实参）**。技术上讲，这些具体值被称为参数（arguments）
+- 我们可以定义拥有参数的函数，**参数是特殊变量，是函数签名的一部分。当函数拥有参数（形参，Parameters）时，可以为这些参数提供具体的值（实参，Arguments）**
 
 - Kotlin 里面函数的参数是不可改变的，也就是你没法改变传进来的参数的值，***函数参数是 `val` 的***
 
@@ -1741,7 +1743,7 @@ fun say_hello(vararg names: String) {
 
 ## 5.3 递归函数
 
-- ***递归函数不是什么特殊函数，他就是函数内部又调用了自己，这就叫递归函数***
+- ***递归函数（recursive function）不是什么特殊函数，他就是函数内部又调用了自己，这就叫递归函数***
 
 > 由于 Kotlin 语法上支持面向函数编程，因此写出下面的例子很简单
 
@@ -1790,7 +1792,7 @@ tailrec fun factorial(num: ULong): ULong {
 
 ### 5.4.1 高阶函数
 
-- ***高阶函数就是指将函数类型用作参数或返回值的函数***，没错在 Kotlin 里面函数是可以作为参数或返回值的
+- ***高阶函数（High Order Function）就是指将函数类型用作参数或返回值的函数***，没错在 Kotlin 里面函数是可以作为参数或返回值的
 
 > 指针函数和函数指针的阴影又回来了
 
@@ -1948,7 +1950,7 @@ fun my_func1(func: (Int?) -> Int?) {
 
 ### 5.4.2 匿名函数
 
-- 既然可以把函数赋给变量，还有更简易的写法，可以***直接把函数体放在变量赋值的右面，这叫匿名函数***，这样就可以省略函数名了，而且 ***Kotlin 也不允许匿名函数有函数名***
+- 既然可以把函数赋给变量，还有更简易的写法，可以***直接把函数体放在变量赋值的右面，这叫匿名函数（Anonymous function）***，这样就可以省略函数名了，而且 ***Kotlin 也不允许匿名函数有函数名***
 
 ```kt
 val func3 = fun (Unit: Unit): Int {
@@ -2581,7 +2583,7 @@ fun func(): (String) -> (Int) -> String {   // 箭头表示法是右结合的，
 
 > 假设我有一个函数，它可以接受很多种类型的形参并且返回值回去，难道我需要写上一百个接受不同类型的函数，同时函数名还要自己去绞尽脑汁的想上一百个吗？
 
-- ***方法重载的目的就是让类似的方法具有相同的名字，简化对方法的调用***
+- ***方法重载（Overloading）的目的就是让类似的方法具有相同的名字，简化对方法的调用***
 - ***在方法重载时，任意两个重载的方法之间在方法参数的个数上或是一一对应的参数类型上，至少有一项存在差别，方法的返回值类型不作任何限制***
 
 ```kt
@@ -2744,7 +2746,7 @@ JS:
 
 ## 7.1 初识面向对象
 
-- 什么是面向对象？这里也不跟大家讲什么复杂的，**类就是一个把相关的变量和函数包装起来的抽象的代码块，你要使用的话需要创建出来一个*****类的实例：对象***，这个对象里面包含着***自己的变量 (成员变量) 和能够操作成员变量的函数 (成员方法)***
+- 什么是面向对象？这里也不跟大家讲什么复杂的，**类就是一个把在逻辑上互相关的变量和函数包装起来的抽象的代码块，你要使用的话需要创建出来一个*****类的实例：对象***，这个对象里面包含着***自己的变量（成员变量、属性、Properties）和能够操作成员变量的函数（成员函数、方法、Methods、Member Functions）***
 
 > **方法和函数基本上已经没有区别**了，你就按照一个概念理解就行
 
@@ -3344,7 +3346,7 @@ class User (age: Int) {
 
 ### 7.3.2 幕后字段
 
-- ***幕后字段允许我们访问属性中真正的字段值，它只在 `getter` `setter` 中以 `field` 关键字的形式调用***
+- ***幕后字段（Backing Field）允许我们访问属性中真正的字段值，它只在 `getter` `setter` 中以 `field` 关键字的形式调用***
 
 > 在 Kotlin 中，字段仅作为属性的一部分在内存中保存其值时使用。字段不能直接声明。 然而，当一个属性需要一个幕后字段时，Kotlin 会自动提供。这个幕后字段可以使用 field 标识符在访问器中引用
 
@@ -3462,7 +3464,7 @@ class User {
 
 > 在初始化前访问一个 `lateinit` 属性会抛出一个特定异常，该异常明确标识该属性被访问及它没有初始化的事实
 
-- ***检测一个 `lateinit` 的变量有没有初始化，可以在该变量的引用上调用 `isInitialized`***，没错
+- ***检测一个 `lateinit` 的变量有没有初始化，可以在该变量的引用上调用 `isInitialized`***，没错属性也可以引用，具体我们在后面讲解
 
 ## 7.4 继承
 
@@ -3482,6 +3484,7 @@ class User {
 // 可以把汽车看作父类，轿车是子类，二者是继承关系，轿车继承了汽车的特征同时还拥有了自己特有的特征
 // 从宝马的一辆具体类型到汽车就是越来越抽象的过程就是不断继承
 // 在编程里如果我们写了轿车和大卡车的代码，里面的重合部分就可以抽象出来单独作为一个类，成为他们的父类，提高代码复用率
+// 这就叫继承
 ```
 
 - 在 Kotlin 中***所有类都有一个共同的父类 Any，对于没有父类型声明的类它是默认 Any 的子类***
@@ -3514,7 +3517,7 @@ class Zi : Fu() // 这表示在调用父类的无参构造
 
 - 子类可以***使用 `override` 关键字覆盖父类的属性或方法***，你不写就声明一个同名的属性和方法是不行的
 
-> 也对，*强制要求覆盖方法方便辨认*
+> *强制要求覆盖方法有 `override` 方便辨认*
 
 - 父类的***属性和方法默认是 `final` 不能被覆盖的，使用 `open` 关键字使其可被覆盖***
 
@@ -3539,6 +3542,10 @@ class Circle() : Shape() {
 ```
 
 - 属性也是可以被覆盖的，唯一注意的一点就是 ***`var` 可以覆盖原来 `val` 的属性，反之则不行***
+
+    1. `val` 属性是可以被 `val` 的属性所`override` 的
+    2. `var` 属性是可以被 `val` 属性 `override` 的
+    3. `val` 属性是不能被 `var` 属性所 `override` 的
 
 > 因为 `val` 只有一个 getter 访问器，而 `var` 有 getter 和 setter
 
@@ -3981,7 +3988,7 @@ f1.out();   // int 属性默认值是 0
 
 > 这是一个很有意思的特性
 
-- ***在把一个父类的引用指向一个子类的对象的时候，通过属性和方法优先获得的是子类的同名覆盖属性和方法，这种特性叫做多态***
+- ***在把一个父类的引用指向一个子类的对象的时候，通过属性和方法优先获得的是子类的同名覆盖属性和方法，这种特性叫做多态（Polymorphism）***
 
 > 记住是**父类和子类必须同时具有覆写方法和属性才行**，对于一个子类里面多了方法和属性的对象，你把他赋给父类引用是不行的
 
@@ -5933,4 +5940,525 @@ operator fun Point.plusAssign(other: Point) {
 
 > Kotlin 原生支持委托模式，一个关键字就能很做到在 Java 里面几十行的代码才完成的功能
 
-- 
+- 如果一个类不想自己去实现所有的方法，而是委托给另一个类去实现，就可以使用委托模式，这种模式叫做委托，委托模式的好处就是***解耦***，***提高代码的可读性和可维护性***
+
+- Kotlin ***使用 `by` 关键字进行方法的委托，写在继承的接口后面（只能是接口），构造函数需要一个该接口的实现对象进行委托***
+
+
+```kt
+// 这是一个装饰模式的呈现，使用委托
+
+interface Shape {
+    fun draw()
+}
+
+class Circle(val radius: Double) : Shape {
+
+    override fun draw() {
+        println("Drawing a circle with radius $radius")
+    }
+}
+
+class Rectangle(val width: Double, val height: Double) : Shape {
+
+    override fun draw() {
+        println("Drawing a rectangle with width $width and height $height")
+    }
+}
+
+class ShapeDecorator(val shape: Shape) : Shape by shape {
+
+    // 我不想关心 draw 方法的实现，只需要调用它就行
+    fun resize(factor: Double) {
+        shape.draw()
+        println("Resizing the shape by factor $factor")
+    }
+}
+
+fun main() {
+
+    val circle = Circle(5.0)
+    val rectangle = Rectangle(10.0, 20.0)
+
+    circle.draw()
+    rectangle.draw()
+
+    val decoratedCircle = ShapeDecorator(circle)
+    decoratedCircle.resize(2.0)
+}
+```
+
+```kt
+// 这是另一种设计模式：代理的实现，它与装饰的区别多在与装饰在于扩充原有的功能，而代理是在实现时不去关心继承的实现，只需关心自己新的方法
+
+interface IInstantNoodles {
+
+    fun noodles(): String
+
+    fun sauce(): String
+
+    fun smallLeaves(): String
+
+    fun extras(): String
+}
+
+class IngredientPackets: IInstantNoodles {
+
+    override fun noodles(): String {
+        return "普通即食面条"
+    }
+
+    override fun sauce(): String {
+        return "红烧酱汁"
+    }
+
+    override fun smallLeaves(): String {
+        return "六颗小叶子"
+    }
+
+    override fun extras(): String {
+        return "香辣粉"
+    }
+
+    fun Egg(): String {
+        return "鸡蛋"
+    }
+
+    fun Beef(): String {
+        return "两颗牛肉"
+    }
+}
+
+class PackagingTheFinishedProduct(noodlesImpl: IInstantNoodles): IInstantNoodles by noodlesImpl {   // 委托时候主构造需要一个接口类的对象（也就是接口的实现类，因为接口本身没有对象，而这个对象一定完成了接口的定义），by 后面的实现类就是主构造里面的那个对象名称
+    
+    // 如果还要重写继承来到方法，会让这里很乱
+
+    fun Shell () : String {
+        return "纸质外壳"
+    }
+
+    fun Label () : String {
+        return "商品标签"
+    }
+
+    fun Box () : String {
+        return "盒子包装"
+    }
+
+    override fun toString(): String {
+        return "一包由${Shell()}${Box()}的方便面，材料是\n${noodles()}，${sauce()}，${smallLeaves()}，${extras()}"
+
+        // 比如这里，我可以访问到继承来交给配料类的 noodles() 等方法，但是访问不到 Egg() 和 Beef() 方法
+    }
+}
+
+fun main() {
+
+    val ingredients = IngredientPackets()
+    val finishedProduct = PackagingTheFinishedProduct(ingredients)
+
+    println(finishedProduct)
+}
+```
+
+- **可以为多继承的接口每一个指定一个委托对象，这样子就可以实现多继承的委托**
+
+```kt
+// 定义Flyer接口
+interface Flyer {
+    fun fly()
+}
+
+// 定义Swimmer接口
+interface Swimmer {
+    fun swim()
+}
+
+// 实现Flyer接口的具体类
+class Bird : Flyer {
+    override fun fly() {
+        println("I can fly like a bird!")
+    }
+}
+
+// 实现Swimmer接口的具体类
+class Fish : Swimmer {
+    override fun swim() {
+        println("I can swim like a fish!")
+    }
+}
+
+// FlyingFish类通过委托实现多继承
+class FlyingFish(flyer: Flyer, swimmer: Swimmer) : Flyer by flyer, Swimmer by swimmer
+
+fun main() {
+    // 创建具体的Flyer和Swimmer实例
+    val bird = Bird()
+    val fish = Fish()
+
+    // 创建FlyingFish实例，并委托给bird和fish
+    val flyingFish = FlyingFish(bird, fish)
+
+    // 调用fly和swim方法
+    flyingFish.fly()
+    flyingFish.swim()
+}
+```
+
+> 去看反编译后的代码，知道本质上 Kotlin 是把自己继承接口的实现调用了主构造里的两个对象的方法
+
+- 委托的时候***如果本身也实现了接口***的方法，那么会***调用自己实现的而不是委托对象的***，这点要注意
+
+```kt
+interface A {
+    fun foo()
+}
+
+
+class B : A {
+    override fun foo() {
+        println("B.foo()")
+    }
+}   
+
+
+class C(a: A) : A by a {
+    override fun foo() {
+        println("C.foo()")
+    }
+}
+
+
+fun main() {
+    val b = B()
+    val c = C(b)
+
+    b.foo()
+    c.foo()
+}
+```
+
+> 这里 `C` 类继承了 `A` 接口，并委托给 `b` 对象，`c` 对象调用 `foo()` 方法的时候，会调用 `b` 对象的方法，而不是 `c` 对象自己的实现，因为 `c` 对象没有实现 `foo()` 方法，而是委托给了 `b` 对象
+
+> 这里是方法的委托，后面会讲属性的委托
+
+## 7.11 特殊类
+
+### 7.11.1 数据类
+
+- ***数据类是一种特殊的类，它可以自动生成 `equals()`、`hashCode()`、`toString()` 方法，以及 `componentN()` 方法（用于解构对象），这些方法都是基于类的属性来实现的，而且还可以自动生成 `copy()` 方法，可以方便的实现对象的复制***
+
+- 要***声明一个数据类，只需要在类名前面加上 `data` 关键字，然后在类体中声明属性即可***
+
+```kt
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    val person1 = Person("Alice", 25)
+    val person2 = Person("Bob", 30)
+
+    println(person1)
+    println(person2)
+
+    println(person1 == person2)
+    println(person1.copy(age = 35))
+}   
+```
+
+> `toString()` 的默认格式是 `Person(name=Alice, age=25)`
+
+> **`copy()` 方法可以复制对象，修改其中一个属性的值，而不需要关心其他属性**，然后返回新的对象，这里 `copy()` 格式是 `fun copy(name: String = this.name, age: Int = this.age): Person`
+
+```kt
+val jack = Person(name = "Jack", age = 1)
+val olderJack = jack.copy(age = 2)
+```
+
+> 自动生成的 `equals` 可以方便的比较对象而不需要自己重写，默认比较类中的所有属性是否相等
+
+- 为了保证自动生成的代码，数据类有以下规定：
+    1. ***不能没有主构造***，主构造函数必须至少有一个参数
+    2. ***主构造里的所有参数必须同时也是属性***，主构造函数的所有参数必须标记为 `val` 或 `var`
+    - 并不代表属性无法在类体中声明，***类体中声明的属性会被 `equals()` `toString()` 等等自动生成的方法排除***，比如下面
+
+        ```kt
+        data class Person(val name: String) {
+            var age: Int = 0
+        }
+
+        fun main() {
+            val person1 = Person("John")
+            val person2 = Person("John")
+            person1.age = 10
+            person2.age = 20
+
+            println("person1 == person2: ${person1 == person2}")
+            // person1 == person2: true
+
+            println("person1 with age ${person1.age}: ${person1}")
+            // person1 with age 10: Person(name=John)
+
+            println("person2 with age ${person2.age}: ${person2}")
+            // person2 with age 20: Person(name=John)
+        }
+
+        // 这里 person1 和 person2 的 age 被排除在外，所以 person1 和 person2 相等，但是 toString() 显示的 age 不同
+        ```
+    3. ***数据类不能是抽象、开放、密封或者内部的***
+    4. **`compoentN()` 和 `copy()` 不允许自定制**
+    5. **如果在数据类体中有显式实现 `equals()`、 `hashCode()` 或者 `toString()`，或者这些函数在父类中有 `final` 实现**，那么不会生成这些函数，而***会使用现有函数***
+
+    ```kt
+    open class User(open val name: String, open val age: Int) {
+        final override fun toString(): String {
+            return "User123(name='$name', age=$age)"
+
+            // 父类里面 final 的可以被数据类的子类所使用，真是想不清
+        }
+    }
+
+    data class Person(override val name: String, override val age: Int): User(name, age)
+
+    fun main() {
+        val person1 = Person("Alice", 25)
+        val person2 = Person("Bob", 30)
+
+        println(person1)
+        println(person2)
+    }
+    ```
+
+    6. **如果父类（数据类不能被继承，但是可以继承）有自己 `open` 的 `componentN()` 方法，如果返回格式兼容，则使用父类继承而来的，如果不兼容或者不开放，则会报错**
+
+- 这个 **`conpoment()` 方法，是用来对解构声明进行重载**的，而***解构声明可以方便的从一个对象中取出一些属性***，还可以方便的赋值给变量，比如下面
+
+```kt
+data class Person(val name: String, val age: Int) 
+
+fun main() {
+    val person1 = Person("John", 30)    
+    val (name, age) = person1
+    println(name)
+    println(age)
+}
+```
+
+- 如果想对 `componentN()` 方法进行重载，实现对自定义类的解构声明，可以在类体或是扩展函数中定义 `componentN()` 方法，每一个方法返回一个类中的属性
+
+```kt
+class Person(val name: String, val age: Int) {
+    // 注意：数据类不能自定义 compoentN() 方法，只能使用自动生成的，所以这里是一个普通类
+
+    operator fun component1() = name
+}
+operator fun Person.component2() = age
+
+fun main() {
+    val person1 = Person("Alice", 25)
+    var (name, age) = person1   // val 或 var 均可
+    name = "Bob"    // 这就是普通的变量
+    println(name)
+    println(age)
+}
+
+// 注意，解构时变量的数量只能小于等于声明的解构重载函数（类里面加上扩展）的数量
+```
+
+### 7.11.2 枚举类
+
+- 有些时候一些变量只能由特定且有限的值，并且值之间有很强的关联性，这时候就可以使用枚举类
+
+- 要***声明一个枚举类，只需要在类名前面加上 `enum` 关键字，然后在类体中使用 `,` 分别声明枚举常量即可***
+
+
+```kt
+enum class Color { RED, GREEN, BLUE }
+
+
+fun main() {
+    val color1 = Color.RED
+    val color2 = Color.BLUE
+
+    println(color1)
+    println(color2)
+}
+```
+
+- 所谓枚举类，本质上就是一个普通的类，只不过***每一个枚举常量就是这个类的一个对象***，所以你可以理解为
+
+```kt
+class Color {
+    val RED: Color = Color()
+    val BLUE: Color = Color()
+    val GREEN: Color = Color()
+}
+```
+
+- 枚举类本身不能初始化对象，可是***枚举常量可以初始化枚举类***
+
+```kt
+enum class Day(val weekOfDay: Int) {
+    MONDAY(1),
+    TUESDAY(2),
+    WEDNESDAY(3),
+    THURSDAY(4),
+    FRIDAY(5),
+    SATURDAY(6),
+    SUNDAY(7)
+
+    // 每一个枚举常量都是枚举类的对象，自然可以有构造函数
+}
+
+fun main() {
+    // 枚举类里的常量都是静态的，无需实例化就可以使用
+
+    println(Day.MONDAY.weekOfDay)
+    println(Day.TUESDAY)
+}
+```
+
+- ***枚举类里面除了枚举常量，还可以有普通的属性和方法，枚举常量可以访问这些属性和方法***（因为他们是枚举类的实现，自然拥有这些属性和方法），但是枚举类本身不能访问（因为本身不能初始化）
+
+```kt
+enum class Day(val weekOfDay: Int, val chineseName: String) { // 这就是属性，写在了主构造里
+    MONDAY(1, "星期一"),
+    TUESDAY(2, "星期二"),
+    WEDNESDAY(3, "星期三"),
+    THURSDAY(4, "星期四"),
+    FRIDAY(5, "星期五"),
+    SATURDAY(6, "星期六"),
+    SUNDAY(7, "星期日");
+
+    // 枚举常量可以访问这些属性和方法
+    fun isWeekend() = this == SATURDAY || this == SUNDAY
+
+    // 枚举类可以有自己的 companion object
+    companion object {
+        fun daysOfWeek() = 7
+    }
+}
+
+fun main() {
+    println(Day.MONDAY.isWeekend())
+    println(Day.TUESDAY.chineseName)
+    println("一周有${Day.daysOfWeek()}天")
+}
+```
+
+- 既然这样，***枚举类里面也可以有抽象的属性和方法，枚举常量也可以实现这些抽象方法，自然也可以使用匿名类的方式实现***
+
+> 注意***枚举常量和普通成员之间使用 `;` 分号分隔***
+
+```kt
+enum class Day {
+    // 直接在枚举常量名后面加上花括号，里面就是实现的抽象方法
+
+    Monday {
+        override fun getDay(): String {
+            return "星期一"
+        }
+    },
+    Tuesday {
+        override fun getDay(): String {
+            return "星期二"
+        }
+    },
+    Wednesday {
+        override fun getDay(): String {
+            return "星期三"
+        }
+    },
+    Thursday {
+        override fun getDay(): String {
+            return "星期四"
+        }
+    },
+    Friday {
+        override fun getDay(): String {
+            return "星期五"
+        }
+    },
+    Saturday {
+        override fun getDay(): String {
+            return "星期六"
+        }
+    },
+    Sunday {
+        override fun getDay(): String {
+            return "星期日"
+        }
+    };
+
+    // 使用分号分隔枚举常量和一般成员（Java ：你逃不掉吧）
+
+    abstract fun getDay(): String
+}
+```
+
+- 虽然枚举类不能继承自类、抽象类，但是它***可以继承接口***，每一个枚举常量必须均实现接口里的方法，可以向上面的那样单独实现，***也可以定义一个普通的函数实现，则每一个枚举常量都使用这个函数的实现***
+
+```kt
+interface DayInterface {
+    fun getDay(): String
+}
+
+enum class Day: DayInterface {
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY,
+    SATURDAY,
+    SUNDAY;
+
+    override fun getDay(): String {
+        return "I don't know the day"
+    }
+}
+
+
+fun main() {
+    println(Day.MONDAY.getDay())
+    println(Day.TUESDAY.getDay())
+}
+```
+
+- Kotlin 也为枚举类添加了一些内置的属性，对于***每一个枚举常量都可以使用他们***，**`name` 会返回当前枚举常量的名称， `ordinal` 会返回当前枚举常量的索引（从 0 开始）**
+
+- ***每一个枚举类本身也有内置的方法***，比如 **`values()` 方法可以返回所有枚举常量的数组，`valueOf(name: String)` 方法可以根据名称返回枚举常量**
+
+```kt
+enum class Day (val chineseName: String) {
+    Monday("星期一"),
+    Tuesday("星期二"),
+    Wednesday("星期三"),
+    Thursday("星期四"),
+    Friday("星期五"),
+    Saturday("星期六"),
+    Sunday("星期日");
+}
+
+
+fun main() {
+
+    for (day in Day.values()) {
+        when (day) {
+            // 这里使用了好几个内置属性，可能有点晕，比如 Day.valueOf(day.name) 就是根据 day.name 得到枚举常量的名字，然后通过这个名字再得到 chineseName 属性
+            // 其实只需要 day.chineseName 就可以了
+            Day.Monday -> println("今天是一周内的第${day.ordinal + 1}天，是${day.chineseName}，要上班")
+            Day.Tuesday -> println("今天是一周内的第${day.ordinal + 1}天，是${Day.valueOf(day.name).chineseName}，要上班")
+            Day.Wednesday -> println("今天是一周内的第${day.ordinal + 1}天，是${Day.valueOf(day.name).chineseName}，要上班")
+            Day.Thursday -> println("今天是一周内的第${day.ordinal + 1}天，是${Day.valueOf(day.name).chineseName}，要上班")
+            Day.Friday -> println("今天是一周内的第${day.ordinal + 1}天，是${Day.valueOf(day.name).chineseName}，要上班")
+            Day.Saturday -> println("今天是一周内的第${day.ordinal + 1}天，是${Day.valueOf(day.name).chineseName}，可以休息了")
+            Day.Sunday -> println("今天是一周内的第${day.ordinal + 1}天，是${Day.valueOf(day.name).chineseName}，可以休息了")
+
+            // 注意到，when 表达式不需要 else 分支，因为编译器知道这里涵盖了所有的可能，这也是之前 when 说过必须有 else 的一个特例
+        }
+    }
+}
+```
+
+### 7.11.3 密封类
+
+### 7.11.4 内联类
