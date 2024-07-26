@@ -6846,3 +6846,215 @@ public static final void func_3FFIWmM(@NotNull String msg) {
 
 - 泛型（generics）是一个重要特性，它允许我们在定义类、函数、接口时使用类型参数（type parameter）来表示类型，从而可以编写更灵活、更具表现力的代码
 
+> 比如我们有一个类，我们希望无论用户传入什么类型，都可以正常运行，而不是创建一堆同样功能只不过类型不同的类
+
+- 要使用泛型，***将泛型参数 T 放在尖括号 `<T>` 中 , 该泛型参数放在类名后 , 主构造函数之前, 该泛型参数 T 是类型占位符***，可以替换为任意字母，但是一般用大写字母 T、K、V 来表示类型参数
+
+
+```kt
+class Box<T>(val value: T) {
+    fun get(): T {
+        return value
+    }
+}
+
+fun main() {
+    val box1 = Box<Int>(10)
+    val box2 = Box<String>("Hello, world!")
+    val box3 = Box<Double>(3.14159)
+
+    println(box1.get())
+    println(box2.get())
+    println(box3.get())
+}
+```
+
+- 当定义了一个泛型类，该类里面的方法和属性都可以把这个类型参数当作一个真正的类型来使用
+
+- Kotlin 具有类型推断，在**使用泛型的时候可以不手动指定类型参数**，编译器会根据传入的参数自动推断出类型参数
+
+- ***泛型也可以有多个类型参数，每一个泛型参数之间使用逗号 `,` 分隔***
+
+
+```kt
+class Tuple <T, K> (one: T, two: K){
+    val first: T = one
+    val second: K = two
+
+    fun printTuple() {
+        println("First element: $first")
+        println("Second element: $second")
+    }
+}
+
+fun main() {
+    val tuple = Tuple(10, "Hello")
+    // 等于 val tuple = Tuple<Int, String>(10, "Hello") 可以不指定类型参数
+    tuple.printTuple()
+}
+```
+
+- 记住***泛型参数本身只是一个占位符，在编译时会被擦除，因此编译后的字节码中并没有泛型参数，只有泛型参数对应的真实类型***，这个叫做***类型擦除***，是 JVM 平台的天生特性
+
+```kt
+class Tuple <T, K> (one: T, two: K){
+    val first: T = one
+    val second: K = two
+
+    fun printTuple() {
+        println("First element: $first")
+        println("Second element: $second")
+        println("Factorial of first element: ${first.factorial()}")
+
+        // 这里不可以访问 factorial 方法，因为类型参数 T 在运行时实际上是 Any 类，Any 没有这个扩展方法
+    }
+}
+
+fun Int.factorial(): Int {
+    if (this == 0) {
+        return 1
+    }
+    return this * this.factorial()
+}
+
+fun main() {
+    val tuple = Tuple(10, "Hello")
+    tuple.printTuple()
+    println("Factorial of 5: ${5.factorial()}")
+
+    // 但是这里可以访问 factorial 方法
+}
+```
+
+> 请记住这个特性，有关泛型的所有问题基本上都是基于这个特性带来的疑惑，下面会再讲解
+
+> 上面我们自己声明了一个 `Tuple`元组，其实 Kotlin 也有内置的元组类型，但***请注意元组已经被抛弃***，现在只有二元元组和三元元组可用，多元元组不可用
+
+```kt
+fun main() {
+    val tuple1 = Pair(1,"Hello")
+    val tuple2 = Triple(2,"World", 3.14)
+    val tuple3 = '\n' to 42
+
+    // public infix fun <A, B> A.to(that: B): Pair<A, B> = Pair(this, that)
+    // 中缀操作符 to 可以快速生成二元元组
+
+    println(tuple1)
+    println(tuple2)
+    println(tuple3)
+}
+
+// 元组的本质就是泛型数据类
+
+public data class Pair<out A, out B>(
+    public val first: A,
+    public val second: B
+) : Serializable
+```
+
+- 因为Kotlin 支持顶层函数，***顶层函数如果想要使用泛型，在 `fun` 后面，函数名前面写上 `<T>`***，然后自己的参数和函数体内部才能使用
+
+- 怎样判断需不需要写新的泛型参数呢？关键在于如果函数所在的类已经声明了这个泛型，但***函数需要返回一个新的类型***，这个类型跟类声明的泛型类型是不一样的，或者说***函数位于顶层***，都***需要自己写上尖括号去声明新的泛型类型***
+
+```kt
+class User<T> (val msg: T) {
+    
+    fun <K> function(func: (T) -> K): K = func(msg)
+}
+
+fun main() {
+    val user = User("Hello, World!")
+    println(user.function {value: String -> 
+        value.toString()
+        
+        // 这里 value 写明了是 String 类型，所以在泛型里面也可以使用 String 类的 length 属性返回 Int 类型的值
+    })
+}
+```
+
+- 同样，***泛型类也可以实现泛型接口或继承泛型类***
+
+```kt
+interface A <T>{
+     fun foo(t: T)
+}
+
+open class B <T> {
+    open fun bar(t: T) {
+        println(t)
+    }
+}
+
+class C <T, K ,V> (t: T, k: K, v: V) : B<K>(), A<V> {
+    // 这里的意思是，C 类有三个泛型参数 T 、 K 和 V，把 K 作为 B 类的泛型参数，把 V 作为 A 接口的泛型参数
+    // 是作为泛型参数，跟传值是两个概念，泛型参数一旦传入，则该类里面所有使用该参数作为类型占位符的方法或属性都会被替换成该类型
+    
+    val tuple = Triple<T, K, V>(t, k, v)
+
+    override fun bar(k: K) {
+        println(k == tuple.second)
+    }
+
+    fun baz(t: T) {
+        println(t == tuple.first)
+    }
+
+    override fun foo(v: V) {
+        println(v == tuple.third)
+    }
+
+}
+
+
+fun main() {
+    val c = C(1, "Hello", 3.14)
+    c.bar("Hello")
+    c.baz(2)
+    c.foo(3.14)
+}
+```
+
+## 8.2 泛型的约束
+
+- 上面讲过，JVM 的类型擦除导致我们无法使用传入对象的独有方法，可以***在声明泛型参数的时候在类型参数后面加上冒号 `:` 约束，来限制泛型参数的类型范围，只有该类的子类或是实现类才能传入，这样就可以使用这个类的方法和属性了***
+
+```kt
+class User<T: Name> (val msg: T) {
+
+    fun <K> function(func: (T) -> K): K = func(msg)
+}
+
+
+class Name (val name: String)
+
+
+fun main() {
+    val user = User(Name("John"))
+    println(user.function { it.name.toString() })
+}
+```
+
+- 这个叫***泛型的上界（upper bound）约束***，表示泛型参数 T 的类型必须是某个类的子类，或者是该接口的实现类
+
+- 对于***默认的类型参数，它是 `Any` 的子类***，所以你传入 `Any` `Any?` 或是使用 `Any` 的方法都是可以的
+
+```kt
+class Generics<T> (val value: T) {  // <T :Any>
+    fun printValue() {
+        value.printValue()
+    }
+}
+
+fun Any?.printValue() {
+    println("Yes, I am Any")
+
+    if (this == null) println("I am null") else println("I am not null")
+}
+
+fun main() {
+    val generics = Generics<Any?>(null)
+    generics.printValue()
+}
+```
+
+- 泛型的下界（lower bound）约束，表示泛型参数 T 的类型必须是某个类的超类，或者是该接口的超接口
