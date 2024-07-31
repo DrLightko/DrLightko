@@ -15,7 +15,7 @@
  
 ## 1.2 安装
  
-1. 在 Github 上面的 [Kotlin](https://github.com/JetBrains/kotlin/releases) 编译器仓库下载最新版，Kotlin 基于 JVM，所以你必须要有 [JDK](https://learn.microsoft.com/zh-cn/java/openjdk/download) 才行，这个微软打包的版本，你也可以到 OpenJDk 官网下载
+1. 在 Github 上面的 [Kotlin](https://github.com/JetBrains/kotlin/releases) 编译器仓库下载最新版，Kotlin 基于 JVM，所以你必须要有 [JDK](https://learn.microsoft.com/zh-cn/java/opKotlinKotlin enjdk/download) 才行，这个微软打包的版本，你也可以到 OpenJDk 官网下载
  
 > 现在也有了 Native 版本，可以自己尝试
  
@@ -198,6 +198,7 @@ java HelloKt
  * |内容|内容|
  */
 ```
+
 
 # 第三章：变量与*基本类型*
 
@@ -1560,6 +1561,18 @@ fun print_int(n: Int) {
 > 这个 `Unit` 跟 Java 的 `void` 不一样的点是，***`Unit` 是一个单例对象，返回 `void` 的函数表示自己真的是什么也不返回，但是返回 `Unit` 的函数是一定要返回 `Unit` 的***
 
 ```kt
+public object Unit {
+    override fun toString(): String {
+        return "kottlin.Unit"
+    }
+}
+
+// 因为默认继承自 Any ，所以以下不会报错
+
+val unit: Any = Unit
+```
+
+```kt
 fun print_int(n: Int) // : Unit 编译器自动加上，这个 Unit 表示类型 {
     println(n)
 
@@ -2622,6 +2635,7 @@ fun add(a: Long, b: Long) = a + b + 100
 fun add(a: Double, b: Double) = a + b + 0.001
 ```
 
+
 # 第六章：包和导入
 
 > 上一章和下一章很难，讲一点轻松的
@@ -2761,6 +2775,9 @@ JVM:
 JS:
     kotlin.js.*
 ```
+
+- 还有一点，**Kotlin 里面的包名和文件名是没有关系的**，没有 Java 类名必须跟文件名一致并且同意文件下只能有一个 `public` 的类的限制，你只需要保证包名唯一就行，文件名可以随便取，但是建议文件名和类名保持一致
+
 
 # 第七章：类和对象
 
@@ -5556,7 +5573,9 @@ class MyClass {
     2. ***对象声明是在第一次被访问到时延迟初始化的***
     3. ***伴生对象的初始化是在相应的类被加载（解析）时***，与 Java 静态初始化器的语义相匹配
 
-> 说实话，反正***静态成员也不能访问正常成员***，你还不如写成顶层声明的样子，反正除非是单例我估计不会用伴生对象
+> 什么时候使用伴生对象，什么时候使用顶层声明呢，对于一般的方法，反正***静态成员也不能访问正常成员***，你还不如写成顶层声明的样子
+
+> 而像静态初始化块，保留信息的静态方法，那就只能使用伴生对象了
 
 ## 7.9 扩展
 
@@ -6276,6 +6295,9 @@ val olderJack = jack.copy(age = 2)
         // 这里 person1 和 person2 的 age 被排除在外，所以 person1 和 person2 相等，但是 toString() 显示的 age 不同
         ```
     3. ***数据类不能是抽象、开放、密封或者内部的***
+
+    > 也就是***数据类不能被继承***，可以看[Jet Brains 博客](https://blog.jetbrains.com/kotlin/2015/09/feedback-request-limitations-on-data-classes/#Appendix.Comparingarrays) 了解为什么
+
     4. **`compoentN()` 和 `copy()` 不允许自定制**
     5. **如果在数据类体中有显式实现 `equals()`、 `hashCode()` 或者 `toString()`，或者这些函数在父类中有 `final` 实现**，那么不会生成这些函数，而***会使用现有函数***
 
@@ -6333,6 +6355,48 @@ fun main() {
 }
 
 // 注意，解构时变量的数量只能小于等于声明的解构重载函数（类里面加上扩展）的数量
+```
+
+- 加上前面说过的 `[]` 索引操作符重载，现在就可以声明一个类似数组的类
+
+```kt
+class Data (var firstName: String, var lastName: String, var age: Int){
+    operator fun component1(): String = firstName
+
+    operator fun component2(): String = lastName
+
+    operator fun component3(): Int = age
+
+    operator fun set(index: Int, value: String) { // set 就是 [] 赋值，有两个参数
+        when (index) {
+            0 -> firstName = value
+            1 -> lastName = value
+            2 -> age = value.toInt()
+            else -> println("Invalid index")
+        }
+    }
+
+    operator fun get(index: Int): String { // get 就是根据 [] 取值
+        return when (index) {
+            0 -> firstName
+            1 -> lastName
+            2 -> age.toString()
+            else -> "Invalid index"
+        }
+    }
+}
+
+fun main() {
+    val data = Data("John", "Doe", 30)
+    data[0] = "Jane"
+    data[1] = "Dorothy"
+    data[2] = "35"
+    val (firstName, lastName, age) = data
+    println("First Name: $firstName")
+    println("Last Name: $lastName")
+    println("Age: $age")
+    println("first name: ${data[0]}, last name: ${data[1]}, age: ${data[2]}")
+}
 ```
 
 ### 7.11.2 枚举类
@@ -6682,7 +6746,7 @@ sealed class Color {
 
 > 在观看此小结前，建议阅读[Kotlin 值类型设计](https://github.com/Kotlin/KEEP/blob/master/notes/value-classes.md)这篇 Github 上的文章，会方便你了解，同时，内联类在 Kotlin 当中仍是一个较新的设计，不排除以后版本会进行修改的可能性
 
-> 在 Kotlin 1.3 之前，使用 `inline` 去声明内联类，1.5 ***引入了 `value` 关键字，但是现在使用 `value` 仍需要加上 `@JvmInline` 的注解***，否则编译不通过。`inline class` 仍然可以用但是不排除被废弃的可能，`value` 未来仍可能添加新特性
+> 在 Kotlin 1.3 之前，使用 `inline` 去声明内联类，1.5 ***引入了 `value` 关键字，但是现在使用 `value` 仍需要加上 `@JvmInline` 的注解***，否则编译不通过（非 JVM 平台可以不写，比如 Native）。`inline class` 仍然可以用但是不排除被废弃的可能，`value` 未来仍可能添加新特性
 
 - 假设这样一个场景，我们需要一个函数接受一个 `Double` 类型表示时间的参数，但是不去做任何的注解的话，调用者并不知道传入的时间是什么单位，秒、毫秒、分还是小时。这是我们可能会创建一个数据类去规定这个类他具体的单位，但是创建一个类会带来额外的内存消耗以及读取时间，从极致性能角度上讲的话并不划算，所以 `Kotlin`引入了一个新的特性叫做***内联值类***（inline value class）
 
@@ -6836,17 +6900,49 @@ public static final void func_3FFIWmM(@NotNull String msg) {
 }
 ```
 
+
+
 # Kotlin 进阶
 
 > 如果你看到这里，那么恭喜你你已经看完了 Kotlin 入门的全部篇章，那么在这一章我们会讨论进阶的更多功能比如，泛型、（集合我现在甚至没有使用过数组）、异常处理、标准库的各种函数、以及最重要的协程
+
 
 # 第八章：泛型
 
 ## 8.1 泛型概述
 
-- 泛型（generics）是一个重要特性，它允许我们在定义类、函数、接口时使用类型参数（type parameter）来表示类型，从而可以编写更灵活、更具表现力的代码
+> 假如我们有一个类想要接受所有类型参数都可以传入，而不需要对每一个类型都进行重写，我们可能会想到使用 `Any` 类型，最后对它返回的类型进行强制转换，比如
 
-> 比如我们有一个类，我们希望无论用户传入什么类型，都可以正常运行，而不是创建一堆同样功能只不过类型不同的类
+```kt
+fun main() {
+    val printer = Printer("Hello")
+    printer.print()
+    val str: String = printer.getMsg() as String
+    println(str)
+    
+    val printer2 = Printer(123)
+    printer2.print()
+    val num: Int = printer2.getMsg() as Int
+    println(num)
+}
+
+
+class Printer (val message: Any) {
+    fun print() {
+        println(message)
+    }
+
+    fun getMsg(): Any {
+        return message
+    }
+}
+```
+
+> 但是强制转换还是会带来一些可能隐患，其实 Kotlin 还有一种更方便的
+
+- ***泛型（generics）*** 是一个重要特性，它允许我们在定义类、函数、接口时使用类型参数（type parameter）来表示类型，从而可以编写更灵活、更具表现力的代码
+
+> 比如我们有一个类，我们希望无论用户传入什么类型，都可以正常运行，而不是创建一堆同样功能只不过构造类型不同的类
 
 - 要使用泛型，***将泛型参数 T 放在尖括号 `<T>` 中 , 该泛型参数放在类名后 , 主构造函数之前, 该泛型参数 T 是类型占位符***，可以替换为任意字母，但是一般用大写字母 T、K、V 来表示类型参数
 
@@ -6869,9 +6965,7 @@ fun main() {
 }
 ```
 
-- 当定义了一个泛型类，该类里面的方法和属性都可以把这个类型参数当作一个真正的类型来使用
-
-- Kotlin 具有类型推断，在**使用泛型的时候可以不手动指定类型参数**，编译器会根据传入的参数自动推断出类型参数
+- 如果类型参数可以推断出来，例如从构造函数的参数或者从其他途径， 就***可以省略类型参数***
 
 - ***泛型也可以有多个类型参数，每一个泛型参数之间使用逗号 `,` 分隔***
 
@@ -6889,10 +6983,12 @@ class Tuple <T, K> (one: T, two: K){
 
 fun main() {
     val tuple = Tuple(10, "Hello")
-    // 等于 val tuple = Tuple<Int, String>(10, "Hello") 可以不指定类型参数
+    // 等于 val tuple = Tuple<Int, String>(10, "Hello") 可以不指定类型参数，因为编译器知道 10 是 Int 类型， "Hello" 是 String 类型
     tuple.printTuple()
 }
 ```
+
+> 把泛型理解为一个类型占位符更容易理解，使用泛型类的时候需要把泛型参数的类型也传入，比如 `MyClass` `MyClass<T>` 是两个不同的类型
 
 - 记住***泛型参数本身只是一个占位符，在编译时会被擦除，因此编译后的字节码中并没有泛型参数，只有泛型参数对应的真实类型***，这个叫做***类型擦除***，是 JVM 平台的天生特性
 
@@ -6952,9 +7048,11 @@ public data class Pair<out A, out B>(
 ) : Serializable
 ```
 
-- 因为Kotlin 支持顶层函数，***顶层函数如果想要使用泛型，在 `fun` 后面，函数名前面写上 `<T>`***，然后自己的参数和函数体内部才能使用
+- 当**定义了一个泛型类，该类里面的方法和属性都可以把这个类型参数当作一个真正的类型来使用**
 
-- 怎样判断需不需要写新的泛型参数呢？关键在于如果函数所在的类已经声明了这个泛型，但***函数需要返回一个新的类型***，这个类型跟类声明的泛型类型是不一样的，或者说***函数位于顶层***，都***需要自己写上尖括号去声明新的泛型类型***
+- 因为Kotlin 支持顶层函数，***函数如果想要使用泛型，在 `fun` 后面，函数名前面写上 `<T>`***，然后自己的参数和函数体内部就能使用这个类型占位符使用时传入的类型
+
+- 怎样判断需不需要写新的泛型参数呢？关键在于如果函数所在的类已经声明了这个泛型，但***函数需要返回一个新的类型***，这个类型跟类声明的泛型类型是不一样的，或者说***函数位于顶层***，都***需要自己写上尖括号去声明新的泛型类型***，如果**类里面的方法自己重新声明一个类型参数，无论名称是否一样都是会覆盖掉原来的类型参数的**
 
 ```kt
 class User<T> (val msg: T) {
@@ -6969,6 +7067,25 @@ fun main() {
         
         // 这里 value 写明了是 String 类型，所以在泛型里面也可以使用 String 类的 length 属性返回 Int 类型的值
     })
+}
+```
+
+```kt
+class PairTuple <T, K> (val first: T, val second: K) {
+
+    fun <T> getFirst(t: T): T {
+        println(t == first)
+        return first as T
+
+        // 如果这里没有 as 转换，编译器会说 “期望 T 类型，但是得到了 T 类型”，实际上就是新声明的类型覆盖了原来的
+    }
+}
+
+fun main() {
+    val pair = PairTuple(1, "Hello")
+    val first = pair.getFirst(1)
+    println(first)
+
 }
 ```
 
@@ -7014,9 +7131,24 @@ fun main() {
 }
 ```
 
+- 还有**泛型扩展函数**
+
+```kt
+fun <T: Number?> T.isNull(): Boolean = if (this == null) true else false
+
+fun main() {
+    val num: Int? = 10
+    val nullNum: Int? = null
+    // val str: String? = "Hello" 无法使用 isNull() 方法
+    
+    println(num.isNull()) // false
+    println(nullNum.isNull()) // true
+}
+```
+
 ## 8.2 泛型的约束
 
-- 上面讲过，JVM 的类型擦除导致我们无法使用传入对象的独有方法，可以***在声明泛型参数的时候在类型参数后面加上冒号 `:` 约束，来限制泛型参数的类型范围，只有该类的子类或是实现类才能传入，这样就可以使用这个类的方法和属性了***
+- 上面讲过，JVM 的类型擦除导致我们无法使用传入对象的独有方法，可以***在声明泛型参数的时候在类型参数后面加上冒号 `:` 约束，来限制泛型参数的类型范围，只有该类的子类或是实现类才能传入，这样就可以使用这个父类继承给子类的方法和属性了***
 
 ```kt
 class User<T: Name> (val msg: T) {
@@ -7036,10 +7168,10 @@ fun main() {
 
 - 这个叫***泛型的上界（upper bound）约束***，表示泛型参数 T 的类型必须是某个类的子类，或者是该接口的实现类
 
-- 对于***默认的类型参数，它是 `Any` 的子类***，所以你传入 `Any` `Any?` 或是使用 `Any` 的方法都是可以的
+- 对于***默认的类型参数，它是 `Any?` 的子类***，所以你传入 `null` 是可以的
 
 ```kt
-class Generics<T> (val value: T) {  // <T :Any>
+class Generics<T> (val value: T) {  // <T :Any?>
     fun printValue() {
         value.printValue()
     }
@@ -7052,9 +7184,369 @@ fun Any?.printValue() {
 }
 
 fun main() {
-    val generics = Generics<Any?>(null)
+    val generics = Generics(null)
     generics.printValue()
 }
 ```
 
-- 泛型的下界（lower bound）约束，表示泛型参数 T 的类型必须是某个类的超类，或者是该接口的超接口
+- 默认在尖括号里只能声明一个父类，***如果类型参数需要多个父类（接口）的约束，请使用单独 `where` 的子句***
+
+> 这里请看清楚 `where` 声明的位置和格式
+
+```kt
+interface Animal {
+    fun makeSound(): String
+}
+
+interface Runnable {
+    fun run()
+}
+
+class Dog<T>(val name: String, val animal: T) : Animal by animal, Runnable by animal
+where T : Animal, T : Runnable {
+// where 另起一行声明
+
+    fun printName() {
+        println(name)
+    }
+}
+
+fun <T> makeDog(name: String, animal: T): Dog<T>
+where T : Animal, T : Runnable {
+// 另起一行声明
+
+    return Dog(name, animal)
+}
+
+class Impl : Animal , Runnable {
+    override fun makeSound(): String {
+        return "Woof!"
+    }
+
+    override fun run() {
+        println("Running...")
+    }
+}
+
+
+fun main() {
+    val dog = makeDog("Fido", Impl())
+    dog.printName()
+    dog.run()
+    println(dog.makeSound())
+}
+```
+
+## 8.3 reified
+
+> 最好先看下[Kotlin 官方文档](https://book.kotlincn.net/text/generics.html)对这里的描述，同时复习一些 Java 的知识点
+
+- 因为**类型擦除**的存在，所以你可以判断一个泛型值是不是某个类型，但是***不能判断某个值是不是泛型类型的***
+
+```kt
+fun <T> Int.isInt(value: T) = this is T // 错误，不能判断某个值是不是泛型类型的
+
+fun main() {
+    println(1.isInt(1))
+    println(1.isInt("1"))
+}
+```
+
+- 但是 Kotlin 有一个***关键字 `reified`，只能使用在内联函数的泛型参数声明上***，可以让你在运行时判断某个值是不是某个泛型类型
+
+```kt
+inline fun <reified T> Int.isInt(value: T) = this is T
+
+fun main() {
+    println(1.isInt(1))
+    println(1.isInt("1"))
+}
+```
+
+> reified 关键字并没有修改 JVM 的类型擦除，只不过由于内联函数可以知道泛型参数的具体类型，所以运行时直接硬编到返回指里
+
+## 8.4 协变和逆变
+
+- 泛型能实现多态吗？看下面的第一个变量 value1 是被允许的，但是第二个变量 value2 是不被允许的，也就是说，你***不能把一个泛型类型子类的对象赋给泛型类型父类的引用***
+
+```kt
+open class Base<T> (open val value: T) {
+    open fun func() {
+        println("Base func $value")
+    }
+}
+
+class Derived<T> (override val value: T) : Base<T>(value) {
+    override fun func() {
+        println("Derived func $value")
+    }
+}
+
+fun main() {
+    val stringBase = Base<String>("Hello")
+    val intBase = Base<Int>(10)
+    println(stringBase::class == intBase::class)
+
+    val value1: Base<String> = Derived<String>("Polymorphism") // 允许
+    value1.func() // 多态生效
+    val value2: Base<Any> = Base<String>("Can't do this") // 报错
+}
+```
+
+> 还是类型擦除的存在，导致无法判断某个值是不是某个泛型类型的，可以看下面这段官网的示例
+
+```kt
+// Java
+List<String> strs = new ArrayList<String>();
+
+// 报错；类型不匹配
+List<Object> objs = strs;
+
+// 如果它不报错呢？
+// 就可以把 Integer 类型添加到 ArrayList<Object> 中
+objs.add(1);
+
+// 然后运行时就会抛异常了
+// a ClassCastException: Integer cannot be cast to String
+String s = strs.get(0);
+```
+
+### 8.4.1 Java 的实现
+
+- 在介绍协变和逆变之前，先看看 Java 是怎么处理的，**Java 里面使用通配符 `? extends Base` 来表示接受一个 Base 或者它子类的泛型类型**，这样我们就可以***安全的从中读取数据，但不能写入数据***，因为我们不知道 Base 的子类的具体类型，如果贸然写入可能会导致子类的方法调用时出现类型不匹配的错误
+
+> 从中取出的数据是 Base 类型，子类的对象可以赋给父类
+
+```java
+class Fu <T> {
+    T value;
+
+    void func() {
+        System.out.println("Fu func" + value);
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public void setValue(T value) {
+        this.value = value;
+    }
+
+    Fu(T s) {
+        value = s;
+    }
+}
+
+class Zi <T> extends Fu<T> {
+    T value;
+
+    void func() {
+        System.out.println("Zi func" + value);
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public void setValue(T value) {
+        this.value = value;
+    }
+
+    Zi(T s) {
+        super(s);
+        value = s;
+    }
+}
+
+
+public class Test {
+    public static void main(String[] args) {
+        Fu<? extends Object> fu = new Fu<String>("Hi there");
+        System.out.println(fu.getValue());
+        // fu.setValue("Hello"); 报错，不能写入数据
+    }
+}
+```
+
+- 相反，如果想要从中写入，可以使用通配符 **`? super Base` 来表示接受一个 Base 或者它父类的泛型类型**，这样我们就***可以安全的写入数据，但不能读取数据***，因为不知道 Base 未来会传入怎样的父类，所以只能返回 Base 而不是它的具体父类
+
+> 比如赋给它一个 Object 父类，Base 类型的引用当然可以持有 Object 类型的对象
+
+```java
+class Fu <T> {
+    T value;
+
+    void func() {
+        System.out.println("Fu func" + value);
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public void setValue(T value) {
+        this.value = value;
+    }
+
+    Fu(T s) {
+        value = s;
+    }
+}
+
+class Zi <T> extends Fu<T> {
+    T value;
+
+    void func() {
+        System.out.println("Zi func" + value);
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public void setValue(T value) {
+        this.value = value;
+    }
+
+    Zi(T s) {
+        super(s);
+        value = s;
+    }
+}
+
+
+public class Test {
+    public static void main(String[] args) {
+        Fu<? extends Object> fu = new Fu<String>("Hi there");
+        System.out.println(fu.getValue());
+
+        Zi<? super Integer> zi = new Zi<Object>(100);
+        zi.setValue(213);
+        Object obj = zi.getValue(); // 只能是 obj
+        System.out.println(obj);
+    }
+}
+```
+
+> 无论你的声明的类型是什么，它真正存储的区域都是这个传入的对象所开辟在内存中的部分，我们通过 getValue 返回的虽然是 `Object` 类型，但是它只是把它整数部分的那一块完整的区域被隐藏起来了，通过 `println` 这个函数调用时，toString 方法是Integer 的 toString，好好理解一下
+
+- `? extends E` 声明的类型是***协变（covariant）***的，意思是***泛型类型参数可以是引用变量泛型参数子类的类型***，在实现泛型多态的代价就是***只能 `getter`，无法使用有关 `setter` 类的方法***
+
+- `? super E` 声明的类型是***逆变（contravariant）***的，意思是***泛型类型参数可以是引用变量泛型参数父类的类型***，虽然***可以使用有关 `setter` 类的方法，但是无法使用有关 `getter` 类的方法***
+
+- ***Java 默认的泛型是抗变（不变，invariant）的，也就是说，泛型类型参数不能是引用变量泛型参数子类的类型，也不能是引用变量泛型参数父类的类型***
+
+> 有一个 PECS 法则，`Producer（生产者）- Extends, Consumer（消费者）- Super`，看看就好
+
+### 8.4.2 in out
+
+- **Kotlin 的泛型默认也是不变的**，但是你可以通过***声明 `in` 和 `out` 关键字来声明协变和逆变，`out` 关键字表示协变，等于 `? extends`，只能 `getter`，`in` 关键字表示逆变，等于 `? super`，只能 `setter`***
+
+> 比 Java 的好记吧
+
+```kt
+class MyClass <T> (var value: T)
+
+fun main() {
+    val cls1: MyClass<out Number> = MyClass<Int>(12) // 协变
+    val cls2: MyClass<in Int> = MyClass<Any>("Hello") // 逆变
+
+    println(cls1.value) // 调用 getter 方法，允许
+    cls2.value = 'a' as Any as Int
+    // 想不到吧，是可以的，编译器不报错，运行时报错，但是强烈不建议，你声明一个逆变的类就是用类存放它父类的引用的，不是用来存其他的
+    val obj = cls2.value // 这里 obj 是 Any?
+    println(obj)
+}
+```
+
+- 这叫***使用处型变***，也就是**在声明** ***泛型对象*** **的时候使用 `in` `out`**
+
+> Kotlin 管这个叫***类型投影***，个人没明白这个起名的意义
+
+```kt
+data class Person<T, U> (var first: T, var second: U)
+
+fun duplicate(from: Person<out Any, out Any>): Person<Any, Any> = Person(from.first, from.second)
+
+// 因为我们像让任何类型的 Person 传入，所以形参必须是实参的父类，也就是 Any ，需要 out 来修饰，因为我们只是访问 first 和 second ，所以没有问题
+
+fun main() {
+    val person1 = Person("John", 25)
+    val person2 = duplicate(person1)
+    println(person2)
+}
+```
+
+- 还有一种***声明处型变***，也就是在**声明** ***泛型类（抽象类、接口）*** **的时候使用 `in` `out`**，**表示自己这个类里面所有的方法都是输入或输出的***，这样在使用的时候就无需再使用 `in out` 了
+
+```kt
+abstract class Prosumer <out T> {
+    abstract fun func(): T 
+}
+
+interface Consumer <in T> {
+    fun consume(t: T)
+}
+
+// 每一处使用处都是协变或逆变的，不需要再声明 in out
+```
+
+> **但是使用了声明处型变的类（接口），里面的每一个方法必须遵守声明时的限制**
+
+```kt
+class MyClass <out T> (value: T){
+    val value: T = value
+    
+    var myVar: T = value // 报错，var 属性有 set 方法，与 out 冲突
+    
+    fun myFunction(): T {
+        return value
+    }
+    
+    fun functionWithParam(param: T): T { // 报错，不能使用带有类型参数的函数
+        return param 
+    }
+}
+```
+
+> 如果你有一个类是专门用来输入或输出的，那么就可以使用声明处型变；如果本身尽既包含类型参数作为参数的方法，也有返回类型参数的方法，那么最好还是在使用的时候再去型变
+
+- ***请分清楚泛型型变和泛型的上界约束***，二者完全不同
+
+- 有时候我们对泛型参数并不了解，但仍然想使用它，就可以使用***星号通配符 `<*>` 来表示***，它会如下工作
+
+    1. ***对于 `Foo <out T : TUpper>`***，其中 **T 是一个具有上界 TUpper 的协变类型参数**，`Foo <*>` 等价于 `Foo <out TUpper>`， 意味着当 T 未知时，你***可以安全地从 `Foo <*>` 读取 TUpper 的值***
+
+    2. ***对于 `Foo <in T>`，其中 T 是一个逆变类型参数***，`Foo <*>` 等价于 `Foo <in Nothing>`。 意味着当 T 未知时， ***没有什么可以以安全的方式写入 `Foo <*>`***
+    
+    > 这里 **Nothing 是所有类型的子类**，这是后面的知识点，`in Nothing` 是所有类型，当然不安全，某种意义上可以说 `in Nothing == out Any`
+
+    3. ***对于 `Foo <T : TUpper>`***，其中 **T 是一个具有上界 TUpper 的不型变类型参数**，***`Foo<*>` 对于读取值时等价于 `Foo<out TUpper>` 而对于写值时等价于`Foo<in Nothing>`***
+
+> Kotlin 叫这个星号通配符为***星投影***，***星投影只能用在声明变量时的类型和函数参数这两个使用处***，而不能使用在声明处
+
+> 官网有个示例：对于 `Function1<in T, out U>`  
+> `Function<*, String>` 表示 `Function<in Nothing, String>`  
+> `Function<*, *>` 表示 `Function<in Nothing, out Any?>`  
+> `Function<Int, *>` 表示 `Function<Int, out Any?>`  
+>> 因为 `Function1<in T, out U>` 就是 `Function1<in T, out U: Any?>`
+
+- 还有**下划线 `<_>` 运算符用于省略编译器可以自行推断出的类型参数***
+
+```kt
+fun <T, K, V> func(t: T, k: K, v: V) {
+    println("T: $t, K: $k, V: $v")
+}
+
+fun main() {
+    func<Int , _ , _>(1, "Hello", true)
+}
+```
+
+
+# 第九章：引用和反射
+
+> 这是第一次使用非标准库的特性，记住***本章的所有内容都要导入 `kotlin.reflect` 库***
+
+## 9.1 初识反射
