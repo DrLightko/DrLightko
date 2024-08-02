@@ -1919,7 +1919,7 @@ fun my_func2(Unit: Unit): Int {
 }
 ```
 
-- 好，回到主题，***`::` 表示为此函数创建一个引用对象，这也是 Kotlin 能实现高阶函数的原因，他把函数当作对象包装起来传入函数***
+- 好，回到主题，***`::` 表示为此函数创建一个引用对象（function reference），这也是 Kotlin 能实现高阶函数的原因，他把函数当作对象包装起来传入函数***
 
 >  具体的原理会在后面反射的时候讲到，现在只简单的理解成这是个引用对象就行，可能不太准确
 
@@ -7544,9 +7544,164 @@ fun main() {
 }
 ```
 
+## 8.5 类型别名
+
+- 有时候我们使用的类型名称过长，不便于阅读，Kotlin 提供了***类型别名（type alias），可以给一个类型起一个别名***，方便使用
+
+```kt
+typealias Name = String
+
+fun main() {
+    val name: Name = "Alice"
+}
+```
+
+> 类型别名不区分声明范围，无论声明顺序，整个文件都可以使用，不过一般是放在文件顶部，方便阅读
+
+> 但是***类型别名只能声明在顶层***
+
+- 类型别名经常用于给冗长的泛型类型起别名
+
+```kt
+class Quadruple <T, K, V, R> {
+    var first: T? = null
+    var second: K? = null
+    var third: V? = null
+    var fourth: R? = null
+}
+
+typealias IntQuadruple = Quadruple<Int, Int, Int, Int>
+
+fun main() {
+    val intQuadruple = IntQuadruple()
+    intQuadruple.first = 1
+    println(intQuadruple.first)
+}
+```
+
+- 需要注意的是，***类型别名没有引入新的类型***，他只是在编译时把所有用到类型别名的地方替换为原名
+
+```kt
+
+typealias Name = String
+
+fun printName(name: Name) {
+    println("Hello, $name!")
+}
+
+
+fun main() {
+    val name: String = "John"
+    printName(name)
+    // String 也可以使用参数为 Name 的函数，因为本质上 printName 接收的就是 String 类型
+}
+```
+
+>  包括下面的，虽然顺序错了，但是本质上是一样的
+
+```kt
+typealias MyInt = Int
+typealias YourInt = Int
+
+fun func(num: MyInt, num2: YourInt) {
+    println("num: $num, num2: $num2")
+}
+
+fun main() {
+    val num: MyInt = 10
+    val num2: YourInt = 12
+    
+    func(num2, num)
+}
+```
+
+- ***类型别名可以为能在变量声明时冒号右面出现的类型起别名***，其他的并不行
+
+> 类型别名声明后的标识符**可以用在变量类型声明、泛型参数的上界约束、`is` `as` 转换**
+
+```kt
+// 比如函数类型，是可以声明为变量冒号右面的，这个是比较使用的，因为面对一堆参数声明一般是没有可读性的
+
+typealias MyHandler = (Int, String, Any) -> Unit
+
+typealias Predicate<T> = (T) -> Boolean
+
+// 还有内部类
+
+class A {
+    class Inner
+}
+class B {
+    class Inner
+}
+
+typealias AInner = A.Inner
+typealias BInner = B.Inner
+
+// 单例
+
+object Test {
+    fun doSomething() {
+        println("Hello, world!")
+    }
+}
+
+typealias printSomething = () -> Unit
+typealias Print = Test
+
+fun main() {
+    val doSomething: printSomething = { Print.doSomething() }
+    doSomething()
+}
+
+// 包括带有泛型参数位置的类型别名
+
+class MyClass <T> (val x: T)
+
+typealias MyAlias<T> = MyClass<T>
+
+fun main() {
+    val myAlias: MyAlias<Int> = MyAlias(10)
+    println(myAlias.x)
+}
+
+// 可空类也是可以的，因为它也可以出现在变量声明的右面
+
+class Test (val name: String)
+
+typealias TestAlias = Test?
+
+fun main() {
+    val test: TestAlias = null
+    println(test?.name)
+}
+```
+
+- 你可能会想到 `import as` ，它与类型别名有什么区别吗？
+
+|目标|类型别名|import as|
+|:---:|:---:|:---:|
+|类和接口|✔|✔|
+|可空类|✔|✘|
+|泛型参数未知的泛型类型|✔|✘|
+|有泛型参数的泛型类型|✔|✘|
+|函数类型|✔|✘|
+|枚举|✔|✔|
+|枚举对象|✘|✔|
+|object|✔|✔|
+|object 里的函数|✘|✔|
+|object 里的属性|✘|✔|
+
+- 同样的，类型别名和函数式接口的区别也是，类型别名没有引入新的类型
 
 # 第九章：引用和反射
 
-> 这是第一次使用非标准库的特性，记住***本章的所有内容都要导入 `kotlin.reflect` 库***
+> 这是第一次使用非标准库的特性，记住***本章的大部分内容都要导入 `kotlin.reflect` 库***
 
-## 9.1 初识反射
+- 如果你没有接触过 Java 的反射，简单说反射（reflection）就是***在运行时动态获取类、对象、方法的信息***
+
+## 9.1 函数的引用
+
+> 我们上面说过 Kotlin 能把函数当作一等公民是因为把函数当对象来传递，这倒不假，不过我们这里要更深入了解它的实现机制
+
+- 引入
