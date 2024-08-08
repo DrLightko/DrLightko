@@ -2635,6 +2635,19 @@ fun add(a: Long, b: Long) = a + b + 100
 fun add(a: Double, b: Double) = a + b + 0.001
 ```
 
+- 对于重载函数，传入函数类型的值也是可以自动推断的
+
+```kt
+fun isOld(x: Int) = x > 18
+fun isOld(str: String) = str == "Java" || str == "Android" || str == "Kotlin"
+
+val numbers = arrayListOf(10, 20, 30)
+println(numbers.filter(::isOld)) //调用 isOld(x: Int)
+
+val strs = arrayListOf("Java", "HelloWord", "Tonight")
+println(strs.filter(::isOld)) //调用 isOld(str: String)
+```
+
 
 # 第六章：包和导入
 
@@ -5568,6 +5581,70 @@ class MyClass {
 }
 ```
 
+- 去看编译后的字节码，可以知道其实***伴生对象就是一个静态内部类***，无需外部类的对象就能访问，里面的***每一个伴生对象的成员都是正常的成员而不是静态的***，伴生对象所在的类里面有一个静态成员指向它，***所以伴生对象不是静态成员所在的类而是一个静态单例类，使用的时候就会 new 一个***
+
+```kt
+// Test.kt
+
+class Test {
+    companion object {
+        val a = 1
+    }
+}
+
+fun main() {
+    println(Test.a)
+    println(Test.a)
+    println(Test.a)
+    println(Test.a)
+}
+```
+
+```java
+// Test.java
+
+public final class Test {
+   @NotNull
+   public static final Companion Companion = new Companion((DefaultConstructorMarker)null);
+   private static final int a = 1;
+
+    public static final class Companion {
+      private Companion() {
+      }
+
+      public final int getA() {
+         return Test.a;
+      }
+
+      // $FF: synthetic method
+      public Companion(DefaultConstructorMarker $constructor_marker) {
+         this();
+      }
+   }
+}
+
+
+// TestKt.java
+
+public final class TestKt {
+   public static final void main() {
+      int var0 = Test.Companion.getA();
+      System.out.println(var0);
+      var0 = Test.Companion.getA();
+      System.out.println(var0);
+      var0 = Test.Companion.getA();
+      System.out.println(var0);
+      var0 = Test.Companion.getA();
+      System.out.println(var0);
+   }
+
+   // $FF: synthetic method
+   public static void main(String[] args) {
+      main();
+   }
+}
+```
+
 - 对象表达式和对象声明之间有一个重要的语义差别：
     1. ***对象表达式是在使用他们的地方立即执行（及初始化）的***
     2. ***对象声明是在第一次被访问到时延迟初始化的***
@@ -7700,7 +7777,7 @@ fun main() {
 
 - 如果你没有接触过 Java 的反射，简单说***反射（reflection）就是在运行时动态获取类、对象、方法的信息***
 
-## 9.1 函数的引用
+## 9.1 顶层函数的引用
 
 > 上文中我们讲过 Kotlin 里的函数是一等公民，函数可以当作对象来实现，下面我们对此进行深入探索
 
@@ -7883,7 +7960,7 @@ fun main() {
 
 - 具体每一种 `KFunctionN` 都有哪些方法，可以参考[官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-function/)
 
-## 9.2 类引用
+## 9.2 类的引用
 
 ### 9.2.1 Java 中的反射
 
@@ -7942,79 +8019,47 @@ fun main() {
 }
 ```
 
-- 
+- 这个 Class 类对象有很多方法，***一般来说 `getDeclaredXXX` 方法可以获取类声明的所有成员，甚至 `private` 的，但是无法获取父类继承给自己的，`getXXX` 获取该类所有成员包括从父类继承而来的，但是无法访问 `private` 的***
+
+- ***可以获取 `Field`（属性） `Method`（方法）`Constructor`（构造器）***
+
+> 理论上 Kotlin 应该会自动导入 `java.lang.*` 在 JVM 平台上，可是我发现如果你不显性的声明对象的类型，是可以不导入的；但一旦出现 `Field` `Method` 等词就会说必须导入
+
 ```kt
-// 你没看错这里不需要导入 reflect 包
+import java.lang.reflect.Constructor
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+
 
 data class Person(val name: String, val age: Int) {
 
     fun finalFun() {
-        println("This is a final function")
-    }
-
-    open fun openFun() {
-        println("This is an open function")
+        println("Person is having a final fun")
     }
 
     init {
-        println("This is an init block")
+        println("Person is being initialized")
+    }
+
+    constructor() : this("Default Name", -1) {
+        println("secondary constructor is being called")
+    }
+
+    val tulple = Pair(1, "Hello")
+
+    fun funcWithParam(param: String) {
+        println("Person is having a function with param: $param")
     }
 
     companion object {
-
         fun companionFun() {
-            println("This is a companion function")
+            println("Companion object is having a fun")
         }
+
+        var companionVar = 10
 
         init {
-            println("This is a companion init block")
-        }
-    }
-}
-
-
-fun main() {
-    val clazz = Class.forName("Person")
-    val person = clazz.getConstructor(String::class.java, Int::class.java).newInstance("John", 30)
-
-    for (field in clazz.declaredFields) {
-        println(field.name)
-        field.setAccessible(true)
-        println(field.get(Person("Lisa", 40)))
-    }
-
-    for (method in clazz.declaredMethods) {
-        println(method.name)
-    }
-
-    val func = clazz.getDeclaredMethod("finalFun")
-    func.invoke(person)
-
-}
-```
-
-```kt
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.lang.reflect.Constructor
-
-// 这里需要，因为文中用到了 Field Method Constructor 等等
-
-class Test (val name: String, var age: Int) {
-    
-    fun printName() {
-        println("Name is $name")
-    }
-
-    companion object {
-        val staticName = "Static Name"
-
-        fun printStaticName() {
-            println("Static Name is $staticName")
-        }
-
-        init {
-            println("Init block called")
+            println("Companion object is being initialized")
         }
     }
 }
@@ -8022,25 +8067,83 @@ class Test (val name: String, var age: Int) {
 
 
 fun main() {
-    val test = Test("John", 25)
-    test.printName()
-    Test.printStaticName()
-
-    val clazz: Class<*> = Class.forName("Test")
+    val clazz: Class<*> = Class.forName("Person")
     val fields: Array<Field> = clazz.getDeclaredFields()
-    val methods: Array<Method> = clazz.getDeclaredMethods()
-    val constructors: Array<Constructor<*>> = clazz.getDeclaredConstructors()
-
+    // val fields: Array<Field> = clazz.getFields() 获取所有公开的字段，包括继承而来的字段，注意 Kotlin 默认字段是 private 的
+    // val fields = clazz.getSuperclass().getDeclaredFields() 获取所有父类的字段
     for (field in fields) {
-        println("field name is ${field.name} and type is ${field.type}")
+        println("field name: ${field.name}, type: ${field.type}")
+        // println("field name: ${field.getName()}, type: ${field.getType()}")
+        // 都是可以的
     }
+    println()
 
+    val field = clazz.getDeclaredField("age") // 获取指定字段
+    println(field.name)
+    // val field = clazz.getField("hello") 由于是运行时反射，所以编译时不会报错，而是在运行时抛异常
+    println()
+
+    println(clazz.getDeclaredField("tulple").getGenericType()) // 获取字段的泛型类型，否则是类型擦除后的类型
+    println()
+
+    val methods: Array<Method> = clazz.getDeclaredMethods()
+    // 同上，获取声明的方法
     for (method in methods) {
-        println("method name is ${method.name} and return type is ${method.returnType}")
+        println(method.getName())
     }
+    println()
 
+    val anotations: Array<Annotation> = clazz.getAnnotations()
+    // 获取注解，默认会有一个 MetaData 的注解
+    for (annotation in anotations) {
+        println(annotation)
+    }
+    println()
+
+    val constructors: Array<Constructor<*>> = clazz.getConstructors()
+    // 获取构造方法
     for (constructor in constructors) {
-        println("constructor name is ${constructor.name} and parameter types are ${constructor.parameterTypes}")
+        println(constructor.getName())
+    }
+    println()
+
+    val staticVal: Field = clazz.getDeclaredField("companionVar")
+    staticVal.setAccessible(true)  // 设置为可访问，因为字段默认 private
+    staticVal.setInt(Person(), 99) // 这是直接吧默认值改了，而不是某一个实例的值
+    println(staticVal.getInt(Person()))
+    // 与 Java 真 static 不同，Kotlin 里面的伴生对象里的成员都不是静态的，所以必须给一个外部类的对象
+    // 就像 Java 里的静态内部类，如果访问静态内部类里的静态成员无需实例，但是访问静态内部类的正常成员也是需要实例的
+    println()
+
+    val finalMethod: Method = clazz.getDeclaredMethod("finalFun")
+    finalMethod.invoke(Person()) // 对于每一个类成员的调用，你必须传入一个类的实例作为第一个参数，让他们知道自己是谁的
+    println()
+
+    val funcWithParamMethod: Method = clazz.getDeclaredMethod("funcWithParam", String::class.java) // 参数类型作为第二个
+    funcWithParamMethod.invoke(Person(), "Hello") // 调用带参数的方法，传入参数类型和参数值
+    println()
+
+    val constructor: Constructor<*> = clazz.getConstructor(String::class.java, Int::class.java) // 获取带参数的构造方法
+    // val constructor = clazz.getDeclaredConstructor() // 获取无参数的构造方法
+    val person: Any = constructor.newInstance("Alice", 25) // 注意 person 是 Any 类型，因为是运行时才知道
+    if (person is Person) {
+        // 确保类型安全
+        println(person.name)
+        println(person.age)
+        println()
+        // 也可以通过 clazz.cast() 转换类型，不过由于是运行时才知道 clazz 类型，所以只能对通过字面量获得的类对象有效，像这里的字符串是不行的
+
+        val field = clazz.getDeclaredField("name")
+        field.setAccessible(true)
+        field.set(person, "Bob")
+        // 即便是 private final 字段，也可以直接修改
+        println(person.name)
+        println()
+
+        val method = clazz.getDeclaredMethod("finalFun")
+        method.setAccessible(true)
+        // 可以访问 final (默认都是 final 的)方法，但不可以访问 private 方法和 private final，我也不知道为啥
+        method.invoke(person)
     }
 }
 ```
@@ -8067,11 +8170,149 @@ fun main() {
 
 > 这是 Kotlin 和 Java 里面反射类的组织结构
 
-## 9.3 属性引用
+- 当然也有很多很好用的方法，具体就不细讲了，可以参考[官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/)，里面肯定比我说的详细
 
-### 9.3.1 lazy lateinit
+```kt
+import kotlin.reflect.full.functions
+import kotlin.reflect.jvm.jvmName
 
-### 9.3.2 隐式接收者
+data class Person(val name: String, val age: Int)
 
-# 第十章：集合类
+fun main() {
+    val personK = Person::class
+    personK.isInstance(Person("John", 25)) // 参数是不是该类的实例
+    println(personK.functions)
+    println(personK.jvmName)
+}
+```
 
+## 9.3 成员的引用
+
+### 9.3.1 方法引用
+
+- 要***引用一个类中的方法，使用 `类名::方法名` 的方式，得到的是一个 `KFunctionN` 类型的对象，调用时必须传入一个类的实例作为第一个参数***
+
+> 因为是类中的方法，所以他必须知道是谁在调用我
+
+```kt
+import kotlin.reflect.KFunction2
+
+
+data class Person(val name: String, val age: Int) {
+    fun func(str: String) {
+        println("Hello, $str!")
+    }
+}
+
+
+fun main() {
+    val func: KFunction2<Person, String, Unit> = Person::func
+    func(Person("Alice", 25), "world")
+}
+```
+
+#### 9.3.1.1 扩展函数的引用
+
+- 同理，***扩展函数也可以被引用，引用时也必须传入一个类的实例作为第一个参数，或者显性声明这是个扩展函数的引用函数类型***
+
+```kt
+import kotlin.reflect.KFunction1
+
+fun Int.isEven() = this % 2 == 0
+
+fun main() {
+    val isEven1: Int.() -> Boolean = Int::isEven
+    val isEven2: (Int) -> Boolean = Int::isEven
+    val isEven3: KFunction1<Int, Boolean> = Int::isEven
+    
+    println(12.isEven1())
+    println(isEven2(75))
+    println(isEven3(100))
+}
+```
+
+- 而且对于第一种引用类型，***它既可以作为成员函数调用，也可以作为带有实例参数的普通方法调用***
+
+```kt
+import kotlin.reflect.KFunction1
+
+fun Int.isEven() = this % 2 == 0
+
+fun main() {
+    val isEven1: Int.() -> Boolean = Int::isEven
+    val isEven2: (Int) -> Boolean = Int::isEven
+    val isEven3: KFunction1<Int, Boolean> = Int::isEven
+
+    println(12.isEven1())
+    println(isEven1(12))
+}
+```
+
+- 而且二者还可以互相转换，***你可以把有接收者的函数赋给无接收者的函数，反过来也是可以的***
+
+```kt
+fun Int.isEven() = this % 2 == 0
+
+fun isOdd(n: Int) = n % 2!= 0
+
+fun main() {
+    val fn1: (Int) -> Boolean = Int::isEven
+    val fn2: Int.() -> Boolean = ::isOdd
+    val fn3: (Int) -> Boolean = fn2
+    val fn4: Int.() -> Boolean = fn1
+}
+```
+
+- 那如果***扩展函数同时还是成员函数***呢？这个时候它的调用者又是谁？是他的扩展接收者，还是所在的类？
+
+> 之前讲过的所以扩展函数都是顶层的，这里扩充下知识点
+
+- 这样的话***它既是所在类的成员函数，又是一个 `Int` 的扩展函数***，也就意味着你***只能在 `MyClass` 实例上调用 `isEven()` 方法***，不能在外部 `Int` 实例上调用，因为外部 `Int` 实例访问不到 `isEven()` 方法
+
+```kt
+class MyClass {
+    fun Int.isEven() = this % 2 == 0
+    
+    fun func() {
+        println(4.isEven())
+    }
+}
+
+fun main() {
+    // 4.isEven() 报错
+}
+```
+
+#### 9.3.1.2 隐式的接收者
+
+- 这个***接收者，在 Kotlin 里面叫 `receiver`***，也就是 `this` 差不多，指的是成员所在的类或扩展函数被扩展的类
+
+> 大部分情况下，接收者是可以不写的，除非像内部类嵌套时需要通过 `this@label` 的写法指定接收者，所以也叫***隐式的接收者（implicit receiver）***
+
+- 像上面这样的叫做***双重接收者***，如果真的想要使用它，可以***通过多重嵌套函数的方法同时指定多重接收者***
+
+```kt
+// 1
+
+class MyClass {
+    fun Int.isEven() = this % 2 == 0
+
+    fun func(fn: MyClass.() -> Unit) {
+        fn()
+        // 等于 this.fn() ,隐式的接收者是 MyClass
+    }
+}
+
+fun main() {
+    val myClass = MyClass()
+    myClass.func { // 隐式接收者是 MyClass
+        println(2.isEven()) // 又是 Int 的接收者，同时满足 isEven() 的条件
+    }
+}
+```
+
+#### 9.3.1.3 作用域函数
+
+> 上面所说的特定作用域下的接收者，其实 Kotlin 已经为我们提供了很多方便的语法糖，这些函数的具体使用方法如下
+
+- 有五个
