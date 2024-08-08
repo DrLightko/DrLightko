@@ -7698,10 +7698,380 @@ fun main() {
 
 > 这是第一次使用非标准库的特性，记住***本章的大部分内容都要导入 `kotlin.reflect` 库***
 
-- 如果你没有接触过 Java 的反射，简单说反射（reflection）就是***在运行时动态获取类、对象、方法的信息***
+- 如果你没有接触过 Java 的反射，简单说***反射（reflection）就是在运行时动态获取类、对象、方法的信息***
 
 ## 9.1 函数的引用
 
-> 我们上面说过 Kotlin 能把函数当作一等公民是因为把函数当对象来传递，这倒不假，不过我们这里要更深入了解它的实现机制
+> 上文中我们讲过 Kotlin 里的函数是一等公民，函数可以当作对象来实现，下面我们对此进行深入探索
 
-- 引入
+- 双冒号用于引用一个函数，而*函数类型*的本质就是一个实现了 `kotlin.jvm.functions.FunctionN` 接口的对象，函数体就保存在 `invoke` 里面
+
+```kt
+// JVM 上的 Functions 定义
+
+package kotlin.jvm.functions
+
+/** A function that takes 0 arguments. */
+public interface Function0<out R> : Function<R> {
+    /** Invokes the function. */
+    public operator fun invoke(): R
+}
+
+/** A function that takes 1 argument. */
+public interface Function1<in P1, out R> : Function<R> {
+    /** Invokes the function with the specified argument. */
+    public operator fun invoke(p1: P1): R
+}
+
+/** A function that takes 2 arguments. */
+public interface Function2<in P1, in P2, out R> : Function<R> {
+    /** Invokes the function with the specified arguments. */
+    public operator fun invoke(p1: P1, p2: P2): R
+}
+
+// ``` 一共有 22 个，但不代表你不能使用超过 22 个参数的函数类型
+```
+
+> 所以请看下文
+
+```kt
+// 因为是默认函数类型，所以无需导包
+
+fun func1(str: String) {
+    println("Hello, $str!")
+}
+
+fun func2(func: (String) -> Unit) {
+    func("Kotlin")
+}
+
+fun main() {
+    val func3 = ::func1
+    func2(func3)
+    func2.invoke("Python")
+    
+    val func4: Function1<String, Unit> = ::func1
+    // Functions1 表示该函数类型有一个参数，有几个参数就是 Function 几
+    // 泛型参数里的类型，最后一个是函数返回值类型，前面的都是函数参数的类型，顺序不能错
+    // func4 和 func2 是一样的
+    func4("Java")
+    func4.invoke("CPP")
+    // func1.invoke 同理，func2 就 func 4 的函数体就保存在 invoke 里面，但是普通函数 func1 没有
+}
+```
+
+- 所谓***函数类型的对象，其实也是 SAM 类型***，只不过 Kotlin 原生提供了支持，它们的***函数体都保存在 `invoke` 方法***里，而且 **`invoke` 可以重载**，所以你也可以对一个类的对象像是使用函数一样调用
+
+```kt
+data class User (val name: String, val age: Int) {
+    operator fun invoke(greeting: String) {
+        println("$greeting, my name is $name and I am $age years old.")
+    }
+}
+
+fun main() {
+    val user = User("John", 30)
+    user("Hello")
+    // 注意是 user 对象可以直接调用，而不是 User
+}
+```
+
+> 还有骚操作
+
+```kt
+// 一般写法
+
+interface SAM {
+    fun func() 
+}
+
+
+fun main() {
+    val sam = object : SAM {
+        override fun func() {
+            println("Hello, world!")
+        }
+    }
+
+    sam.func()
+}
+
+// invoke 写在伴生对象里面也是可以的，只要他不访问类
+
+interface SAM {
+    fun func()
+
+    companion object {
+        operator fun invoke(f: () -> Unit): SAM {
+            return object : SAM {
+                override fun func() {
+                    f()
+                }
+            }
+        }
+    }
+}
+
+
+fun main() {
+    val sam = SAM { println("Hello, world!") }
+    /* 等于
+    val sam = SAM.invoke() {
+        println("Hello, world!")
+    }
+    */
+
+    sam.func()
+}
+```
+
+- 还可以**声明 `FunctionN` 接口的实现对象，重载 `invoke` 方法**，实现自己的函数类型
+
+```kt
+fun main() {
+    val func:Function1<String, Unit> = object : Function1<String, Unit> {
+        override fun invoke(p1: String) {
+            println("Hello, $p1!")
+        }
+    }
+
+    func("Kotlin")
+
+    // 函数类型的对象本质上也是这样
+}
+```
+
+- 引入 `kotlin.reflect.*` 后，我们还可以***使用 `KFunction` 当作函数类型对象的类型***，它提供了更多在运行时可以与函数互动的操作，***`KFunctionN` 和`FunctionN` 兼容，可以互相转换***
+
+```kt
+import kotlin.reflect.KFunction1
+// 或者 import kotlin.reflect.* 不然的话每一种参数的函数都要导入
+
+fun func1(str: String) {
+    println("Hello, $str!")
+}
+
+fun func2(str: String, func: (String) -> Unit) {
+    func(str)
+}
+
+
+fun func3(str: String, func: KFunction1<String, Unit>) {
+    println("func is a ${if (func.isFinal) "final" else "open"} function")
+    // 是否 open 或者 final 等信息
+
+    println("func name is ${func.name}")
+    // 函数名
+
+    println("enter the argument:")
+    func.call(readln())
+    // 调用函数，类似 invoke
+}
+
+fun main() {
+    val func: KFunction1<String, Unit> = ::func1
+    func2("Kotlin", func)
+
+    func3("Reflection", func)
+    func3("Reflect", ::func1 as KFunction1<String, Unit>)
+
+    func.invoke("1")
+    func.call("2")
+    // 都是可以的
+}
+```
+
+- 具体每一种 `KFunctionN` 都有哪些方法，可以参考[官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-function/)
+
+## 9.2 类引用
+
+### 9.2.1 Java 中的反射
+
+> 因为**反射是在运行时动态反射**，而 Kotlin 是一门 JVM 语言，所以 ***Java 里的反射 API 也适用于 Kotlin***
+
+> 如果对 Java 的反射不了解的话，可以看[Reflecting in Java](https://www.bilibili.com/video/BV1K4421w7zP/)，这位老哥讲的很清楚，因为这里是 Kotlin 所以就不过多讲解了
+
+- 要想在 Kotlin 里获得一个类的类引用，使用 ***`类名::class` 的方法，返回一个 `KClass` 对象***，如果想要使用 Java 的类对象，可以使用 ***`类名::class.java` 方法，返回的是 `java.lang.Class` 对象，对它可以使用 Java 的反射 API 来操作***
+
+> Kotlin 这里反射的 API 明显不如 Java 丰富，大部分情况下需要使用 ***`Java CLass` 和 `KClass`*** 互相转换，***二者都可以通过 `.java` `.kotlin` 互相转换***
+
+- **一个 `Class` 对象是虚拟机在运行时保存的类的信息，每一个类都有自己的类对象，要想使用 Java 的方式获取类对象，有如下三种方法**
+
+```kt
+data class Person(val name: String, val age: Int) {
+
+    fun finalFun() {
+        println("This is a final function")
+    }
+
+    open fun openFun() {
+        println("This is an open function")
+    }
+
+    init {
+        println("This is an init block")
+    }
+
+    companion object {
+
+        fun companionFun() {
+            println("This is a companion function")
+        }
+
+        val companionVal = "This is a companion val"
+
+        init {
+            println("This is a companion init block")
+        }
+    }
+}
+
+
+fun main() {
+    val personClass1: Class<Person> = Person::class.java
+    // 等于 Class<Person> personClass1 = Person.class; 这个泛型参数里的类型是 Person，因为在编译时可知
+    println()
+
+    val person = Person("John", 25)
+    val personClass2: Class<Person> = person.javaClass
+    // 等于 CLass<?> personClass2 = person.getClass(); 这个是通过已有实例的方法获取它的类对象，注意到 Kotlin 这边 Class 的泛型类型是可知的
+
+    println()
+    val personClass3: Class<*> = Class.forName("Person")
+    // 泛型参数里的 * 表示不知道具体的类型，因为在运行时才知道具体的类型，所以只能用 out Any 作为参数类型
+}
+```
+
+- 
+```kt
+// 你没看错这里不需要导入 reflect 包
+
+data class Person(val name: String, val age: Int) {
+
+    fun finalFun() {
+        println("This is a final function")
+    }
+
+    open fun openFun() {
+        println("This is an open function")
+    }
+
+    init {
+        println("This is an init block")
+    }
+
+    companion object {
+
+        fun companionFun() {
+            println("This is a companion function")
+        }
+
+        init {
+            println("This is a companion init block")
+        }
+    }
+}
+
+
+fun main() {
+    val clazz = Class.forName("Person")
+    val person = clazz.getConstructor(String::class.java, Int::class.java).newInstance("John", 30)
+
+    for (field in clazz.declaredFields) {
+        println(field.name)
+        field.setAccessible(true)
+        println(field.get(Person("Lisa", 40)))
+    }
+
+    for (method in clazz.declaredMethods) {
+        println(method.name)
+    }
+
+    val func = clazz.getDeclaredMethod("finalFun")
+    func.invoke(person)
+
+}
+```
+
+```kt
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.lang.reflect.Constructor
+
+// 这里需要，因为文中用到了 Field Method Constructor 等等
+
+class Test (val name: String, var age: Int) {
+    
+    fun printName() {
+        println("Name is $name")
+    }
+
+    companion object {
+        val staticName = "Static Name"
+
+        fun printStaticName() {
+            println("Static Name is $staticName")
+        }
+
+        init {
+            println("Init block called")
+        }
+    }
+}
+
+
+
+fun main() {
+    val test = Test("John", 25)
+    test.printName()
+    Test.printStaticName()
+
+    val clazz: Class<*> = Class.forName("Test")
+    val fields: Array<Field> = clazz.getDeclaredFields()
+    val methods: Array<Method> = clazz.getDeclaredMethods()
+    val constructors: Array<Constructor<*>> = clazz.getDeclaredConstructors()
+
+    for (field in fields) {
+        println("field name is ${field.name} and type is ${field.type}")
+    }
+
+    for (method in methods) {
+        println("method name is ${method.name} and return type is ${method.returnType}")
+    }
+
+    for (constructor in constructors) {
+        println("constructor name is ${constructor.name} and parameter types are ${constructor.parameterTypes}")
+    }
+}
+```
+
+### 9.2.2 Kotlin 中的反射
+
+- 上面说了，***使用 `类名::class` 就能获得 `KClass` 类型的对象***，因为有类型推断的存在，很多时候我们不需要显式地声明类型，也不用管具体是不是编译时才可知
+
+- 这个 **`KClass` 里面只有一些简单的判断某个类是不是 Kotlin 里面的特殊类的方法**
+
+```kt
+import kotlin.reflect.KClass
+
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    val personClass = Person::class
+    println(personClass.simpleName)
+    println(personClass.isData)
+}
+```
+
+![](https://i-blog.csdnimg.cn/blog_migrate/385f77981f408b9c5a975c7d129aa9d4.png)
+
+> 这是 Kotlin 和 Java 里面反射类的组织结构
+
+## 9.3 属性引用
+
+### 9.3.1 lazy lateinit
+
+### 9.3.2 隐式接收者
+
+# 第十章：集合类
+
