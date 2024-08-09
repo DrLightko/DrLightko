@@ -59,7 +59,7 @@ fun main() {
 
 - 这是 Kotlin 里面 Hello World 的写法，确实**相比 Java 来说简洁很多**，而且像是**函数式编程**（functional programming）
 
-- 首先，***fun 用于声明一个函数，main 函数是程序的入口***，在函数章之前所有的语句都写在 main 里面，**函数的正文写在大括号里面**
+- 首先，***`fun` 关键字用于声明一个函数，main 函数是程序的入口***，在函数章之前所有的语句都写在 main 里面，**函数的正文写在大括号里面**
 
 > 见过 def、func、fn 和函数类型开头的，没见过用 fun 声明的
 
@@ -2635,17 +2635,24 @@ fun add(a: Long, b: Long) = a + b + 100
 fun add(a: Double, b: Double) = a + b + 0.001
 ```
 
-- 对于重载函数，传入函数类型的值也是可以自动推断的
+- 如果***要引用一个重载的函数，则必须要知道匹配这个具体参数的重载函数***，如果无法知道的话会报错
 
 ```kt
-fun isOld(x: Int) = x > 18
-fun isOld(str: String) = str == "Java" || str == "Android" || str == "Kotlin"
+fun func(str: String) { println(str) }
 
-val numbers = arrayListOf(10, 20, 30)
-println(numbers.filter(::isOld)) //调用 isOld(x: Int)
+fun func() { println("Hello, World!") }
 
-val strs = arrayListOf("Java", "HelloWord", "Tonight")
-println(strs.filter(::isOld)) //调用 isOld(str: String)
+fun funcNeedFunc(func: () -> Unit) { func() }
+
+fun funcNeedFunc(func: (String) -> Unit) { func("Hello, Kotlin!") }
+
+fun main() {
+    // val fn = ::func 报错
+    // funcNeedFunc(::func) 报错
+    funcNeedFunc { it: String -> println("Hello, $it!") }
+    funcNeedFunc(fun () { println("Hello Java!") })
+    // funcNeedFunc { println("Hello, Kotlin!") } 报错
+}
 ```
 
 
@@ -5470,7 +5477,7 @@ class SingletonClass(name: String) {
 ```
 > 到此，Kotlin 里面为了使用顶层声明、对象声明和伴生对象彻底干掉了 static 关键字
 
-> 还有一点，对于 `val` 的静态变量，可以声明为 `const val`，这点上面讲过只不过那时候还只能声明在顶层，现在多了两个选择，声明在对象声明里和伴生对象里，这三种情况下都是静态的
+> 还有一点，对于 `val` 的静态变量，可以声明为 ***`const val`***，这点上面讲过只不过那时候还只能***声明在顶层***，现在多了两个选择，***声明在对象声明里和伴生对象里***，这三种情况下都是静态的
 
 - 上面说过，`object` 声明的单例类，一旦访问其中的成员就会初始化，而且不能有普通成员，现在有了 `companion object` 之后可以对其改进
 
@@ -5581,7 +5588,13 @@ class MyClass {
 }
 ```
 
-- 去看编译后的字节码，可以知道其实***伴生对象就是一个静态内部类***，无需外部类的对象就能访问，里面的***每一个伴生对象的成员都是正常的成员而不是静态的***，伴生对象所在的类里面有一个静态成员指向它，***所以伴生对象不是静态成员所在的类而是一个静态单例类，使用的时候就会 new 一个***
+- 去看编译后的字节码，可以知道其实***伴生对象就是一个静态内部类***，无需外部类的对象就能访问
+
+- ***伴生对象的属性的字段是静态字段，保存在伴生对象所在的类当中，但是该字段的 `get` 方法位于伴生对象里***，所以需要一个类才能去访问这个静态字段
+
+- ***伴生对象的方法直接位于伴生对象所在的静态内部类，但是它不是静态的***，你也需要构一个类才能去使用它，唯一的例外是 ***`init {}` ，它仍然是静态初始化块***
+
+- 伴生对象所在类有一个静态字段指向一个 `new` 出来的伴生对象，每一次调用伴生对象里的成员时都是在访问同一个静态内部类的实例，所以***伴生对象也是单例***
 
 ```kt
 // Test.kt
@@ -5644,6 +5657,10 @@ public final class TestKt {
    }
 }
 ```
+
+- ***位于顶层的函数和属性，其位于 `文件名kt.class` 里，都是静态的***，无论字段还是访问器
+
+> 又多了一个不使用伴生对象的理由
 
 - 对象表达式和对象声明之间有一个重要的语义差别：
     1. ***对象表达式是在使用他们的地方立即执行（及初始化）的***
@@ -8186,9 +8203,7 @@ fun main() {
 }
 ```
 
-## 9.3 成员的引用
-
-### 9.3.1 方法引用
+## 9.3 方法的引用
 
 - 要***引用一个类中的方法，使用 `类名::方法名` 的方式，得到的是一个 `KFunctionN` 类型的对象，调用时必须传入一个类的实例作为第一个参数***
 
@@ -8211,9 +8226,11 @@ fun main() {
 }
 ```
 
-#### 9.3.1.1 扩展函数的引用
+### 9.3.1 扩展函数的引用
 
-- 同理，***扩展函数也可以被引用，引用时也必须传入一个类的实例作为第一个参数，或者显性声明这是个扩展函数的引用函数类型***
+- 同理，***扩展函数也可以被引用，也是 `被扩展类::扩展函数名` 的格式，引用时也必须传入一个类的实例作为第一个参数，或者显性声明这是个扩展函数的引用函数类型***
+
+> 就跟成员函数的引用一样，我要知道是谁在调用我
 
 ```kt
 import kotlin.reflect.KFunction1
@@ -8283,7 +8300,7 @@ fun main() {
 }
 ```
 
-#### 9.3.1.2 隐式的接收者
+### 9.3.2 隐式的接收者
 
 - 这个***接收者，在 Kotlin 里面叫 `receiver`***，也就是 `this` 差不多，指的是成员所在的类或扩展函数被扩展的类
 
@@ -8311,7 +8328,7 @@ fun main() {
 }
 ```
 
-#### 9.3.1.3 作用域函数
+### 9.3.3 作用域函数
 
 > 上面所说的特定作用域下的接收者，其实 Kotlin 已经为我们提供了很多方便的语法糖，这些函数的具体使用方法如下
 
@@ -8459,7 +8476,7 @@ fun main() {
 
 - 区别在于 ***`run` 返回的是 `lambda` 的返回值***，而 ***`apply` 返回的是调用对象本身***
 
-- ***`apply` 只能作为扩展函数调用***，但是 ***`run` 既可以作为扩展也可以作为接受调用者的普通函数来使用***
+- ***`apply` 只能作为扩展函数调用***，但是 ***`run` 既可以作为扩展也可以作为普通的单参数 `lambda` 函数来使用***
 
 ```kt
 
@@ -8497,6 +8514,8 @@ fun main() {
     println("Final person: $person")
 }
 ```
+
+> 注意 `run` 单独拿来使用的时候，不像 `with` 一样能有接收者，只能用一个 `lambda` 传给他作为它唯一的参数
 
 - 因为 ***`apply` `also`  返回的是调用对象本身，所以你可以链式调用***，比如如下
 
@@ -8548,3 +8567,319 @@ fun main() {
     println(adam)
 }
 ```
+
+> 需要注意的，上文所有的作用域函数因为都能拿到对象的引用，所以他是真的在修改对象的成员，而不是只返回一个新的对象，如果不明白的话看上面说过的传值引用
+
+- 还有 `takeIf` `takeUnless` 这两个扩展函数，有的时候我们想对经过链式调用的对象做一些简单的 `if` 判断，但又不想新建一个临时变量，可以使用他们
+
+- ***`takeIf` 接受一个 `lambda` 表达式作为参数，如果 `lambda` 返回 `true` 则返回对象本身，否则返回 `null`，注意要进行安全调用 `?.`***
+
+- ***`takeUnless` 相反，如果 `lambda` 返回 `false` 则返回对象本身，否则返回 `null`***
+
+```kt
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    val person = Person("John", 25)
+    person.run {
+        age
+    }.takeIf {
+        it % 2 == 0
+    }?. run {
+        println("this guy's age is even")
+    }
+}
+```
+
+> 这样看起来更优雅了不是？不过看代码的人就要疯了，用的时候注意可阅读性就好
+
+- 讲了这么多，回到我们一开始的问题，对于有双重接受者的扩展函数，你也可以这样调用
+
+```kt
+class MyClass {
+    fun Int.isEven() = this % 2 == 0
+}
+
+fun main() {
+    val myClass = MyClass()
+    println("10 is even? ${
+        myClass.run {  // 隐式接收者是 MyClass
+            with (23) { // 显式接收者是 Int
+                isEven() // 同时满足
+            }
+        }
+    }")
+}
+```
+
+### 9.3.4 构造函数的引用
+
+- **构造函数本质上就是一个接受构造参数，返回类对象的函数**，想要***引用构造，使用 `::类名` 的写法***
+
+> 构造函数也是 `KFunctionN` 类型
+
+```kt
+data class Person(var name: String, var age: Int) {
+    constructor() : this("Default Name", 0)
+}
+
+fun makePerson(name: String, age: Int, func: (String, Int) -> Person): Person {
+    val person = func(name, age).apply {
+        println("Person has been created with name: $name and age: $age")
+        this.name = "Updated Name"  // 因为 name 和函数参数冲突了，本地优先他会以为我要修改函数参数，后者在 Kotlin 里面是 val 的
+        this.age += 10
+    }
+
+    return person
+}
+
+fun main() {
+    val person = makePerson("Harsh", 25, ::Person).apply {
+        println("Person has been updated with name: $name and age: $age")
+    }
+}
+```
+
+> 说实话这个作用域函数真爽，相见恨晚
+
+- ***引用构造函数时必须显性的声明构造函数的参数***，不支持引用重载
+
+```kt
+data class Person(var name: String, var age: Int) {
+    constructor() : this("Default Name", 0) {
+        println("Person has been created with default values")
+    }
+    
+    init {
+        if (name != "Default Name" || age!= 0) println("Person has been initialized with non-default values")
+    }
+}
+
+
+fun main() {
+    val cst1: (String, Int) -> Person = ::Person
+    val cst2: () -> Person = ::Person
+    // val cst3 = ::Person 报错，因为重载
+}
+```
+
+- Kotlin 里的 **`KClass` 有一个 `primaryConstructor` 属性，可以拿到类的主构造函数**，不用手动判断了
+
+```kt
+import kotlin.reflect.KClass
+import kotlin.reflect.full.primaryConstructor
+
+data class Person(val name: String, val age: Int) {
+    constructor() : this("Default Name", 0)
+}
+
+fun main() {
+    val kclass: KClass<Person> = Person::class
+    println(kclass.primaryConstructor)
+}
+```
+
+## 9.4 属性的引用
+
+- 要想***引用一个类中的属性，使用 `类名::属性名` 的方式***，因为 Kotlin 的属性都自动封装了 `getter` 和 `setter`，所以本质上跟 `KFunction` 也差不多
+
+- 如果该属性是不可变变量 `val`，这样返回一个 ***`KProperty` 对象，他跟 `KFunction` 一样继承了 `KCallable` 接口***，都属于可调用
+
+```kt
+import kotlin.reflect.KProperty1
+
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    val kName: KProperty1<Person, String> = Person::name
+    // KProperty1说明有一个参数，类型是 Person，返回值是 String
+    println(kName.get(Person("Alice", 25)))
+}
+```
+
+- 当我们对一个 ***`KClass` 调用 `members` 属性时返回的就是一个 `Collection<KCallable<*>>` 的集合，里面包括了所有可调用的方法，也包括属性的访问器***
+
+```kt
+import kotlin.reflect.KClass
+
+data class Person(val name: String, var age: Int)
+
+fun main() {
+    val kclass: KClass<Person> = Person::class
+    for (f in kclass.members) {
+        println(f.name)
+    }
+}
+```
+
+- 注意到 ***`KProperty` 一共有 `KProperty0` `KProperty1` `KProperty2` 三种实现***，其中 ***`KProperty1` 对应着普通类中属性的引用***，唯一的参数就是调用者对象，***`KProperty0`  对应着顶层属性和伴生对象属性的引用***，他们不需要调用者，***`KProperty2` 对应着有双重接收者属性的引用***
+
+> `KProperty2` 比较特殊，一般情况下你是不能引用一个双重接收者的函数的，同样也不能引用位于类中的扩展属性，不知道有没有人知道怎样才能引用
+
+```kt
+// 普通扩展属性的引用
+
+val String.lastChar: Char
+    get() = this[length - 1]
+
+fun main() {
+    println(String::lastChar.get("abc"))
+}
+```
+
+- ***引用一个顶层属性，使用 `::属性名`*** 的写法，***引用一个伴生对象里的属性跟引用正常属性格式相同***
+
+> 其实 `KProperty0` 引用的都是静态属性
+
+```kt
+import kotlin.reflect.KProperty0
+import kotlin.reflect.KProperty1
+import kotlin.reflect.KProperty2
+
+data class Person(val name: String, val age: Int) {
+    val String.lastchar
+        get() = this[length - 1]
+
+    companion object {
+        val nameC = "23312"
+    }
+}
+
+val nameTop = "John"
+
+fun main() {
+    val nameK: KProperty1<Person, String> = Person::name
+    val topK: KProperty0<String> = ::nameTop
+    val nameC: KProperty0<String> = Person::nameC
+}
+```
+
+- ***对于 `KProperty0` 可以直接取值，而 `KProperty1` 需要传入接收者对象***
+
+```kt
+import kotlin.reflect.KProperty0
+import kotlin.reflect.KProperty1
+import kotlin.reflect.KProperty2
+
+data class Person(val name: String, val age: Int) {
+    val String.lastchar
+        get() = this[length - 1]
+
+    companion object {
+        val nameC = "23312"
+        fun doSomething() {
+            println("do something")
+        }
+
+        init {
+            println("static init")
+        }
+    }
+}
+
+val nameTop = "John"
+
+fun doSomething(name: String) {
+    println(name)
+}
+
+fun main() {
+    val nameK: KProperty1<Person, String> = Person::name
+    val topK: KProperty0<String> = ::nameTop
+    val nameC: KProperty0<String> = Person::nameC
+    println() // static init 初始化
+
+    println(nameC.get())
+    println(nameTop)
+    println(nameK.get(Person("Alice", 25)))
+}
+```
+
+- 如果是***可变变量 `var` ，则这个属性类型是 `KMutablePropertyN`，会多一个 `set` 方法***
+
+```kt
+import kotlin.reflect.KMutableProperty1
+
+data class Person(val name: String, var age: Int)
+
+fun main() {
+    val person = Person("John", 25)
+    val ageK: KMutableProperty1<Person, Int> = Person::age
+
+    println(ageK.isConst)
+    println(ageK.isFinal)
+    // 还有很多操作
+    
+    ageK.set(person, 30)
+    println(person.age)
+}
+```
+
+> 具体 `KProperty` 的方法，请看[官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/)，这里不对每一种进行讲解
+
+## 9.5 参数的引用
+
+- ***对 `KCallable` 使用 `parameters` 属性可以拿到它的所有参数，返回的是一个 `KParameter` 的集合，可以查看函数的参数信息***
+
+> [KCallable 官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/)
+
+- Kotlin 把***参数分为三类，分别是函数的参数 `KParameter`、函数的返回值 `KType` 和泛型的类型参数 `KTypeParameter`***
+
+```kt
+import kotlin.reflect.KClass
+import kotlin.reflect.KCallable
+
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    val kc: KClass<Person> = Person::class
+    for (m in kc.members) {
+        print("${m.name} -> ")
+        for (p in m.parameters) 
+            print("${p.type}\t")
+        println()
+    }
+}
+```
+
+> [KParameter 官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-parameter/)
+
+```kt
+import kotlin.reflect.KClass
+import kotlin.reflect.KCallable
+
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    val kc: KClass<Person> = Person::class
+     for (m in kc.members) {
+         println("${m.name} return ${m.returnType}")
+     }
+}
+```
+
+> [KType 官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-type/)
+
+```kt
+import kotlin.reflect.KClass
+import kotlin.reflect.KCallable
+
+data class Person <T> (val name: String, val age: T) {
+    fun <K> doSomething(k: K) {
+        println("Doing something with $name and $age, and $k")
+    }
+}
+
+fun main() {
+    val kc: KClass<Person<*>> = Person::class
+     for (m in kc.members) {
+         println("${m.name} typeParameters: ${m.typeParameters}")
+     }
+}
+```
+
+> [KTypeParameter 官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-type-parameter/)
+
+## 9.6 lazy 
+
+## 9.7 绑定的引用
