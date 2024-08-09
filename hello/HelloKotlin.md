@@ -8315,4 +8315,236 @@ fun main() {
 
 > 上面所说的特定作用域下的接收者，其实 Kotlin 已经为我们提供了很多方便的语法糖，这些函数的具体使用方法如下
 
-- 有五个
+- Kotlin 标准库包含多个函数，其唯一目的是***在对象的上下文中执行代码块***。当您在提供 lambda 表达式的对象上调用此类函数时，它会形成一个临时作用域，***在此范围内，您可以访问不带其名称的对象***，此类函数称为***作用域函数***
+
+> 如以下例子：
+
+```kt
+data class Person(var name: String, var age: Int, var city: String) {
+    fun moveTo(newCity: String) { city = newCity }
+    fun incrementAge() { age++ }
+}
+
+fun main() {
+    Person("Alice", 20, "Amsterdam").let {
+        println(it)
+        it.moveTo("London")
+        it.incrementAge()
+        println(it)
+    }
+}
+```
+
+- 一共有***五个作用域函数，`let` `also` `run` `with` `apply`，他们接受一个 `lambda` 表达式作为参数，并返回一个值***
+
+- 这些函数都是在对对象执行 `lambda` 里面的代码，唯一***不同的点在于对象的格式，和 `lambda` 的返回值***
+
+|名称|对象引用的名称|返回值|是扩展函数?|
+|----|:----:|:----:|:----:|
+|`let`|it|Lambda 表达式的返回值|是|
+|`run`|this|Lambda 表达式的返回值|是|
+|`run`||Lambda 表达式的返回值|否，可以不带上下文时调用|
+|`with`|this|Lambda 表达式的返回值|否，将上下文对象作为参数|
+|`apply`|this|调用对象|是|
+|`also`|it|调用对象|是|
+
+- ***`let` 和 `also` 接受的 `lambda` 参数里可以不用对每一次调用都做非空判断***，直接使用 `it.成员` 调用即可，区别在于二者 ***`let` 返回 `lambda` 的最后一行表达式作为返回值***，而 ***`also` 返回扩展函数的接收者本身***
+
+```kt
+data class Person(var name: String, var age: Int)
+
+fun Person.doSomething(func: (it: Person) -> Unit) {
+    func(this)
+}
+
+fun main() {
+    val person = Person("Alice", 30)
+
+    // 使用 let
+    val resultLet = person.let {
+        println("Inside let: ${it.name}, ${it.age}")
+        it.age
+        // it?.age 无需作非空判断
+    }
+    println("Result of let: $resultLet")  // 输出: Result of let: 35
+
+    // 使用 also
+    val resultAlso = person.also {
+        println("Inside also: ${it.name}, ${it.age}")
+        // also 返回调用它的对象
+    }
+    println("Result of also: ${resultAlso.name}, ${resultAlso.age}")  // 输出: Result of also: Alice, 30
+
+    val nullPerson: Person? = null
+
+    // 如果不使用 let，每一此调用都需要 ?. 进行非空判断
+    println("Before using let: ${nullPerson?.name}, ${nullPerson?.age}")
+    println("Before using let: ${nullPerson?.name}, ${nullPerson?.age}")
+
+
+    val resultLetNull = nullPerson?.let {
+        println("Inside let: ${it.name}, ${it.age}")
+        println("Inside let: ${it.name}, ${it.age}")
+        // it?.age 无需作非空判断
+    }
+    println(resultLetNull)
+
+    // 因为 ?. 是非空就不执行，所以上面的 let 根本不会执行（返回了 null），但是下面的 let 会执行，可是里面又必须非空检测
+    nullPerson.let {
+        println("Inside let: ${it?.name}, ${it?.age}")
+    }
+
+    // 类似如下
+    nullPerson?.doSomething {
+        println("Inside doSomething: ${it.name}, ${it.age}")
+    }
+}
+```
+
+- `it` 只是 `lambda` 默认的单参数参数名，你也可以自定义
+
+```kt
+data class Person(var name: String, var age: Int)
+
+fun main() {
+    val person = Person("Alice", 25)
+
+    person.let { value: Person ->
+        println("Name: ${value.name}, Age: ${value.age}")
+    }
+}
+```
+
+- 除了传递 `lambda` ，还***可以传递函数引用***
+
+```kt
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    val person = Person("John", 25)
+    person.let(::println)
+    person.let { println(it) }
+    // person.let { ::println } ，这是不行的
+}
+```
+
+- ***`with` 把调用对象作为参数，传给 `lambda` 的参数是隐式的 `this`，所以使用的时候可以直接拿成员名称调用，同样把 `lambda` 的返回值作为返回值***
+
+```kt
+data class Person(var name: String, var age: Int)
+
+fun main() {
+    val person = Person("John", 25)
+
+    with(person) {
+        println("Name: $name, Age: $age")
+        // 等于如下，this 是隐式的接收者，相当于是在类里面使用
+        println("Name: ${this.name}, Age: ${this.age}")
+    }
+
+    val nullPerson: Person? = null
+
+    println(with(nullPerson) {
+        println("Name: ${this?.name}, Age: ${this?.age}")
+        // 不具备非空判断功能，直接用会报空指针异常
+
+        this?.name ?: "null name"
+    })
+}
+```
+
+> 一般 `with` 会用在不返回值的地方，把要一系列调用的成员放在 `with` 里面同意调用
+
+- ***`run` 和 `apply` 这两个函数相当于 `let + with` `also + with`，不需要作非空判断，里面可以直接调用对象的方法（隐式的 `this`）***
+
+- 区别在于 ***`run` 返回的是 `lambda` 的返回值***，而 ***`apply` 返回的是调用对象本身***
+
+- ***`apply` 只能作为扩展函数调用***，但是 ***`run` 既可以作为扩展也可以作为接受调用者的普通函数来使用***
+
+```kt
+
+data class Person(var name: String?, var age: Int?)
+
+fun main() {
+    val person = Person("Alice", 30)
+
+    // 使用 run
+    val resultRun = person.run {
+        println("Inside run: $name, $age")
+        age = 31
+        age
+    }
+    println("Result from run: $resultRun")
+
+    // 使用 apply
+    val resultApply = person.apply {
+        println("Inside apply: $name, $age")
+        age = 32
+    }
+    println("Result from apply: $resultApply")
+
+    val complexNumber = run {
+        // run 还可以作为单独的表达式，这就很适合单个表达式无法声明的变量赋值，需要声明一些临时的变量
+        
+        val n = 1.0
+        val m = 2.0
+
+        n + m
+    }
+    println("Complex number: $complexNumber")
+
+    // 打印最终的 person 对象
+    println("Final person: $person")
+}
+```
+
+- 因为 ***`apply` `also`  返回的是调用对象本身，所以你可以链式调用***，比如如下
+
+> `also` 基本上也就用在链式调用的地方，逻辑清晰
+
+```kt
+data class NumBox<T : Number>(var value: T) {
+    fun add(t: T) {
+        value += t
+    }
+}
+
+
+operator fun <T : Number> Number.plus(other: T): T {
+    return when (this) {
+        is Int -> this + other.toInt()
+        is Double -> this + other.toDouble()
+        is Float -> this + other.toFloat()
+        is Long -> this + other.toLong()
+        is Short -> this + other.toShort()
+        is Byte -> this + other.toByte()
+        else -> 0
+    } as T
+}
+
+fun main() {
+    val nb = NumBox(1)
+    nb.also { println(it)
+    }.apply {
+        add(2)
+        add(3)
+        add(4)
+    }.also { println(it) }
+}
+```
+
+> `run` 用在既返回值又初始化对象的地方很好用
+
+> `apply` 一般使用在对象配置的时候，不需要返回其他值的地方
+
+```kt
+data class Person(var name: String, var age: Int = 0, var city: String = "")
+
+fun main() {
+    val adam = Person("Adam").apply {
+        age = 32
+        city = "London"        
+    }
+    println(adam)
+}
+```
