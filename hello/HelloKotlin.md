@@ -11,8 +11,10 @@
  
 ## 1.1 简介
  
-- Kotlin 是由著名的 ***Jet Brains 公司开发***，是一门***基于 `JVM` 的高级静态强类型语言***（JVM-based, high-level, statically-typed language），融入了他们对于 Java 语言的改进与想法，并且与 Java 无缝兼容。***Kotlin 继承了 Java 的优点的同时还拥有了一些高级语言的新功能***，最重要的是 Kotlin ***对于安卓开发有着重要的作用***，所以文章后面会有**跨平台图形界面**的内容，笔者与大家一块学习
- 
+- Kotlin 是由著名的 ***Jet Brains 公司开发***，是一门***基于 `JVM` 的高级静态强类型语言***（JVM-based, high-level, statically-typed language），融入了他们对于 Java 语言的改进与想法，并且与 Java 无缝兼容。***Kotlin 继承了 Java 的优点的同时还拥有了一些高级语言的新功能***
+
+- 本文为了保证受众面广所以不会只针对安卓开发的 Kotlin 讲解，而是相对全面的介绍 Kotlin 的基础知识和官方库，所以可以放心观看，每一个使用到的 API 都会标明
+
 ## 1.2 安装
  
 1. 在 Github 上面的 [Kotlin](https://github.com/JetBrains/kotlin/releases) 编译器仓库下载最新版，Kotlin 基于 JVM，所以你必须要有 [JDK](https://learn.microsoft.com/zh-cn/java/opKotlinKotlin enjdk/download) 才行，这个微软打包的版本，你也可以到 OpenJDk 官网下载
@@ -3518,33 +3520,6 @@ public val table: Map<String, Int>
     }
 ```
 
-### 7.3.3 lateinit
-
-- 有些时候我们知道这个属性虽然不在初始化的时候就初始化，但是我们使用的时候是一定非空的，就可以使用 ***`lateinit` 标识该变量稍后初始化***，注意的是***这种变量是 `var`、声明在类体而不是类头、没有自定义 `getter` 和 `setter`，必须非空且不能是原生类型***
-
-```kt
-fun main() {
-    val user = User()
-    
-
-    user.set_name("hello")
-    println(user.name)
-}
-
-class User {
-    lateinit var name: String
-
-    fun set_name(name: String) {
-        println(::name.isInitialized)
-        this.name = name
-    }
-}
-```
-
-> 在初始化前访问一个 `lateinit` 属性会抛出一个特定异常，该异常明确标识该属性被访问及它没有初始化的事实
-
-- ***检测一个 `lateinit` 的变量有没有初始化，可以在该变量的引用上调用 `isInitialized`***，没错属性也可以引用，具体我们在后面讲解
-
 ## 7.4 继承
 
 ### 7.4.1 概念
@@ -5597,36 +5572,37 @@ class MyClass {
 - 伴生对象所在类有一个静态字段指向一个 `new` 出来的伴生对象，每一次调用伴生对象里的成员时都是在访问同一个静态内部类的实例，所以***伴生对象也是单例***
 
 ```kt
-// Test.kt
+// MyClass.java
 
-class Test {
-    companion object {
-        val a = 1
-    }
-}
-
-fun main() {
-    println(Test.a)
-    println(Test.a)
-    println(Test.a)
-    println(Test.a)
-}
-```
-
-```java
-// Test.java
-
-public final class Test {
+public final class MyClass {
    @NotNull
    public static final Companion Companion = new Companion((DefaultConstructorMarker)null);
-   private static final int a = 1;
+   private static final int myCompanionVal = 20;
+   @NotNull
+   private static String myCompanionVar = "World";
 
-    public static final class Companion {
+   
+   public static final class Companion {
       private Companion() {
       }
 
-      public final int getA() {
-         return Test.a;
+      public final void myCompanionFun() {
+         String var1 = "I'm a companion function";
+         System.out.println(var1);
+      }
+
+      public final int getMyCompanionVal() {
+         return MyClass.myCompanionVal;
+      }
+
+      @NotNull
+      public final String getMyCompanionVar() {
+         return MyClass.myCompanionVar;
+      }
+
+      public final void setMyCompanionVar(@NotNull String var1) {
+         Intrinsics.checkNotNullParameter(var1, "<set-?>");
+         MyClass.myCompanionVar = var1;
       }
 
       // $FF: synthetic method
@@ -5635,23 +5611,46 @@ public final class Test {
       }
    }
 }
+// MainKt.java
 
 
-// TestKt.java
+public final class MainKt {
+   private static final int topVal = 10;
+   @NotNull
+   private static String topVar = "Hello";
 
-public final class TestKt {
-   public static final void main() {
-      int var0 = Test.Companion.getA();
-      System.out.println(var0);
-      var0 = Test.Companion.getA();
-      System.out.println(var0);
-      var0 = Test.Companion.getA();
-      System.out.println(var0);
-      var0 = Test.Companion.getA();
+   public static final void topFun() {
+      String var0 = "I'm a top level function";
       System.out.println(var0);
    }
 
-   // $FF: synthetic method
+   public static final int getTopVal() {
+      return topVal;
+   }
+
+   @NotNull
+   public static final String getTopVar() {
+      return topVar;
+   }
+
+   public static final void setTopVar(@NotNull String var0) {
+      Intrinsics.checkNotNullParameter(var0, "<set-?>");
+      topVar = var0;
+   }
+
+   public static final void main() {
+      topFun();
+      int var0 = topVal;
+      System.out.println(var0);
+      String var1 = topVar;
+      System.out.println(var1);
+      MyClass.Companion.myCompanionFun();
+      var0 = MyClass.Companion.getMyCompanionVal();
+      System.out.println(var0);
+      var1 = MyClass.Companion.getMyCompanionVar();
+      System.out.println(var1);
+   }
+
    public static void main(String[] args) {
       main();
    }
@@ -6995,12 +6994,6 @@ public static final void func_3FFIWmM(@NotNull String msg) {
 ```
 
 
-
-# Kotlin 进阶
-
-> 如果你看到这里，那么恭喜你你已经看完了 Kotlin 入门的全部篇章，那么在这一章我们会讨论进阶的更多功能比如，泛型、（集合我现在甚至没有使用过数组）、异常处理、标准库的各种函数、以及最重要的协程
-
-
 # 第八章：泛型
 
 ## 8.1 泛型概述
@@ -7788,11 +7781,14 @@ fun main() {
 
 - 同样的，类型别名和函数式接口的区别也是，类型别名没有引入新的类型
 
+
 # 第九章：引用和反射
 
 > 这是第一次使用非标准库的特性，记住***本章的大部分内容都要导入 `kotlin.reflect` 库***
 
 - 如果你没有接触过 Java 的反射，简单说***反射（reflection）就是在运行时动态获取类、对象、方法的信息***
+
+> 请注意，引用和反射是最后一章会引入新概念的章节，之后的所以内容都是基于前九章内容的扩展和丰富，因此请扎实理解本篇内容
 
 ## 9.1 顶层函数的引用
 
@@ -8304,7 +8300,7 @@ fun main() {
 
 - 这个***接收者，在 Kotlin 里面叫 `receiver`***，也就是 `this` 差不多，指的是成员所在的类或扩展函数被扩展的类
 
-> 大部分情况下，接收者是可以不写的，除非像内部类嵌套时需要通过 `this@label` 的写法指定接收者，所以也叫***隐式的接收者（implicit receiver）***
+> 大部分情况下，接收者是可以不写的（就像你在类里面的成员是可以不写 `this.` 的），除非像内部类嵌套时需要通过 `this@label` 的写法指定接收者，所以也叫***隐式的接收者（implicit receiver）***
 
 - 像上面这样的叫做***双重接收者***，如果真的想要使用它，可以***通过多重嵌套函数的方法同时指定多重接收者***
 
@@ -8880,6 +8876,254 @@ fun main() {
 
 > [KTypeParameter 官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-type-parameter/)
 
-## 9.6 lazy 
+## 9.6 绑定的引用
 
-## 9.7 绑定的引用
+- 之前我们讲过的引用，只要是位于类里面的，在调用时都要传入一个对象作为它的第一个参数，但是有些时候可能我们为了方便并不像这么做，所以 ***Kotlin 也允许你引用一个实例对象上的成员，使用 `对象名::成员名`*** 的方法，这样在使用的时候会被换为实际成员的调用，并且**无需指定调用者**
+
+```kt
+data class Person(val name: String, val age: Int) {
+    fun printSelf()= "My name is $name and I am $age years old."
+
+}
+
+fun main() {
+    val strLen = "Hello, Kotlin!"::length
+    println(strLen())
+    // 注意是这是个方法，只不过不用传指定的调用者，不是普通的属性
+
+    val person = Person("Alice", 25)::printSelf
+    println(person())
+}
+```
+
+> 官网这里用了一个***正则表达式***（Regex Expression）的例子来说明，我就不讲了，可以看下[Kotlin 正则表达式](https://geek-docs.com/kotlin/kotlin-tutorial/regularexpressions.html)、[正则表达式速查表](https://cheat-sheet.cn/post/regex-cheat-sheet/)、[Kotlin Regex API](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/-regex/) 这几个网站自行了解
+
+```kt
+fun main() {
+    val isNumber = Regex("\\d+")::matches // 也可以使用 "\\d+".toRegex()::matches 的方式生成 Regex 对象
+    println("Enter something:")
+    readln().run {
+        if (isNumber(this)) {
+            println("It is a number")
+        } else {
+            println("It is not a number or it is empty")
+        }
+    }
+}
+```
+
+## 9.7 属性的委托
+
+> 上面在讲委托的时候只是简单的介绍了类中方法实现的委托，并没有过于深入，其实委托用的最多的地方是这里的属性委托，只不过由于第七章还没有讲泛型和反射，所以放到这里做个总结
+
+- 有些时候我们想对属性的初始化或者赋值拥有更多的操控权，因此 Kotlin 还为我们提供了***属性委托（property delegation）***的机制，通过委托我们可以***自定义属性的访问和赋值***
+
+- 想把一个属性的访问器委托给另外一个对象，只需要***在属性声明时使用 `by` 关键字，并指定委托对象即可***
+
+> 注意这时候该类里面除了有委托对象的方法外，***本身这个委托属性是没有幕后字段的***，他的所有访问都转交给了外部的对象，如果想要使用赋值和设值的话是不能用参数里面的 `KProperty` 的，只能在这个类里面自己设置属性
+
+```kt
+import kotlin.reflect.KProperty
+
+class MyClass {
+    var varible: String by Delegate()
+}
+
+class Delegate {
+    private var value: String? = null
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
+        println("$thisRef, thank you for delegating '${property.name}' to me!")
+        return value ?: "value not set yet"
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
+        println("$value has been assigned to '${property.name}' in $thisRef.")
+        this.value = value
+    }
+}
+
+fun main() {
+    val myClass = MyClass()
+    myClass.varible = "Hello"
+    println(myClass.varible)
+    myClass.varible = "World"
+}
+```
+
+- 需要注意，***被委托对象必须有一个 `setValue` 的操作符函数（`val`），必须有 `setValue` `getValue` 两个操作符函数（`var`）***，函数的参数见上面，其中：
+    - ***`thisRef` 必须与属性所有者类型（对于扩展属性必须是被扩展的类型）相同或者是其超类型***
+    - ***`property` 必须是类型 `KProperty<*>` 或其超类型***
+    - ***`value` 必须与属性类型相同（或者是其超类型）***
+    - ***`getValue()` 必须返回与属性相同的类型（或其子类型）***
+
+- ***这两个操作符函数都可以通过成员函数或扩展函数的方式实现***
+
+- ***属性还可以把自己的访问器委托给其他属性，委托的时候使用属性引用***，这种委托***对于顶层和类的属性（成员和扩展）都可用，委托属性可以为***：
+    - ***顶层属性***
+    - ***同一个类的成员或扩展属性***
+    - ***另一个类的成员或扩展属性***
+
+```kt
+var topLevelInt: Int = 0
+class ClassWithDelegate(val anotherClassInt: Int)
+
+class MyClass(var memberInt: Int, val anotherClassInstance: ClassWithDelegate) {
+    var delegatedToMember: Int by this::memberInt
+    var delegatedToTopLevel: Int by ::topLevelInt
+
+    val delegatedToAnotherClass: Int by anotherClassInstance::anotherClassInt
+}
+var MyClass.extDelegated: Int by ::topLevelInt
+```
+
+- ***局部变量都可以委托，同样在第一次访问的时候才初始化***
+
+```kt
+fun main() {
+    fun example(func: () -> String) {
+        val value: String by lazy(func)
+
+        if (func() == "Hello") {
+            println(value)
+        }
+    }
+
+    example { "Hello" } // Hello
+    example { "World" } // 只有第一次访问才会初始化，这里 value 不会被初始化
+}
+```
+
+> Kotlin 为我们提供了一些常用的操作方法：
+
+### 9.7.1 lateinit
+
+- 有些时候我们知道这个属性虽然不在初始化的时候就初始化，但是我们使用的时候是一定非空的，就可以使用 ***`lateinit` 标识该变量稍后初始化***，注意的是该修饰符***只能用于在类体中的 `var` 属性（不能是在主构造函数中声明的 `var` 属性，并且仅当该属性没有自定义 `getter` 或 `setter` 时），也用于顶层属性与局部变量，该属性或变量必须为非空类型，并且不能是原生类型***
+
+> 在初始化前访问一个 `lateinit` 属性会抛出一个特定异常，该异常明确标识该属性被访问及它没有初始化的事实
+
+- ***检测一个 `lateinit` 的变量有没有初始化，可以在该变量的引用上调用 `isInitialized`***
+
+```kt
+fun main() {
+    val user = User()
+
+    // user.printName() Error: lateinit property name has not been initialized
+    user.name = "John"
+
+    user.printName()
+}
+
+class User {
+    lateinit var name: String
+
+    fun printName() {
+        if (this::name.isInitialized) {
+            println(name)
+        } else {
+            println("Name is not initialized")
+        }
+    }
+}
+```
+
+### 9.7.2 by lazy
+
+- ***延迟属性（lazy property）会委托一个 `lazy` 函数，该函数接受一个 `lambda` 表达式作为参数***，并返回一个 `Lazy<T>` 对象，***该对象在第一次访问时会执行 `lambda` 表达式并缓存结果，之后的访问都直接返回缓存的结果***，可以避免不必要的计算
+
+- 跟 `lateinit`相反，***`lazy` 只能用于 `val` 的属性***
+
+```kt
+class MyClass {
+    val value: String by lazy {
+        println("Enter a string: ")
+        readln().run {
+            if (this.isEmpty()) {
+                "default value"
+            } else {
+                this
+            }
+        }
+    }
+}
+
+fun main() {
+    val myClass = MyClass()
+    println("Not initialized yet:")
+    println(myClass.value)
+    println(myClass.value)
+    println(myClass.value)
+}
+```
+
+- ***而且 `lazy` 默认是线程锁***的，该值只在一个线程中计算，但所有线程都会看到相同的值，至于更多见[官方文档](https://book.kotlincn.net/text/delegated-properties.html)
+
+### 9.7.3 observable
+
+- 有些时候我们***想观察某个属性的变化，可以使用 `Delegates.observable` 委托***，该委托接受三个参数：
+    - **第一个参数是属性的初始值**
+    - **第二个参数是一个函数，该函数的参数被赋值的属性、旧值和新值**
+
+- ***每当我们给属性赋值时会调用该函数（在赋值后执行）***
+
+```kt
+import kotlin.properties.Delegates
+
+class Name {
+    var name: String by Delegates.observable("John") { prop, old, new ->
+        println("($prop) has changed from $old to $new")
+    }
+}
+
+fun main() {
+    val name = Name()
+    name.name = "Alice"
+    name.name = "Bob"
+}
+```
+
+- 如果你想对输入的值进行判断再赋值，可以使用 ***`vetoable` 委托***，该委托与 `observable` 委托的区别是***它接受一个函数，该函数的参数是赋值的属性、旧值和新值，如果该函数返回 `false`，则赋值被拒绝，`true` 则接受***
+
+```kt
+import kotlin.properties.Delegates
+
+class Num {
+    var value: Int by Delegates.vetoable(0) { prop, old, new ->
+        println("newer value is ${if (new > old) 
+            "greater than the old value, allowed" 
+        else 
+            "lesser than the old value, not allowed" }"
+        )
+        new > old
+    }
+}
+
+fun main() {
+    val num = Num()
+    num.apply {
+        value = 5
+        println(value)
+    }.apply {
+        value = 3
+        println(value)
+    }.apply {
+        value = 7
+        println(value)
+    }
+}
+```
+
+
+
+# Kotlin 进阶
+
+- 恭喜你看完了前面的九章，Kotlin 所有基础的东西都包含在这里了，后面的内容只不过是前面内容的扩展和丰富，如果还有不了解的请再多看几遍，你多看几遍花费的时间肯定是比我写这个省时间的
+
+- 下面的内容里会对 Kotlin 里相对独立的几个板块挨个讲解，分别是集合、异常处理、与 Java 互操作、标准库里一些其他东西和多线程
+
+- 加油 💪
+
+
+# 第十章：集合和序列
+
+> 在经过前面的九章不能使用列表数组的痛苦后，终于可以介绍这个了
