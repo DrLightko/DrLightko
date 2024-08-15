@@ -202,7 +202,7 @@ java HelloKt
 ```
 
 
-# 第三章：变量与*基本类型*
+# 第三章：变量与基本类型
 
 > 与所有的编程语言一样，变量很好基本类型是最重要也是最基础的一章
 
@@ -1141,7 +1141,9 @@ println(i)
 
 ### 4.1.3 逻辑与比较
 
-- ***`&&`、 `||`、 `!` 逻辑与、或、非操作符，注意`&&` `||` 是惰性的，也就是如果前面的判断满足了需求则不运行后面的表达式***
+- ***`&&` 与、 `||` 或、 `!` 非操作符，注意`&&` `||` 是惰性的，也就是如果前面的判断满足了需求则不运行后面的表达式***
+
+- ***`&&` 接受的表达式都为真才返回真，否则为假：`||` 接受的表达式只要有一个为真就返回真，一个都没有返回假***
 
 ```kt
 var num: Int = 23
@@ -9127,3 +9129,235 @@ fun main() {
 # 第十章：集合和序列
 
 > 在经过前面的九章不能使用列表数组的痛苦后，终于可以介绍这个了
+
+## 10.1 数组
+
+> Kotlin 里面的数组和 Java 里的原生数组不太一样，并且里面的值是装箱的，如果需要性能可以使用原生数组（见后文），如果没有特殊需求还是推荐使用列表，列表可以只读，而且很容易增删检查，数组虽然方便取值但是增删元素比较耗时
+
+### 10.1.1 创建数组
+
+- ***创建一个数组，可以使用 `arrayOf()` `arrayOfNulls()` `emptyArray()`  或使用 `Array` 类的构造器***
+
+- ***`arrayOf()` 可以传入多个参数，创建一个包含这些参数的数组***。数组一旦被创建长度就不可变
+
+```kt
+fun main() {
+    val myArray = arrayOf(1, 2, 3, 4, 5)
+    println(myArray)
+    println(myArray.joinToString())
+    // jotinToString() 带有很多参数
+    println(myArray.joinToString(separator = " -> ", prefix = "Start: ", postfix = " End"))
+    println(myArray.joinToString(transform = { "Item: $it" }))
+}
+```
+
+- ***`arrayOfNulls()` 可以创建一个指定长度为空的数组，以后可以进行赋值***，因为每一个元素都是 `null`，所以使用泛型参数需要指定泛型类型
+
+```kt
+fun main() {
+    val nullArray = arrayOfNulls<Int>(5)
+    // val nullArray: Array<Int?> = arrayOfNulls(5) 这样子也可以，因为有类型推断
+    println(nullArray.joinToString())
+    println(nullArray.apply {
+        for (i in 0..size - 1) {
+            if (this[i] == null) {
+                this[i] = i
+            }
+        }
+    }.joinToString())
+}
+```
+
+- ***`emptyArray()` 创建一个空数组***，因为数组长度是不变的，所以***这个数组什么都干不了***，所以***一般赋给的都是 `var` 的变量***，用于初始化占位
+
+```kt
+fun main() {
+    var empty = emptyArray<Int>()
+    println(empty)
+    println(empty.isEmpty())
+    empty = arrayOf(1, 2, 3)
+    println(empty.joinToString())
+}
+```
+
+- ***`Array` 类的构造器接受数组的长度，还接受一个 `lambda` 参数，`lambda` 的参数是数组索引，返回值会被赋给索引位置的值***
+
+```kt
+fun main() {
+    Array<Int>(5) {
+        it * it
+    }.forEach { print("$it -> ") }
+
+}
+
+// forEach 是一个很方便的函数，他提供给你传入的函数每一个元素，然后执行你函数内的操作
+```
+
+- ***也可以创建多维数组马，也就是一个元素为数组的数组***
+
+```kt
+fun main() {
+    println(Array<Array<Int>>(3) { Array<Int>(3) { 0 } }.contentDeepToString())
+    println(Array<Array<String>>(2) {
+        Array<String>(2) {
+            when {
+                it == 0 -> "Hello"
+                else -> "World"
+            }
+        }
+    }.contentDeepToString())
+}
+
+// joinToString() 由于里面还是数组，所以要用 contentDeepToString()
+```
+
+### 10.1.2 索引数组
+
+- ***使用索引操作符中括号 `[]` 来访问或修改数组里的元素，索引从 `0` 开始***
+
+```kt
+fun main() {
+    val simpleArray = arrayOf(1, 2, 3)
+    val twoDArray = Array(2) { Array<Int>(2) { 0 } }
+
+    simpleArray[0] = 10
+    twoDArray[0][0] = 2
+
+    println(simpleArray[0].toString())
+    println(twoDArray[0][0].toString())
+}
+```
+
+- ***索引操作符允许重载***，所以也可以对自己的类设定索引的方式
+
+```kt
+data class Name(var firstName: String, var lastName: String) {
+    operator fun get(index: Int) = when (index) {
+        0 -> firstName
+        1 -> lastName
+        else -> println("Index $index is out of bounds for this Name object")
+    }
+
+    operator fun set(index: Int, value: String) = when (index) {
+        0 -> firstName = value
+        1 -> lastName = value
+        else -> println("Index $index is out of bounds for this Name object")
+    }
+
+
+    // 除了正常的取值，还可以使用字符串索引
+    operator  fun get(name: String) = when (name) {
+        "firstName" -> firstName
+        "lastName" -> lastName
+        else -> println("$name is not a valid property of Name object")
+    }
+
+    operator fun set(name: String, value: String) = when (name) {
+        "firstName" -> firstName = value
+        "lastName" -> lastName = value
+        else -> println("$name is not a valid property of Name object")
+    }
+}
+
+fun main() {
+    val name = Name("John", "Doe").apply { println(this) }
+
+    name.apply {
+        println(this[0])
+        println(this[1])
+        this[0] = "Harry"
+        this[1] = "Smith"
+        println(this[0])
+        println(this[1])
+    }.apply {
+        println(this["firstName"])
+        println(this["lastName"])
+        this["firstName"] = "Jenny"
+        this["lastName"] = "Doe"
+        println(this["firstName"])
+        println(this["lastName"])
+    }
+}
+```
+
+- ***索引一个数组，可以直接使用 `for ··· in ···` 循环，也可以使用 `forEach` 函数，数组的 `indices` 属性可以拿到数组的索引范围，`size` 属性可以拿到数组的长度***
+
+```kt
+fun main() {
+    val array = arrayOf(1, 2, 3, 4, 5)
+
+    for (i in array) {
+        println(i)
+    }
+
+    for (i in array.indices) {
+        println(array[i])
+    }
+
+    for (i in 0..(array.size - 1)) {
+        // 因为 size 返回的是数组的长度，而数组索引因为从 0 开始所以长度会比 size 小 1
+        println(array[i])
+    }
+
+    for (i in 0 ..< array.size) {
+        println(array[i])
+    }
+
+    for (i in 0 until array.size) { // until 就是 ..<
+        println(array[i])
+    }
+}
+```
+
+> 同时获得元素索引和元素本身
+
+```kt
+fun main() {
+    val array = arrayOf(1, 2, 3, 5, 7, 11, 13, 17, 19, 23)
+    for (i in array.indices) {
+        println("array[$i] = ${array[i]}")
+    }
+}
+```
+
+### 10.1.3 数组的操作
+
+- 数组不可以使用 `==` 比较（也不是不可以），***建议使用 `contentEquals()` 来比较两个数组是否相等***
+
+```kt
+fun main() {
+    var prime = arrayOf(2, 3, 5, 7, 11, 13, 17, 19, 23)
+    val numbers = arrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    var primes = prime
+    println(prime == primes)
+    println(prime === primes)
+    println("prime at $prime: ${prime.joinToString()}, primes at $primes: ${primes.joinToString()}")
+    // == === 都可用
+
+    primes += 29
+    // prime = prime + 29 
+    // 数组使用加法是创建了一个新数组，而不是用原先的，可以看下面的打印结果，对象的位置变了
+    println(prime == primes)
+    println(prime === primes)
+    println("prime at $prime: ${prime.joinToString()}, primes at $primes: ${primes.joinToString()}")
+    // === 不相等，== 也不相等
+
+    prime += 29
+    println(prime == primes)
+    println(prime === primes)
+    println("prime at $prime: ${prime.joinToString()}, primes at $primes: ${primes.joinToString()}")
+    // 这里 === 虽然不等，但是 == 应该是相等的，可是并没有出现如预期的结果
+    // 所以建议使用下面的 contentEquals() 来比较两个数组是否相等
+
+    println(prime.contentEquals(primes))
+
+    val p1 = arrayOf(1, 2, 3)
+    val p2 = arrayOf(1, 2, 4)
+    println(p1 == p2)
+    // 这就更明显了，对于对象不同的两个数组 equals 无法判断相等是否
+}
+```
+
+> ***`var` `val` 的数组并不代表他的元素不可变，只是代表他的引用不可变，可以修改他的元素***，这里 `==` 很想 `===`，检查的是变量的指向而不是指向对象的值
+
+- 
