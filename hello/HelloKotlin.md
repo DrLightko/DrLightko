@@ -9519,7 +9519,7 @@ fun main() {
 }
 ```
 
-- 下面是 Kotlin 集合的继承和是实现关系：
+- 下面是 Kotlin 集合的继承和实现关系：
 
 ![](https://book.kotlincn.net/images/collections-diagram.png)
 
