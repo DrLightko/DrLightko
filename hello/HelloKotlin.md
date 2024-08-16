@@ -1602,7 +1602,7 @@ println(add_int(2,3))
 
 - Kotlin 里面函数的参数是不可改变的，也就是你没法改变传进来的参数的值，***函数参数是 `val` 的***
 
-> Kotlin 一刀斩
+> Kotlin 一刀斩掉了在函数里面修改引用变量的能力，不过这不代表函数接受的引用类型的变量无法在函数里面对它进行操作，只是不能修改它的指向
 
 ```kt
 fun main() {
@@ -8554,6 +8554,8 @@ fun main() {
 
 > `also` 基本上也就用在链式调用的地方，逻辑清晰
 
+> 链式调用很像 Java 的 Stream API，Kotlin 真是用惯了 Java 的人写出来的
+
 ```kt
 data class NumBox<T : Number>(var value: T) {
     fun add(t: T) {
@@ -9501,8 +9503,8 @@ fun main() {
 
 - ***Kotlin 主要有三种集合类型：`list` `set` `map`***
     - ***`list`：是一个有序集合***，元素可以出现多次，可以进行索引访问
-    - ***`set`：是一个无序集合，元素不可以重复***，里面只存放唯一值，所谓无序集合说明我们不关心取出来时的顺序
-    - ***`map`：是一个键值对集合，每一个键值对都是一个映射，用于存放逻辑关系紧密的数据***
+    - ***`set`：是一个无序集合，元素不可以重复***，里面只存放唯一值，所谓无序集合说明我们不关心取出来时的顺序，也无法索引
+    - ***`map`：是一个键值对集合，每一个键值对都是一个映射，用于存放逻辑关系紧密的数据***，每一个键用来索引值，Python 里的字典就是这种结构
 
 > **数组不是集合**
 
@@ -9527,4 +9529,202 @@ fun main() {
 
 > 可变集合不协变是为了类型安全，因为如果 `MutableList<Int>` 是 `MutableList<Any>` 的子类，那么 `MutableList<Int>` 里面可以放入 `String` 类型的元素，这违反了类型安全
 
+- **`Collection<T>` 是根层次的集合，它拥有最简单的遍历和取值操作等等**，如果你需要匹配大部分的集合（没错 map 不行）可以使用它
+
+```kt
+fun printAll(strings: Collection<String>) {
+    for(s in strings) print("$s ")
+    println()
+}
+
+fun main() {
+    val stringList = listOf("one", "two", "one")
+    printAll(stringList)
+
+    val stringSet = setOf("one", "two", "three")
+    printAll(stringSet)
+}
+```
+
 ### 10.2.2 创建集合
+
+#### 10.2.2.1 list 列表
+
+- ***创建一个 `List` ，一般就用 `listOf` 函数***，它接受一些可变参数，返回一个 `List` 对象
+
+- ***`List<T>` 以指定的顺序存储元素，并提供使用索引访问元素的方法***。索引从 `0`（第一个元素的索引）开始直到 `lastIndex`，即 `list.size - 1`
+
+> 编译器知道 `listOf` 里面参数的类型，所以无需手动指定列表类型
+
+```kt
+fun main() {
+    val numbers = listOf("one", "two", "three", "four")
+    println("Number of elements: ${numbers.size}")
+    println("Third element: ${numbers.get(2)}")
+    println("Fourth element: ${numbers[3]}")
+    println("Index of element \"two\" ${numbers.indexOf("two")}")
+}
+```
+
+- ***`list` 允许空值和重复值***，因此在**判断两个列表相等的时候只要在索引相同的位置有值相等的元素就可以了**
+
+```kt
+data class Person(var name: String, var age: Int)
+
+fun main() {
+    val bob = Person("Bob", 31)
+    val people = listOf(Person("Adam", 20), bob, bob)
+    val people2 = listOf(Person("Adam", 20), Person("Bob", 31), bob)
+    // Bob 这里存的是对对象的引用
+    println(people == people2)
+    bob.age = 32
+    println(people == people2)
+}
+```
+
+```kt
+fun main() {
+    val list: List<Int?> = listOf(1, null, 3, 4, null, 6)
+    var nullList: List<Int>? = null
+    // nullList = listOf(1, null, null) 是不行的
+    // 注意 List<Int?> 和 List<Int>? 的区别
+    nullList = listOf(1, 2, 3)
+}
+```
+
+- 一个 `list` 在声明之后长度和元素就是固定了的无法改变，而一个 ***`mutableList` 可以添加、删除元素***
+
+```kt
+fun main() {
+    val names = mutableListOf("Alice", "Bob", "Charlie").apply {
+        forEach { println("Name is $it") }
+        println(size)
+        println()
+    }
+
+    names.run {
+        add("Dave")
+        add("Eve")
+        forEach { println("Name is $it") }
+        println(size)
+        println()
+    }
+
+    names.run {
+        remove("Bob")
+        removeAt(0)
+        removeFirst()
+        removeLast()
+        forEach { println("Name is $it") }
+        println(size)
+    }
+}
+```
+
+> 官方文档说 `ArrayList` 是 `MutableList` 的默认实现，估计是用 `ArrayList`  比 `LinkedList` 的人多（但是 `ArrayList` 增删麻烦，性能不好阿），但是注意到 ***Kotlin 没有原生的 `LinkedList`***
+
+- Kotlin 虽然没有原生的 `LinkedList`，但是别忘了 Java 里面有一堆原生的数据结构，而且完全兼容，所以**如果要创建具体的数据类型只需导入后声明即可**
+
+```kt
+import java.util.LinkedList
+
+fun main() {
+    val linkedlist = LinkedList<Int>(listOf(1, 2, 3, 4, 5))
+    // linkedlist 可以接受 Kotlin 里面的集合类型 Collection 
+    linkedlist.add(6)
+    linkedlist.addFirst(0)
+    linkedlist.addLast(7)
+    linkedlist.reverse()
+    println(linkedlist.joinToString(prefix = "[", postfix = "]", separator = " -> "))
+    // 估计是 Kotlin 为 LinkedList 做的扩展，Java 里是没有这个的
+}
+```
+
+- 除了这些方式，还可以***使用 `buildList` 函数，该函数接受一个 `lambda` ，在 `lambda` 内可以把需要初始化的只读列表当作可变列表一样增删改，最后返回经过处理的 `List` 对象，注意是只读的***
+
+
+```kt
+import java.util.LinkedList
+
+fun main() {
+    val  names = buildList /*<String>*/ {
+        add("Alice")
+        add("Bob")
+        add("Charlie")
+        remove("Bob")
+        removeFirst()
+        addAll(listOf("Dave", "Eve"))
+    }.apply {
+        println(this)
+    }
+}
+```
+
+- 创建一个***空的 `list` 也可以用 `emptyList` 函数***，他返回的 `List` 对象的 `size` 为 `0`，也不能增删元素
+
+
+```kt
+fun main() {
+    var names = emptyList<String>()
+    println(names.isEmpty())
+    println(names.size)
+    names = listOf("Alice", "Bob", "Charlie")
+    println(names.isEmpty())
+}
+```
+
+- ***`List` 有一个构造器***，允许你像声明数组一样初始化列表，***它接受列表的长度和一个 `lambda`***，在 `lambda` 内可以把需要初始化的元素逐个添加到列表中
+
+- 同时，***列表也是可以使用 `..` 生成的迭代器初始化的，这个后面讲***
+
+```kt
+
+fun main() {
+    val evens = List(5) { it * 2 }
+    val evenNumbers = (1..100).filter { it % 2 == 0 }
+    println(evens)
+    println(evenNumbers)
+}
+```
+
+- 列表的值也可以指向另一个列表，这个时候就需要注意源列表改动对引用列表产生的影响
+
+- 如果***直接拿变量名引用，这样产生的结果类似浅拷贝***（shallow copy），即指向同一个对象，修改其中一个会影响另一个；而***使用 `toXXX()` 类似的方法产生的对象，结果是深拷贝***（deep copy）的，即指向不同对象，修改其中一个不会影响另一个
+
+```kt
+data class Person(var name: String)
+
+fun main() {
+    val alice = Person("Alice")
+    val sourceList = mutableListOf(alice, Person("Bob"))
+    val copyList = sourceList.toList()
+    sourceList.add(Person("Charles"))
+    alice.name = "Ace"
+    println("First item's name is: ${sourceList[0].name} in source and ${copyList[0].name} in copy")
+    println("List size is: ${sourceList.size} in source and ${copyList.size} in copy")
+}
+```
+
+- 这样**许多引用都指向同一个实例的时候，每一个引用对实例的修改都会影响到其他引用，包括在函数里面也是**
+
+- ***可以把一个可变列表的引用赋值给不可变列表的变量，这样可以收窄该引用变量的作用范围***，他**只能访问但不能修改实际上可变的元素**
+
+```kt
+fun main() {
+    val ml = mutableListOf(1, 2, 3)
+    val list: List<Int> = ml
+    // list.add(4)
+
+    // func(list)
+    func(ml)
+}
+
+fun func(list: MutableList<Int>) {
+    list.add(666)
+    println(list)
+}
+```
+
+#### 10.2.2.2 set 集
+
+- `Set<T>` 存储唯一的元素，
