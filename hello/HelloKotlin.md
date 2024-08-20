@@ -7157,7 +7157,7 @@ fun main() {
     val tuple3 = '\n' to 42
 
     // public infix fun <A, B> A.to(that: B): Pair<A, B> = Pair(this, that)
-    // 中缀操作符 to 可以快速生成二元元组
+    // 中缀操作符 to 可以快速生成二元元组，请记住这个方法，后面讲集合的时候会遇见
 
     println(tuple1)
     println(tuple2)
@@ -9207,6 +9207,8 @@ fun main() {
 
 - ***`emptyArray()` 创建一个空数组***，因为数组长度是不变的，所以***这个数组什么都干不了***，所以***一般赋给的都是 `var` 的变量***，用于初始化占位
 
+> 是用于初始化数组类型的引用变量的，而不是数组里面元素的初始值，所以一般赋值给 `var` 的变量，不然的话他就一辈子不可变一直是空的，那我为什么声明它？
+
 ```kt
 fun main() {
     var empty = emptyArray<Int>()
@@ -9359,7 +9361,7 @@ fun main() {
 
 ### 10.1.3 数组的比较
 
-- 数组不可以使用 `==` 比较（也不是不可以），***建议使用 `contentEquals()` 来比较两个数组是否相等***
+- 数组不可以使用 `==` 比较（也不是不可以），***建议使用 `contentEquals()` 来比较两个数组是否相等***，具体为什么看下面
 
 ```kt
 fun main() {
@@ -9457,6 +9459,8 @@ fun main() {
 
 > 数组还有很多方便的方法，具体看[官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/)
 
+- 注意 Kotlin 在有关集合方面的解构函数都只有五个，超过五个的需要自己扩展
+
 ```kt
 fun main() {
     val array = arrayOf(1, 2, 3, 4, 5, 6)
@@ -9475,6 +9479,8 @@ fun main() {
 operator fun <T> Array<T>.component6() = get(5)
 ```
 
+- `filter()` 函数接受一个 `lambda` 函数，根据 `lambda` 函数的返回布尔值来过滤元素，返回一个新的 `list`
+
 ```kt
 fun main() {
     val array = arrayOf(1, 2, 3, 4, 5, 6)
@@ -9482,6 +9488,8 @@ fun main() {
     array.filter { it % 2 == 0 }.run { println(this.joinToString()) }
 }
 ```
+
+- `zip` 函数接受两个 `list` 作为参数，返回一个 `list` 列表，其中包含两个 `list` 中对应位置的元素组成的 `pair`
 
 ```kt
 fun main() {
@@ -9500,6 +9508,8 @@ fun main() {
 ### 10.2.1 概念
 
 > 集合在任何一门语言中都是重要的存在，对我们对数据的存取读写提供了方便的操作方式，Kotlin 中的集合位于 `kotlin.collections` 包下，会默认导入
+
+- ***Kotlin 的集合统统基于泛型***，可以存储任何类型的数据，包括基本类型、对象、集合等等
 
 - ***Kotlin 主要有三种集合类型：`list` `set` `map`***
     - ***`list`：是一个有序集合***，元素可以出现多次，可以进行索引访问
@@ -9528,6 +9538,8 @@ fun main() {
 - ***Kotlin 里面所有的只读集合都是协变的***，也就是 `List<Int>` 是 `List<Any>` 的子类，可以互相引用；反过来，***所有可变集合不是协变的***，也就是 `MutableList<Int>` 不是 `MutableList<Any>` 的子类，不能互相赋值
 
 > 可变集合不协变是为了类型安全，因为如果 `MutableList<Int>` 是 `MutableList<Any>` 的子类，那么 `MutableList<Int>` 里面可以放入 `String` 类型的元素，这违反了类型安全
+
+> 你试一下就知道，***Kotlin 里面的数组是不协变的***，Java 里面数组是协变的，但是集合是不协变的
 
 - **`Collection<T>` 是根层次的集合，它拥有最简单的遍历和取值操作等等**，如果你需要匹配大部分的集合（没错 map 不行）可以使用它
 
@@ -9621,7 +9633,7 @@ fun main() {
 }
 ```
 
-> 官方文档说 `ArrayList` 是 `MutableList` 的默认实现，估计是用 `ArrayList`  比 `LinkedList` 的人多（但是 `ArrayList` 增删麻烦，性能不好阿），但是注意到 ***Kotlin 没有原生的 `LinkedList`***
+> 官方文档说 `ArrayList` 是 `MutableList` 的默认实现，估计是用 `ArrayList`  比 `LinkedList` 的人多（但是 `ArrayList` 增删麻烦，性能不好啊），注意到 ***Kotlin 没有原生的 `LinkedList`***
 
 - Kotlin 虽然没有原生的 `LinkedList`，但是别忘了 Java 里面有一堆原生的数据结构，而且完全兼容，所以**如果要创建具体的数据类型只需导入后声明即可**
 
@@ -9662,6 +9674,7 @@ fun main() {
 
 - 创建一个***空的 `list` 也可以用 `emptyList` 函数***，他返回的 `List` 对象的 `size` 为 `0`，也不能增删元素
 
+> 注意他返回的这个 `List` 如果是不变的 `List`，如果你的变量也是 `val` 的，那么这个变量就是没用的
 
 ```kt
 fun main() {
@@ -9670,6 +9683,25 @@ fun main() {
     println(names.size)
     names = listOf("Alice", "Bob", "Charlie")
     println(names.isEmpty())
+}
+```
+
+- ***多数情况下我们会直接使用 `listOf` ，然后参数为空，这样也是会返回空列表的***，或者 `mutalbeListOf` 这样结果可以 `add`
+
+```kt
+fun main() {
+    val list = mutableListOf<Int>()
+    println(list)
+    println(list.isEmpty())
+
+    list.apply {
+        add(1)
+        add(2)
+        add(3)
+    }
+    
+    println(list)
+    println(list.isEmpty())
 }
 ```
 
@@ -9725,6 +9757,597 @@ fun func(list: MutableList<Int>) {
 }
 ```
 
+- `list` 的***取值操作符 `get()` 可以使用 `[]` 来使用，也有防止越界的 `getOrNull` `getOrElse` 方法***
+
+- 同理，**`set()` 方法也可以使用 `[]`**
+
+```kt
+fun main() {
+    val list = listOf(1, 2, 3, 4, 5)
+    println(list.get(3))
+    println(list.getOrElse(6) { it })
+    // list[6]
+    println(list.getOrNull(5))
+}
+```
+
+- ***`subList()` 返回列表中指定的索引范围的列表，对这个子列表的操作直接影响到源列表，反之亦然***
+
+```kt
+fun main() {
+    val numbers = (0..10).toMutableList()
+    println(numbers.subList(3, 6))
+    numbers.subList(3, 6).clear()
+    println(numbers)
+    numbers.retainAll { it % 2 == 0 }
+    // println(numbers.subList(3, 6))
+}
+```
+
+- **`index` 线性查找**
+
+```kt
+fun main() {
+    val nums = listOf(1, 2, 3, 4, 5)
+    val numbers = listOf(1, 3, 123, 45, 6, 2, 3)
+
+    // indexOf() lastIndexOf() 线性查找，找不到返回 -1
+    println(nums.indexOf(3))
+    println(numbers.lastIndexOf(3))
+    println(nums.indexOf(6))
+
+    // indexOfFirst() indexOfLast() 接受参数，返回第一个或最后一个匹配项的索引，找不到返回 -1
+    println(nums.indexOfFirst { it % 2 == 0 })
+    println(nums.indexOfLast { it % 2 == 0 })
+    println(numbers.indexOfFirst { it > 100 })   
+}
+```
+
+- ***`binarySearch()` 二分查找，速度优于线性查找，但是要求列表要有一定的顺序***
+
+- ***如果找到，则返回元素的索引；如果找不到，则返回 `-(insertPosition - 1)`，其中 `insertPosition` 是新元素应该插入的位置***
+
+```kt
+fun main() {
+    val list = mutableListOf('a', 'b', 'c', 'd', 'e')
+    println(list.binarySearch('d'))
+
+    list.remove('d')
+
+    // -(insertion point - 1)
+    val invertedInsertionPoint = list.binarySearch('d')
+    val actualInsertionPoint = -(invertedInsertionPoint + 1)
+    println(actualInsertionPoint)
+
+    list.add(actualInsertionPoint, 'd')
+    println(list)
+}
+```
+
 #### 10.2.2.2 set 集
 
-- `Set<T>` 存储唯一的元素，
+- ***`Set<T>` 存储唯一的元素***，顺序一般无所谓，***`setOf` 函数可以创建一个 `Set` 对象，它接受一些可变参数，返回一个 `Set` 对象***
+
+- **`null` 元素也是唯一的**，***如果两个 `Set` 对象长度一样，并且每个元素对方也都有，那么认为这两个 `Set` 对象相等***
+
+```kt
+fun main() {
+    val set = setOf(1, 2, 3, 4, 5)
+    println(set.sum())
+    println(set.average())
+    println(set.max()) // or min()
+    println(set.count())
+    println(set)
+
+    for (i in set.indices) { println(" Set Contains $i ? -> ${set.contains(i)}") }
+}
+```
+
+```kt
+fun main() {
+    val set1 = setOf(1, 2, 3, 4, 5)
+    val set2 = setOf(5, 4, 3, 2, 1)
+    println(set1 == set2)
+    // 无视顺序只看元素
+}
+```
+
+- 同样，***集合也有自己的可变类 `MutableSet`，它就可以添加、删除元素，使用 `mutableSetOf` 来创建***
+
+```kt
+fun main() {
+    val set1 = mutableSetOf(1, 2, 3, 4, 5)
+    set1.add(6)
+    set1.remove(2)
+    println(set1)
+}
+```
+
+- **也有自己的 `buildSet` 方法**
+
+```kt
+fun main() {
+    val set = buildSet {
+        add("apple")
+        add("banana")
+        add("orange")
+    }.also {
+        println(it)
+    }
+}
+```
+
+- ***`Set` 的默认实现是 `LinkedHashSet`，听名字也能知道他会保留元素的插入顺序***，因此像是 `first` `last` 这些本来对集合没用的操作，`Set` 都可以用，而且如预期实现
+
+```kt
+fun main() {
+    val numbers = setOf(1, 2, 3, 4)
+    val numbersBackwards = setOf(4, 3, 2, 1)
+
+
+    println(numbers == numbers)
+    println(numbers.first() == numbersBackwards.first())
+    println(numbers.first() == numbersBackwards.last())
+}
+```
+
+> 另一种 `HashSet` 使用依赖顺序的方法时不会向上面这样，但是好处是占用内存和时间复杂度都比 `LinkedHashSet` 低，同样 `HashSet` 使用的是 Java 里面的，可以发现在 JVM 的上的 Kotlin 真是用惯了 Java 的库
+
+```kt
+fun main() {
+    val numbers = HashSet<Int>(4).apply { add(1); add(2); add(3); add(4) }
+    val numbersBackwards = HashSet<Int>(4).apply { add(4); add(3); add(2); add(1) }
+
+
+    println(numbers == numbers)
+    println(numbers.first() == numbersBackwards.first())
+    println(numbers.first() == numbersBackwards.last())
+}
+```
+
+- 说到集，就要补充几个***跟集合概念有关的操作：交集、差集、并集***等等，放心比数学上的概念简单多了，***这些方法对集合有关的类都通用，但是在不同数据结构上的结果可能不一样***，需要注意下
+
+```kt
+fun main() {
+    val set = setOf(1, 2, 3, 4, 5)
+    val primeSet = setOf(2, 3, 5, 7, 11)
+
+    println("加法：${set + primeSet}")
+    // plus 的结果包括原始集合和第二个集合的元素
+    println("减法：${set - primeSet}")
+    // minus 返回第一个中的所有元素，但是第二个集合中的有的除外，如果第二个集合是一个单独元素，则移除其在在原始集合中的第一次出现
+    // 如果是一个集合，那么移除其元素在原始集合中的所有出现
+    println("交集：${set.intersect(primeSet)}")
+    // 交集，返回两个集合中都有的元素
+    println("并集：${set.union(primeSet)}")
+    // 并集，返回两个集合中所有元素，注意因为是set，所以默认的加法跟并集的结果是一样的，但是如果是list，并集会去重，加法不会
+    println("差集：${set.subtract(primeSet)}")
+    // 差集，返回第一个集合中有，第二个集合中没有的元素，没错跟 minus 也就是减法是一样的
+    println("补集：${primeSet.minus(set)}")
+    // 补集，返回第一个集合中没有，第二个集合中有的元素
+}
+```
+
+- ***想创建一个空集合，同样在使用 `setOf` 的时候不填参数就可以***
+
+```kt
+fun main() {
+    val set = mutableSetOf<Int>()
+    println(set)
+    println(set.isEmpty())
+
+    set.apply {
+        add(1)
+        add(2)
+        add(3)
+    }
+
+    println(set)
+    println(set.isEmpty())
+}
+```
+
+#### 10.2.2.3 map 字典
+
+> `Map<K, V>` 不是 `Collection` 接口的继承者，但是它也是 Kotlin 的一种集合类型
+
+- ***`Map` 存储键值对（Key Value Pairs），键是唯一的，但是不同的键可以与相同的值配对***，`Map` 接口提供特定的函数进行通过键访问值、搜索键和值等操作
+
+- ***创建一个字典，使用 `mapOf` 函数，它接受一些键值对（其实是我们见过的 `Pair` 数据类），返回一个 `Map` 对象，还有对应的 `mutableMapOf` 函数返回可变字典***
+
+```kt
+fun main() {
+    val map = mapOf("Alice" to 25, "Bob" to 30, "Charlie" to 35)
+    println(map)
+    for ((name, age) in map) {
+        println("\t$name is $age years old")
+    }
+
+    for (i in 0..map.size - 1) {
+        println("\t\t${map.keys.elementAt(i)} is ${map.values.elementAt(i)} years old")
+    }
+
+    for (i in map) {
+       println("\t\t\t$i")
+    }
+}
+```
+
+- 这个 **`to` 不是一个关键字，他只是二元元组里的一个中缀方法**用于快速创建元组，而 `map` 的初始化方法接受的就是一堆元组的可变参数
+
+```kt
+fun main() {
+    val map = mapOf(Pair("apple", 1), Pair("banana", 2), Pair("orange", 3))
+    val map1 = mapOf("apple" to 1, "banana" to 2, "orange" to 3)
+
+    // 二者效果相等
+}
+```
+
+- 因为二元元组是一个数据类，所以**在需要性能的地方最好少去使用 `to` 的方式初始化字典**
+
+```kt
+fun main() {
+    val map = mutableMapOf<String, String>().apply {
+        // apply 返回对象本身
+        put("apple", "$1.00")
+        // map 有 put 而不是 add 方法
+        put("banana", "$0.50")
+        put("orange", "$0.75")
+        remove("banana")
+        // 移除掉键的它对应的值
+        put("pear", "$2.00")
+        this["grape"] = "$3.00" // 没有键则添加
+        this["apple"] = "$1.50" // 已有键则更新
+        println(this)
+    }
+}
+```
+
+- ***字典的 `equals` 方法只看键对应的值相等与否***，顺序无所谓
+
+```kt
+fun main() {
+    val numbersMap = mapOf("key1" to 1, "key2" to 2, "key3" to 3, "key4" to 1)    
+    val anotherMap = mapOf("key2" to 2, "key1" to 1, "key4" to 1, "key3" to 3)
+
+    println("The maps are equal: ${numbersMap == anotherMap}")
+}
+```
+
+- ***`mutableMap` 是一个允许读写操作的字典***
+
+```kt
+fun main() {
+    val numbersMap = mutableMapOf("one" to 1, "two" to 2)
+    numbersMap.put("three", 3)
+    numbersMap["one"] = 11
+    // map 的 set 方法也支持 [key] 的索引方式
+
+    println(numbersMap)
+}
+```
+
+- Kotlin 里的**字典默认实现是 `LinkedHashMap` ，可以保留插入的顺序**，如果**为了追求性能可以自己指定 `HashMap` 用作实现**
+
+> 具体 `LinkedHashMap` 和 `HashMap` 的区别，可以看网上的资料，这里不了解就不介绍了
+
+```kt
+fun main() {
+    val linkMap = mapOf("Kotlin" to "https://kotlinlang.org", "Java" to "https://www.java.com")
+    val hashMap = HashMap<String, String>(linkMap)
+
+    println("hashMap: $hashMap")
+    println("linkMap: $linkMap")
+}
+```
+
+### 10.2.3 集合的常见操作
+
+> 这里不会对 Kotlin 里面集合的每一个操作进行讲解，费力不讨好，直接看官方文档就好了，很简单，这里列出常用方法的名称方便索引
+
+- [集合转换操作](https://book.kotlincn.net/text/collection-transformations.html)
+
+> `map()` `filter()` `associate` `flatten()` `joinTo`
+
+```kt
+fun main() {
+    val list = listOf("apple", "banana", "orange", "grape", "pear")
+    val map = mapOf("Nikon Z6" to 1200, "Canon EOS 5D" to 1800, "Sony Alpha 6800" to 2000)
+
+    // map() 方法接受一个 lambda 表达式作为参数，并将每个元素应用到 lambda 表达式中，返回一个新的集合，顺序不变
+    // Indexed 函数可以获取元素的索引，如果要返回的元素可以为空，请使用对应的 NotNull 方法
+    println(list.map { "$it is a fruit" })
+    println(list.mapIndexed { index, fruit -> "$index: $fruit is a fruit" })
+    println(list.mapNotNull { if (it.length > 5) it else null }.apply { println(this.size) })
+    // 注意这个 NotNull 方法的使用，他返回的并不是 List<String?> 而是 List<String>，略过了 null 元素，下面同理
+    println(list.mapIndexedNotNull { index, fruit -> if (fruit.length > 4) "$index: $fruit" else null })
+
+    // 如果操作的对象是 map，可以选择 mapKeys() 和 mapValues() 方法，前者对键进行操作保留值，后者对值进行操作保留键
+    println(map.mapKeys { it.key.uppercase() })
+    println(map.mapValues { it.value * 2 })
+    println(map
+        .mapKeys { it.key.lowercase() }
+        .mapValues { it.value * 3 }
+        .map { "${it.key} costs $ ${it.value}" }
+    )
+    println()
+
+    // filter() 方法接受一个 lambda 表达式作为参数，并将每个元素应用到 lambda 表达式中，返回一个新的集合，顺序不变
+    // 只有满足 lambda 表达式的元素才会被保留，不满足的元素会被过滤掉
+    println(list.filter { it.length > 5 })
+    println(list.filterIndexed { index, fruit -> index % 2 == 0 })
+    println(list.filterNot { it.length > 5 })
+    println()
+
+    val dogs = listOf("Rufus", "Max", "Buddy")
+    val cats = listOf("Fluffy", "Whiskers")
+    // zip() 方法接受两个集合作为参数，返回一个包含两个 Pair 的 list，每一个 Pair 包含两个元素，第一个元素来自第一个集合，第二个元素来自第二个集合
+    // 如果两个集合的元素个数不一致，则只会返回最短集合的元素
+    println(dogs zip cats)
+    // 还可以指定一个 lambda 表达式来自定义结果集
+    println(dogs.zip(cats) { d, c -> "$d is a good dog, $c is a good cat" })
+    println(dogs.zip(cats, transform = { d, c -> d to c })) // 等于默认
+    println()
+
+    // 同理，如果有一个只包含 Pair 的 list，还可以使用 unzip() 方法将其解压为两个集合，第一个集合包含所有 Pair 的第一个元素，第二个集合包含所有 Pair 的第二个元素
+    val pairs = listOf("apple" to 10, "banana" to 20, "orange" to 30)
+    val fruits = pairs.unzip()
+    println(fruits)
+    println()
+
+    // associate() 系列方法可以把一个集合与另外的元素关联从而返回一个字典
+    // associateWith() 方法接受一个 lambda 表达式作为参数，并将每个元素应用到 lambda 表达式中，返回一个字典，键是元素，值是 lambda 表达式的结果
+    println(list.associateWith { it.length })
+    // associateBy() 方法可以指定键的生成和值的生成方式
+    println(list.associateBy(keySelector = { it.first() }, valueTransform = { it.length }))
+    // associate() 方法可以同时指定键和值的生成方式，lambda 表达式需要返回一个 Pair，里面就是键和值
+    println(list.associate { it.first().uppercase() to it.length + 10 })
+    println()
+
+    // flatten() 方法可以将一个包含集合的集合中的元素展开为一个单独的元素列表
+    println(listOf(listOf(1, 2, 3), listOf(4, 5, 6)).flatten())
+    // flatMap() 方法可以将一个集合中的元素应用到一个 lambda 表达式，然后将结果展开为一个单独的元素列表，注意 lambda 表达式拿到的是集合而不是集合中的元素，并且必须返回一个可迭代的对象
+    println(list.flatMap { it.toList() })
+    println(listOf(listOf("apple", "banana"),
+        listOf("orange", "grape"),
+        listOf(1, 2, 3)
+    ).flatMap { it.map { it.toString() } })
+    println()
+
+    // joinToString() 方法可以方便的格式化集合为字符串
+    println(list.joinToString()) // 默认
+    println(list.joinToString(prefix = "(", postfix = ")", separator = " -> ", transform = { it.uppercase() })) // 自定义
+    // joinTo() 方法可以将集合中的元素以指定的方式连接到一个 StringBuilder 中
+    val sb = StringBuilder("This is a list: ")
+    list.joinTo(sb, separator = " | ", prefix = "(", postfix = ")")
+    println(sb.toString())
+    println()
+}
+```
+
+- [过滤集合](https://book.kotlincn.net/text/collection-filtering.html)
+
+> `filter()` `partition()` `any()` `none()` `all()`
+
+```kt
+fun main() {
+    val list = listOf(1, 2, 3, 4, 5)
+    val map = mapOf("1th" to 1, "2nd" to 2, "3rd" to 3, "4th" to 4, "5th" to 5)
+    val anyList = listOf(1, "2", 3.0, '4', null)
+    val emptySet = setOf<Int>()
+
+    // filter() 函数用于过滤列表中的元素，返回一个新的列表，参数为一个 lambda 表达式，该表达式接收一个元素作为参数，返回一个布尔值，表示是否保留该元素
+    println(list.filter { it % 2 == 0 })
+    // list 和 set 都返回 list，map 过滤后返回 map
+    println(map.filter { (key, value) /*Pair 解构*/ -> value % 2 == 0 && key.endsWith("th") })
+    // filterIndexed() 还可以拿到元素的索引
+    println(list.filterIndexed { index, value -> (index + 1) % 2 == 0 && value % 2 == 0 })
+    // filterNot() 正好与 filter() 相反，返回一个新的列表，保留原列表中不满足 lambda 表达式的元素
+    println(list.filterNot { it % 2 == 0 })
+    // filterNotNull() 过滤掉 null 元素
+    println(anyList.filterNotNull())
+    // filterIsInstance() 可以拿到指定类型的元素集合，从而可以针对特定类型使用它的特点方法
+    println(anyList.filterIsInstance<String>().forEach { print("${it.uppercase()} and ") })
+    println()
+
+    // partition() 函数可以将列表分成两个列表，第一个列表是满足 lambda 表达式的元素，第二个列表是不满足的元素
+    val (evens, odds) = list.partition { it % 2 == 0 }
+    println("evens = $evens, odds = $odds")
+    println()
+
+    // any() none() all() 函数用于简单判断，any() 有一个元素满足 lambda 表达式，返回 true，否则返回 false；
+    // none() 所有元素都不满足 lambda 表达式，返回 true，否则返回 false
+    // all() 所有元素都满足 lambda 表达式，返回 true，否则返回 false。
+    println(list.any { it % 2 == 0 })
+    println(list.none { it % 2 == 0 })
+    println(list.all { it % 2 == 0 })
+    // 这些方法不带参数使用的话就简单的判断列表是否为空或非空，如果为空 any() 返回 false，none() 返回 true
+    println(emptySet.isEmpty())
+    println(emptySet.none())
+    println(emptySet.any())
+    println()   
+}
+```
+
+- [分组](https://book.kotlincn.net/text/collection-grouping.html)
+
+> `group()` 和它的衍生方法
+
+```kt
+fun main() {
+    val list = listOf(1, 2, 3, 4, 5)
+
+    // groupBy() 方法用于将集合按照给定的条件分组，返回字典，其中键是分组的条件（lambda表达式的返回值），值是分组后的元素
+    println(list.groupBy { if (it % 2 == 0) "even" else "odd" })
+    // 注意这里 keySelector 和 valueTransform 两个中的 it 都是指集合中的元素，不是索引
+    println(list.groupBy(keySelector = { it % 2 }, valueTransform = { "$it : ${it * 2}" }))
+
+    // groupingBy() 返回的是一个 Grouping 类型的实例，可以对它在调用方法，比如 eachCount() 方法，用于统计每个分组的元素数量
+    println(list.groupingBy { it % 2 }.eachCount())
+}
+```
+
+- [取集合的一部分](https://book.kotlincn.net/text/collection-parts.html)
+
+> `slice()` `take()` `drop()` `chuncked()` `windowed()`
+
+```kt
+fun main() {
+    val list = listOf("1th", "2nd", "3rd", "4th", "5th")
+
+    // slice() 函数接受一个区间，返回索引在区间内对应的元素
+    println(list.slice(1..3))
+
+    // take() takeLast() 函数接受一个整数，返回从开头或结尾取指定数量的元素
+    println(list.take(3))
+    println(list.takeLast(3))
+
+    // drop() dropLast() 函数接受一个整数，返回从开头或结尾去掉指定数量的元素
+    println(list.drop(3))
+    println(list.dropLast(3))
+    println(list) // 源列表不变
+    // 注意当 take 和 drop 都取出了相同数量的元素时，结果将会是整个列表
+    println(list.take(10))
+    println()
+
+    // takeWhile() 函数接受一个 lambda 表达式，返回从开头开始，直到 lambda 表达式返回 true 的元素，其他的 takeLastWhile() dropWhile() dropLastWhile() 函数类似
+    println(list.takeWhile { it.endsWith("th") })
+    println(list.takeLastWhile { it.endsWith("th") })
+    println(list.dropWhile { it.endsWith("th") })
+    println(list.dropLastWhile { it.endsWith("th") })
+    println()
+
+    // chunked() 函数接受一个整数，返回一个二维列表，里列表的大小为指定的整数，列表的元素是源列表的连续片段
+    println((1..10).toList().chunked(3))
+    // chunked() 函数还可以接受一个 lambda 表达式，对每个片段进行处理
+    println((1..10).toList().chunked(3) { it.sum() })
+    println()
+
+    // windowed() 函数用于把集合分割成指定大小的窗口，返回一个二维列表，这个窗口的大小，每次移动的步长，包不包含不完整的窗口都可以指定，他返回的二位列表就是一个个窗口展示出的元素
+    println(list.windowed(3))
+    println(list.windowed(size = 3, step = 2))
+    println(list.windowed(size = 2, step = 1, partialWindows = true))
+    println()
+}
+```
+
+- [取单个元素](https://book.kotlincn.net/text/collection-elements.html)
+
+> `elementAt()` `first()` `last()` `random()` `contains()` `isEmpty()`
+
+```kt
+fun main() {
+    val list = listOf("1th", "2nd", "3rd", "4th", "5th")
+
+    // elementAt() 函数用于取值，不过对于 list 来说还是使用 get() 函数更方便
+    println(list.elementAt(2)) // == list[2]
+
+    // elementAtOrNull() 函数用于取值，如果越界则返回 null
+    // elementAtOrElse() 函数用于取值，如果越界则返回 lambda 函数的返回值
+    println(list.elementAtOrNull(10))
+    println(list.elementAtOrElse(10) { "out of bounds" })
+
+    // first() last() 函数用于取第一个和最后一个元素
+    println(list.first())
+    println(list.last())
+    // first() last() 函数也可以传入 lambda 函数作为参数，用于筛选第一个符合要求的元素
+    println(list.first { it.endsWith("th") })
+    println(list.last { it.endsWith("th") })
+    // 注意，如果没有符合要求的元素，first() last() 函数会抛出 NoSuchElementException 异常，可以使用 firstOrNull() lastOrNull() 函数
+    println(list.firstOrNull { it.endsWith("th") })
+    println(list.lastOrNull { it.endsWith("6th") })
+    // Kotlin 还贴心的准备了 find() findLast() 用于简化 firstOrNull() lastOrNull()，二者功能完全相同
+    println(list.find { it.endsWith("th") })
+    println(list.findLast { it.endsWith("6th") })
+
+    // random() 函数用于随机取一个元素
+    println(list.random())
+
+    // contains() 函数用于判断元素是否存在于列表中，一般用于 set 集合
+    println(list.contains("2nd"))
+    println(list.contains("6th"))
+    println()
+
+    // firstNotNullOf() 函数遍历集合，返回 lambda 返回的第一个非 null 值，如果遍历完仍没有找到非 null 值，则抛出 NoSuchElementException 异常
+    println(listOf(null, "1", 23, "2nd", null).firstNotNullOf { it.toString().takeIf { it == "1" } })
+    // firstNotNullOfOrNull() 不会报错取而代之的是返回 null
+    println(listOf(null, '1', 23, "2nd", null).firstNotNullOfOrNull { it.takeIf { it is String } })
+    // 因为要返回 null 才会调用，这也是为什么一般与 takeIf() 一起使用
+}
+```
+
+- [排序](https://book.kotlincn.net/text/collection-ordering.html)
+
+- [聚合操作](https://book.kotlincn.net/text/collection-aggregate.html)
+
+> `min()` `max()` `sum()` `average()` `count()` `reduce()` `fold()`
+
+```kt
+fun main() {
+    val numbers = listOf(6, 42, 10, 4)
+
+    // count 返回集合中元素的数量，对 list 来说类似 size
+    // maxOrNull 返回集合中最大的元素，如果集合为空，则返回 null
+    // minOrNull 返回集合中最小的元素，如果集合为空，则返回 null
+    // average 返回集合中元素的平均值
+    // sum 返回集合中元素的总和
+    println("Count: ${numbers.count()}")
+    println("Max: ${numbers.maxOrNull()}")
+    println("Min: ${numbers.minOrNull()}")
+    println("Average: ${numbers.average()}")
+    println("Sum: ${numbers.sum()}")
+
+    // sumOf()
+    println("Sum of squares 1 to 10: ${(1..10).sumOf { it * it }}") // 每一个数的平方的和，sumOf 允许你在求和之前对每一个元素再做一次操作
+
+    // maxBy() maxByOrNull() maxWithOrNull() minBy() minByOrNull() minWithOrNull() 看下面
+    println(numbers.maxBy { it % 2 == 0 })
+    println(numbers.maxWithOrNull(compareBy { it % 2 }))
+
+    // fold() reduce() 都是累积对集合操作，一个参数是之前的累加值，另一个是当前索引
+    // 唯一不同点是 fold 接受一个初始值并当作第一次的累加值，而 reduce 把第一第二个元素作为参数
+    println(numbers.fold(0) { sum, i -> sum + i })
+    println(numbers.reduce { sum, i -> println("$sum and $i") ; sum + i })
+    println(numbers.reduce { sum, i -> println("$sum and $i") ; sum + i * 2})
+    println()
+
+    // foldRight() reduceRight() 类似 fold() reduce() ，但是从右边开始累积，注意参数的顺序也变了
+    println(numbers.foldRight(0) { i, sum -> sum + i })
+    println(numbers.reduceRight { i, sum -> println("$i and $sum") ; sum + i })
+    println(numbers.reduceRight { i, sum -> println("$i and $sum") ; sum + i * 2})
+    println()
+
+    // foldIndexed() reduceIndexed() 类似 fold() reduce() ，但是可以访问索引，同理 foldRight() reduceRight()
+    println(numbers.foldIndexed(0) { index, sum, i -> sum + index + i })
+    println(numbers.reduceIndexed { index, sum, i -> println("$index and $sum and $i") ; sum + index + i })
+    println(numbers.reduceRightIndexed { index, i, sum -> println("$index and $i and $sum") ; sum + index + i })
+    println()
+
+    // 最后，所有的这些都会在集合为空的时候报错，他们都有对应的OrNull() 版本，如果集合为空，则返回 null
+}
+```
+
+- [集合写操作](https://book.kotlincn.net/text/collection-write.html)
+
+> `add()` `remove()` `addAll()` `removeAll()` `clear()`
+
+```kt
+fun main() {
+    val list = mutableListOf(1, 2, 3, 4, 5)
+    println(list.apply { add(6) })
+    println(list.apply { remove(2) })
+    println(list.apply { removeAll { it % 2 == 0 } })
+    println(list.apply { clear() })
+    println(list.apply { this += 1 })
+    println(list.apply { addAll(listOf(7, 8, 9, 2, 4)) })
+    println(list.apply { retainAll(listOf(1, 3, 5)) })
+    println(list.apply { this -= 1 })
+}
+```
+
+## 10.3 排序
+
+## 10.4 迭代和区间
+
+## 10.6 序列
