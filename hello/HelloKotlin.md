@@ -59,6 +59,12 @@ fun main() {
 }
 ```
 
+> Kotlin 还有 `.kts` 为后缀的脚本文件，可以直接运行
+
+```kts
+println("Hello World!")
+```
+
 - 这是 Kotlin 里面 Hello World 的写法，确实**相比 Java 来说简洁很多**，而且像是**函数式编程**（functional programming）
 
 - 首先，***`fun` 关键字用于声明一个函数，main 函数是程序的入口***，在函数章之前所有的语句都写在 main 里面，**函数的正文写在大括号里面**
@@ -2440,6 +2446,8 @@ inline fun print_hello(crossinline func: (Unit) -> Unit): (Unit) -> Unit {
 
 > ***`crossinline` 不支持非局部返回，支持内联***
 
+>> `crossinline` 还有一种用法我们在协程的时候再讲
+
 - 还有一句，***无论是 `noinline` 还是 `crossinline`，只能在已经声明了 `inline` 的函数的参数里面用***，没有 `inline` 你别想了
 
 - 还有一件事，如果***想要 `lambda` 即使用 `return`，又不要非局部返回，可以使用标签***，就是我们之前在流程控制里讲过的标签
@@ -2671,6 +2679,8 @@ fun main() {
     // funcNeedFunc { println("Hello, Kotlin!") } 报错
 }
 ```
+
+> 说实话，Java 不支持具名参数和参数默认值所以有了方法重载，Kotlin 都有的话其实方法重载用的很少，但是也还能用，
 
 
 # 第六章：包和导入
@@ -9562,7 +9572,7 @@ fun main() {
 
 #### 10.2.2.1 list 列表
 
-- ***创建一个 `List` ，一般就用 `listOf` 函数***，它接受一些可变参数，返回一个 `List` 对象
+- ***创建一个 `List` ，一般就用 `listOf` 这个顶层函数***，它接受一些可变参数，返回一个 `List` 对象
 
 - ***`List<T>` 以指定的顺序存储元素，并提供使用索引访问元素的方法***。索引从 `0`（第一个元素的索引）开始直到 `lastIndex`，即 `list.size - 1`
 
@@ -9874,6 +9884,15 @@ fun main() {
     }.also {
         println(it)
     }
+}
+```
+
+- `Set` 中的元素没有顺序，***判断一个元素是否在 `Set` 中，可以使用 `contains()` 方法，还可以用 `in` 中缀***
+
+```kt
+fun main() {
+    println(setOf("one", "two", "three").contains("one"))
+    println("one" in setOf("one", "two", "three"))
 }
 ```
 
@@ -10346,8 +10365,563 @@ fun main() {
 }
 ```
 
+> 在写这一章的时候，发现了很有意思的一件事
+
+```kt
+fun main(args: Array<String>) {
+    val greeting = "Hello, world!".also {
+        if (it is String) { println("it's a string") } else { println("it's not a string") }
+    }
+
+    // it is String 正好像是一句话了
+}
+```
+
 ## 10.3 排序
 
-## 10.4 迭代和区间
+- 对集合来说，排序（sorting）是很重要的操作，我们在上面曾经讲过 **`compareTo()` 这个操作符重载方法，利用它可以对我们自定义的类使用 `>` `<` 之类的比较操作符**
 
-## 10.6 序列
+- Kotlin 里**一般的类型 `Int` `String` 一类都继承自 `Comparable` 类，并且自己实现了 `compareTo()` 方法**，所以可以直接进行比较，比如 $1 > 0$ $-2 > -3.5F$ ，当然***自己的类也可以继承自 `Comparable`***
+
+```kt
+fun main() {
+    println(1 > 7)
+    println(-1.2 < -3.4f)
+    println("Hello, world!" > "Kotlin")
+    println("Hello, world!" > "Hello, Kotlin!")
+    // 字符默认按照字母顺序排序
+}
+```
+
+- ***`compareTo()` 必须接受同类型的单参数并返回一个整数，正数自己大负数说明没有人家大，`0` 说明一样大***
+
+```kt
+fun main() {
+    println(Version(1, 2) < Version(1, 3))
+    println(Version(1, 4) < Version(1, 3))
+    println(Ver(1, 2) < Ver(1, 3))
+    println(Ver(1, 4) < Ver(1, 3))
+}
+
+data class Version(val major: Int, val minor: Int) {
+
+    operator fun compareTo(other: Version): Int = when {
+        this.major!= other.major -> major - other.major
+        this.minor!= other.minor -> minor - other.minor
+        else -> 0
+    }
+
+    // 使用操作符重载的方式
+
+}
+
+class Ver(val major: Int, val minor: Int) : Comparable<Ver> {
+
+    override fun compareTo(other: Ver) = when {
+        this.major != other.major -> this.major - other.major
+        this.minor != other.minor -> this.minor - other.minor
+        else -> 0
+    }
+
+    // 使用继承并重写 compareTo() 方法的方式
+}
+```
+
+- ***使用方法 `sorted()` 可以集合中对继承自 `Comparable` 的元素进行排序***，返回一个新的排序后的列表，***默认是升序排序***
+
+- ***`sortedDescending()` 是降序排序***
+
+```kt
+fun main() {
+    println(listOf(1, 4, 7, 8, 5).sorted())
+    println(listOf(Version(1, 2), Version(1, 3), Version(1, 1)).sorted())
+
+    println(listOf(1, 4, 7, 8, 5).sortedDescending())
+    println(listOf(Version(1, 2), Version(1, 3), Version(1, 1)).sortedDescending())
+}
+
+
+data class Version(val major: Int, val minor: Int) : Comparable<Version> {
+
+    override fun compareTo(other: Version) = when {
+        this.major != other.major -> this.major - other.major
+        this.minor != other.minor -> this.minor - other.minor
+        else -> 0
+    }
+
+}
+```
+
+- ***`shuffled()` 方法可以对集合进行随机排序，返回一个新的随机排序后的列表***
+
+- ***`reversed()` 方法可以对集合进行反转，返回一个新的反转后的列表***。还有一个 ***`asReversed()` 方法，他的返回是源列表的反向引用，也就是索引方式是倒着的，但是仍然是源列表的引用，你的更改会影响到源列表***
+
+```kt
+// list 不可变
+
+fun main() {
+    val list = listOf(1, 2, 3, 4, 5)
+    list.run {
+        println(this.shuffled())
+
+        println(this.sorted())
+
+        println(this.reversed())
+    }
+
+    println(list)
+}
+```
+
+- 对于 `mutableList`，还有 `shuffle()` `reverse` `sort()` 这类不是过去式的单词，他们代表这会改变原集合，而不是返回一个新的集合
+
+- `asReversed()` 也能改变原集合了
+
+```kt
+fun main() {
+    val list = mutableListOf(1, 2, 3, 4, 5)
+
+    list.shuffle()
+    println(list)
+
+    list.sort()
+    println(list)
+
+    val reverseList = list.asReversed()
+    println("reverseList: $reverseList")
+    println("list: $list")
+
+    reverseList.reverse()
+    println("reverseList: $reverseList")
+    println("list: $list")
+
+    reverseList[0] = 100
+    println("reverseList: $reverseList")
+    println("list: $list")
+
+    reverseList.fill(0)
+    println("reverseList: $reverseList")
+    println("list: $list")
+
+    reverseList.clear()
+    println("reverseList: $reverseList")
+    println("list: $list")
+}
+```
+
+- 既然说到了随机，顺带讲一下 Kotlin **自带的 `Random` 类，可以方便的生成伪随机数**，各种类型都有
+
+> 导入 `kotlin.random.Random` 即可，这个包下就这一个类
+
+```kt
+import kotlin.random.Random
+
+fun main() {
+    val randomValues = List(10) { Random.nextInt(0, 100) }
+    println(randomValues)
+
+    val nextValues = List(10) { Random.nextInt(0, 100) }
+    println(nextValues)
+    println("randomValues != nextValues is ${randomValues != nextValues}")
+}
+```
+
+- 要想***自定义排序，可以使用 `sortedBy()` 和 `sortedByDescending()` 方法，传入一个 `lambda` 接受集合里的每一个元素，然后根据这个 `lambda` 的返回值进行自然排序***（也就是返回 `Int` 则按照默认 `Int` 排序，返回 `String` 则按照字母顺序排序）
+
+```kt
+fun main() {
+    println(listOf("one", "two", "three", "four", "five").sortedBy { it.length })
+    println(listOf("one", "two", "three", "four", "five").sortedByDescending { it.last() })
+}
+```
+
+- 如果自己***对自定义要求程度高，可以使用 `sortedWith()` 方法，该方法需要一个 `Comparator` 对象用来比较***
+
+- 前面我们没讲过，***`Comparator` 其实是一个 `fun interface` ，也就是单参数方法，它的唯一方法 `compare()` 接受两个参数，返回一个 `Int` 值，正数自己大负数说明没有人家大，`0` 说明一样大***
+
+```kt
+fun main() {
+    println(listOf("one", "two", "three", "four", "five")
+    .sortedWith(Comparator { a, b ->
+        a.length - b.length 
+    }))
+
+    // 使用 Kotlin 便捷 SAM 实现写法
+}
+```
+
+- ***使用 `compareBy()` 就可以快速生成 `Comparator` 对象***
+
+```kt
+fun main() {
+    println(listOf("one", "two", "three", "four", "five").sortedWith(compareBy { it.length }))
+
+    // 等同于上文
+}
+```
+
+- ***`then` 方法还可以对排序后的列表再次排序，同样接受一个 `Comparator` 对象，返回一个新的排序后的列表***，**`then` 是中缀形式的，`thenBy()` 无需再传入 `Comparator` 对象**
+
+```kt
+fun main() {
+    val list = listOf("a", "b", "c", "aa", "bb", "ab", "ba")
+
+    println(list.sortedWith(compareBy { it.length }))
+    println(list.sortedWith(compareBy<String> { it.length } then compareBy { it }))
+    println(list.sortedWith(compareBy<String> { it.length }.thenBy { it }))
+}
+```
+
+## 10.4 区间
+
+- Kotlin 里的***区间一般是使用 `rangeTo()` `rangeUntil()` 这两个中缀方法创建的，当然更常见的是使用 `..` `..<` 这两个操作符***
+
+- ***Kotlin 里面有 `CharRange` `IntRange` `LongRange` 这三个区间类***，位于 `kotlin.ranges` 包下，默认会被导入
+
+```kt
+fun main() {
+    val intRange = 1..10 // 1, 2, 3 ... 10
+    val charRange = 'a'..<'z' // 'a', 'b', 'c' ... 'y'
+
+    for (i in intRange) println(i)
+    for (c in charRange step 2) println(c)
+}
+```
+
+- 这个 **`Range` 还包含一些工具方法**
+
+```kt
+fun main() {
+    println(('a'..'g').contains('C'))
+    println(('A'..'G').contains('C'))
+    println('c' in ('a'..'g'))
+    // in 除了泛型、for、现在还有了一个用途
+    println((0..-1).isEmpty())
+}
+```
+
+```kt
+fun main() {
+    println(charKind('a'))
+    println(charKind('A'))
+    println(charKind('0'))
+}
+
+fun charKind(c: Char): String = when (c) {
+    in 'a'..'z' -> "lowercase"
+    in 'A'..'Z' -> "uppercase"
+    in '0'..'9' -> "digit"
+    else -> "other character"
+}
+```
+
+- ***`in` 甚至能判断字符串区间***，不过当然字符串区间不存在，**他会把 `"a" in "abc".."xyz"` 看作是 `"a" >= "abc" && "a" <= "xyz"` 之类的关系**
+
+```kt
+fun main() {
+    println("kotli" in "java".."scala")
+    println("bash" in "cpp".."rust")
+}
+```
+
+> Kotlin 还有一个数列，个人觉得没用，[官方文档](https://book.kotlincn.net/text/ranges.html)有介绍，自己看吧
+
+## 10.6 迭代器
+
+> 如果要遍历元素，最通用的是使用迭代器（iterator），他会逐个返回集合里的元素，而无需暴露底层结构
+
+- ***在一个实现了 `Iterable<T>` 的继承者（`List` `Set`）上，可以调用 `iterator()` 方法得到一个迭代器对象，这个对象首先指向头指针，可以用 `hasNext()` `next()` 方法来遍历元素***
+
+> `Map` 也有 `iterator()` 方法，只不过它不继承自 `Iterable`，并且是扩展方法的方式
+
+```kt
+fun main() {
+    val numbers = listOf("one", "two", "three", "four")
+    val numbersIterator = numbers.iterator()
+    while (numbersIterator.hasNext()) {
+        println(numbersIterator.next())
+    }
+}
+```
+
+> **一但迭代器走到了末尾，那么它就会被作废**，也无法再拿到元素和索引
+
+- 当然，***最常用的 `for` 循环在遍历时会隐式的调用集合的迭代器***，所以一般迭代器用的很少
+
+> `in` 在循环外面表示判断区间，在循环里面表示循环变量
+
+```kt
+fun main() {
+
+    val map = mapOf("apple" to 1, "banana" to 2, "orange" to 3)
+
+    for ((key, value) in map) {
+        println("$key -> $value")
+    }
+}
+```
+
+- 还有我们一直在用的 ***`forEach`，轮流拿到元素***
+
+```kt
+fun main() {
+
+    val map = mapOf("apple" to 1, "banana" to 2, "orange" to 3)
+
+    map.forEach { key, value ->
+        println("$key -> $value")
+    }
+}
+```
+
+- ***`List` 有一个特有的 `listIterator()` 方法，它返回一个 `ListIterator` 对象，可以双向遍历***
+
+> 这样就可以无限迭代下去没有抵达最后的限制
+
+```kt
+fun main() {
+    val numbers = listOf("one", "two", "three", "four")
+    val listIterator = numbers.listIterator()
+
+    while (listIterator.hasNext()) listIterator.next()
+    println("Iterating backwards:")
+    while (listIterator.hasPrevious()) {
+        print("Index: ${listIterator.previousIndex()}")
+        println(", value: ${listIterator.previous()}")
+    }
+
+    println("Iterating forwards:")
+    while (listIterator.hasNext()) {
+        print("Index: ${listIterator.nextIndex()}")
+        println(", value: ${listIterator.next()}")
+    }
+
+    // 可以无限下去
+}
+```
+
+- 还有 ***`MutableList` 为 `listIterator()` 方法提供了修改元素的能力***，比如 `set()` `add()` `remove()` 等方法
+
+```kt
+fun main() {
+    val list = mutableListOf("one", "two", "three", "four", "five")
+    val listIterator = list.listIterator()
+
+    println(listIterator)
+    while (listIterator.hasNext()) {
+        print("${listIterator.next()} ")
+        if (listIterator.nextIndex() % 2 == 0) {
+            listIterator.remove()
+            // 知道为什么除了 one 以外的元素都被移除了，是因为 nextIndex() 方法是动态的原来的列表在 remove 之后的索引也是会变的，一直在 2 的位置移除
+        }
+    }
+
+    println()
+    println(list)
+
+    listIterator.apply {
+        add("six")
+        previous()
+        add("seven")
+        previous()
+        // 注意下反向迭代时候 add 是在哪里加入
+    }
+
+    println(list)
+
+    listIterator.set("eight")
+    // set 是把当前指向的元素替换掉
+    println(list)
+}
+```
+
+## 10.7 序列
+
+> 我们在前面从介绍作用于函数开始，就一直在使用链式调用，写起来逻辑清晰直观，但是**链式调用总是会创建出一堆使用完后就被丢弃的中间对象**，如果调用很多的话或许是个问题
+
+> 说实话作用域函数不就是为了解决临时变量过多的吗？
+
+- Kotlin 有另一种类型，***序列（sequence），它是惰性的，只有在需要的时候才会生成元素，而且可以无限迭代下去，相比迭代器的一个个链式产生的中间对象，序列会对每个元素逐步执行所有操作后再遍历下一个***
+
+- ***创建一个序列，可以使用顶层函数 `sequenceOf()`***，就像是 `listOf()` 一样
+
+```kt
+fun main() {
+    val sq = sequenceOf(1, 2, 3, 4, 5)
+    println(sq) // 拿不到元素，后面就知道了
+    println(sq.sum())
+}
+```
+
+- 或者是 **`asSequence()` 把现有的集合转为序列**
+
+```kt
+fun main() {
+    val sq1 = listOf(1, 2, 3, 4, 5).asSequence()
+    val sq2 = setOf(1, 2, 3, 4, 5).asSequence()
+    val sq3 = mapOf(1 to "one", 2 to "two", 3 to "three", 4 to "four", 5 to "five").asSequence()
+
+    println(sq1.toList())
+    println(sq2.toList())
+    println(sq3.toList())
+}
+```
+
+- 使用 `generateSequence()` 函数，提供第一个元素，使用 `lambda` 里的元素当作下一个元素，一直生成下去，直到 `lambda` 返回 `null` 为止
+
+> 如果不返回 `null` ，那么这是一个无限序列，可以无限迭代下去，在使用的时候才会报错
+
+```kt
+fun main() {
+    val sq = generateSequence(1) {
+        if (it == 100) null else it + 1
+    }
+
+    val infiniteSq = generateSequence(0) {
+        it + 2
+    }
+
+    println(sq.sum())
+    println(infiniteSq.sum())
+    // 到也不是报错，但是会无响应
+}
+```
+
+- ***`sequence()` 函数可让我们像是使用 `buildList()` 类似的方式初始化序列，在他的里面使用 `yield()` 用于添加单个元素，`yieldAll()` 用于添加多个元素***
+
+> **`yieldAll()` 也可以添加无限的序列，只不过这样的元素必须在 `lambda` 的最后一个操作**，之后的操作都不会执行
+
+```kt
+fun main() {
+    val oddNumbers = sequence {
+        yield(1)
+        yieldAll(listOf(3, 5))
+        // yieldAll 可以接受其他集合类型或对象
+        yieldAll(generateSequence(7) { it + 2 })
+    }
+    println(oddNumbers.take(5).toList())
+}
+```
+
+- 序列的操作分为两种：
+    - ***返回一个序列，这叫做中间操作或无状态操作***，因为它不需要具体的状态，比如 `filter()` `map()` ，或者是接受少量参数的 `take()` `drop()`，***中间操作永远是惰性的***，如果有很多中间操作但是没有末端操作的话操作内是访问不到具体的元素的
+
+    - ***返回另一个结果，这叫末端操作或有状态操作***，需要具体状态（通常与元素数量成正比），***会触发所有的惰性操作（中间操作）***，比如 `toList()` `sum()` ，***这些操作会遍历序列并且返回一个需要累加（上一个元素值）的结果***
+
+```kt
+fun main() {
+    val sq = sequenceOf(1, 2, 3, 4, 5)
+    // val sq = listOf(1, 2, 3, 4, 5) 自己试一试列表会发生什么
+    sq.filter { 
+        println("Filtered: $it")
+        it % 2 == 0
+    }.map { 
+        println("Squared: $it")
+        it * it
+    }.sorted()
+}
+```
+
+> 那这么多的方法，我怎么才知道哪个是终端的哪个是中间的，看[官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/)
+
+- **所有的中间操作执行的步骤都会被保留起来，知道终端操作加入会对每一个元素一次性执行完毕中间操作，这就是惰性的意思**
+
+- 下面来看一个经典的例子：
+
+```kt
+fun main() {    
+    val words = "The quick brown fox jumps over the lazy dog".split(" ")
+
+    val lengthsList = words.filter { println("filter: $it"); it.length > 3 }
+        .map { println("length: ${it.length}"); it.length }
+        .take(4)
+
+    val lengthSequence = words.asSequence()
+        .filter { println("filter: $it"); it.length > 3 }
+        .map { println("length: ${it.length}"); it.length }
+        .take(4)
+
+    println("Lengths of first 4 words longer than 3 chars:")
+    println(lengthsList)
+
+    println("Lengths of first 4 words longer than 3 chars (sequence):")
+    println(lengthSequence.toList())
+    // 这里才是末端操作
+}
+```
+
+> 集合的流程：
+
+![](https://book.kotlincn.net/images/list-processing.png)
+
+> 序列的流程：
+
+![](https://book.kotlincn.net/images/sequence-processing.png)
+
+- 最后引用官网的一句话：**序列可避免生成中间步骤的结果，从而提高了整个集合处理链的性能。但是，序列的惰性性质增加了一些开销，这些开销在处理较小的集合或进行更简单的计算时可能很重要。因此，应该同时考虑使用 `Sequence` 与 `Iterable`， 并确定在哪种情况更适合**
+
+> Kotlin 里的序列才是真 `Stream API`，面对数量大且操作多的集合时候明显序列才是更好的选择
+
+## 10.8 命令行参数
+
+> 说了那么多，终于讲到了
+
+- 回过头来看 Java 的 `Hello World`，我们会注意到 `main` 函数有一个参数 `String[] args`，这就是***命令行参数，我们可以用它来接收外部传入的参数***
+
+> 也就是你使用控制台的时候输入的东西，比如 `java HelloWorld arg1 arg2` 中的 `arg1` `arg2` 就是命令行参数
+
+- Kotlin 也有类似的机制，不过它是通过 ***`Array<String>` 类型的 `args` 变量来访问***
+
+```kt
+fun main(args: Array<String>) {
+    for (arg in args) {
+        println(arg)
+    }
+}
+```
+
+> 注意编译的时候不要写，你在编译的时候输入的是编译器的命令行参数，只有在运行时才拿到的你的参数，***命令行参数以空格来区分***
+
+- **Kotlin 没有原生的获取环境变量的方法，不过我们可以用 Java 里面的，完美兼容**
+
+> 由于 Kotlin 会默认导入 `java.lang.*`，所以位于 `java.lang.System` 包下的 `getenv()` 方法可以拿来用
+
+```kt
+fun main(args: Array<String>) {
+    val env = System.getenv()
+    env.forEach { (key, value) ->
+        println("$key=$value")
+    }
+}
+
+// 输出你电脑里面所有的环境变量，也就是每一个控制台能拿到的信息
+
+fun main(args: Array<String>) {
+    val env = System.getenv("PATH")
+    env.split(';').forEach {
+        println(it)
+    }
+}
+
+// PATH 里面的信息
+```
+
+- 要想拿到 Java 的环境变量，使用 `System.getProperties()` `System.getProperty(key)` 方法
+
+```kt
+fun main(args: Array<String>) {
+    val env = System.getProperties()
+    // env 是 Properties 类型，就是之前反射的属性类型
+    for (i in env) {
+        println(i)
+    }
+}
+```
+
+> 恭喜你看完本章
+
+
+# 第十一章：异常处理
+
+> 只要是个高级语言，都会宣传自己的错误处理功能（C：我靠），Java 也是如此，如果你很熟悉 Java 的异常处理，那么你可以直接略过本章，因为大体是一样的
+
