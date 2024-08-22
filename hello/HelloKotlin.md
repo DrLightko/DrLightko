@@ -1030,9 +1030,9 @@ fun func() {
 |乘除余|`*` `/` `%`|
 |加减|`+` `-`|
 |范围运算符|`..`|
-|中缀函数||
+|中缀函数|`infix`|
 |Elvis 运算符|`?:`|
-|Named checks|`in` `!in` `is` `!is`|
+|类型判断和区间判断|`in` `!in` `is` `!is`|
 |比较|`<` `>` `<=` `>=`|
 |相等判断|`==` `!==`|
 |逻辑与|`&&`|
@@ -1047,11 +1047,11 @@ fun func() {
 
     > 以下是他们对应的方法，注意***调用 a.plus(b) 不会改变 a 本身的值***，你要把结果接走
 
-    - 加 + ：plus
-    - 减 -：minus
-    - 乘 *：tiems
-    - 除 /：div
-    - 取余 %：rem
+    - 加 + ：`plus`
+    - 减 -：`minus`
+    - 乘 *：`tiems`
+    - 除 /：`div`
+    - 取余 %：`rem`
 
 > Kotlin 没有原生的乘方，但是 math 包里面有
 
@@ -1507,6 +1507,8 @@ fun main() {
 ```
 
 - 如果想要精准控制循环，可以使用标签，***在 Kotlin 中任何表达式都可以用标签来标记，标签的格式为标识符后跟 `@` 符号***
+
+> `for` 不是一个表达式
 
 ```kt
 loop@ for (i in 1..5) {
@@ -9203,7 +9205,7 @@ fun main() {
 ```kt
 fun main() {
     val nullArray = arrayOfNulls<Int>(5)
-    // val nullArray: Array<Int?> = arrayOfNulls(5) 这样子也可以，因为有类型推断
+    // val nullArray: Array<Int?> = arrayOfNulls(5) 这样子也可以，因为有类型推断，所以左面右面写类型都可以
     println(nullArray.joinToString())
     println(nullArray.apply {
         for (i in 0..size - 1) {
@@ -10925,3 +10927,337 @@ fun main(args: Array<String>) {
 
 > 只要是个高级语言，都会宣传自己的错误处理功能（C：我靠），Java 也是如此，如果你很熟悉 Java 的异常处理，那么你可以直接略过本章，因为大体是一样的
 
+## 11.1 概念
+
+- 下面是 Java 异常的结构图，***所有异常的父类是 `Throwable`，`RunTimeException` 和自己的子类都叫运行时异常（RunTime Exception），`Exception` 和自己非  `RunTime` 的异常，我们叫受检异常（Checked Exception）***
+
+- **受检异常在编译时就可知，而我们真正关心的运行时异常只有在运行时才会被抛出**，对于受检异常，如果你不捕获的话编译是不通过的
+
+```kt
+Throwble
+// 所有异常类的父类叫 Throwble
+   ↑   ↖
+Error   Exception
+// 错误和异常，错误是一种无法继续、无能为力的异常 (比如停电了，死机了)，异常是代码仍能够继续运行的异常
+         ↗    ↖
+        ···    RunTimeException
+// Exception 和自己非 RunTime 的子类，都叫 Checked 异常
+// RunTime 和自己的子类，都叫 RunTime 异常，运行时
+                    ↖
+                    ···
+```
+
+> 虽然 Java 的受检异常本心很好，为了让写代码的人在编译时就知道自己要对可能发生的异常做出反应，但是结果就是到处都是 `try catch`，所以
+
+- ***Kotlin 没有受检异常***，比如 Java 里面的 `Thread.sleep()` 是会抛出 `InterruptedException` 的，这是个受检异常，所以你不写在捕捉里是不会编译的
+
+> 但是 Kotlin 可以不写
+
+```kt
+fun main(args: Array<String>) {
+    println("Hello, Kotlin!")
+    Thread.sleep(2000)
+    println("Goodbye, Kotlin!")
+}
+```
+
+```java
+public class Test {
+    public static void main(String[] args) {
+        System.out.println("Hello, Java!");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Goodbye, Java!");
+    }
+}
+```
+
+- **Kotlin 里的异常继承结构大体上也是上面的那样子，只不过没有受检异常和运行时异常的区分了**
+
+> [官方文档](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/)在这，具体哪个是什么样的异常类型不是自己看去
+
+
+## 11.2 捕捉异常
+
+- Kotlin ***使用 `try catch finally` 语句来捕捉异常***
+
+> `finally` 可选，**但是 `catch` `finally` 必须要有一个**
+
+```kt
+try {
+    可能产生异常的语句
+} catch(异常类型: 异常类型变量名){
+    // 将来引用类型的变量会指向一个异常类型
+    处理异常的语句
+} catch(其他异常类型){
+    ···
+} finally {
+    收尾工作
+}
+```
+
+```kt
+fun main(args: Array<String>) {
+    val list = listOf(1, 2, 3, 4, 5)
+
+    try {
+        println(list[6])
+    }
+    catch(e: ArrayIndexOutOfBoundsException) {
+        println("No Such Element")
+        println(e.message)
+    }
+}
+
+// 对比前后不使用异常处理的代码，我们发现经过处理后程序是顺利运行结束的，而不是运行失败
+```
+
+- ***`try` 里面的代码块如果发生了异常，他会按着 `catch` 接受的类型一个个找下去，找到第一个匹配的 `catch` 就会执行，如果没有匹配的 `catch`，那么就会执行 `finally` 里面的代码，然后程序终止***
+
+- ***如果 `catch` 一个合适的也没有找到，那么程序会报错推出，但是是在执行完 `finally` 里面的语句之后才退出***
+
+```kt
+fun main(args: Array<String>) {
+    val list = listOf(1, 2, 3, 4, 5)
+
+    try {
+        println(list[6])
+    }
+    catch(e: ArrayIndexOutOfBoundsException) {
+        println("No Such Element")
+        println(e.message)
+        // message 是异常的消息，可以打印出来
+        println(e.stackTrace)
+        // stackTrace 打印具体信息
+    } finally {
+        println("Finally block executed")
+        // 会被打印
+    }
+}
+```
+
+> 如果使用的 `Native` 的 Kotlin，还有一些方法可供使用，如果跟我一样是命令行 `JVM` `Native` 都存在的话，必须要使用 `kotlinc-native` 来编译
+
+```kt
+
+@kotlin.experimental.ExperimentalNativeApi
+fun main(args: Array<String>) {
+    val list = listOf(1, 2, 3, 4, 5)
+
+    try {
+        println(list[6])
+    }
+    catch(e: IndexOutOfBoundsException) {
+        println("No Such Element")
+        println(e.message)
+        println()
+        println(e.getStackTraceAddresses())
+        println()
+        println(e.getStackTrace())
+        println()
+        e.printStackTrace()
+    } finally {
+        println("Finally block executed")
+    }
+}
+
+// 说实话这个功能比 JVM 的多
+```
+
+- ***`finally` 有两种情况不会被执行，发生了错误和使用了 `System.exit()` 直接退出***
+
+```kt
+fun main(args: Array<String>) {
+    val list = listOf(1, 2, 3, 4, 5)
+
+    try {
+        println(list[6])
+    }
+    catch(e: ArrayIndexOutOfBoundsException) {
+        println("No Such Element")
+        println(e.message)
+        System.exit(0)
+        // 跟 C 一样，程序以 0 退出为成功，其他为失败
+    } finally {
+        println("Finally block executed")
+    }
+}
+```
+
+- 错误捕获的时候***如果父类在前，那么子类的异常永远不会被捕获***
+
+```kt
+fun main(args: Array<String>) {
+    val list = listOf(1, 2, 3, 4, 5)
+
+    try {
+        println(list[6])
+    }
+    catch (e: Exception) {
+        println("Caught Exception")
+        println(e.message)
+    }
+    catch(e: ArrayIndexOutOfBoundsException) {
+        println("No Such Element")
+        println(e.message)
+    } finally {
+        println("Finally block executed")
+    }
+}
+```
+
+- Kotlin 里面的 ***`try catch` 是一个表达式***，也就是他们**可以当作 `lambda` 把自己的最后一行给返回**
+
+```kt
+fun main(args: Array<String>) {
+    println("please enter a number:")
+
+    val num: Int? = try {
+        readln().toInt()
+    }
+    catch(e: NumberFormatException) {
+        println("Invalid input, please enter a number.")
+        null
+    }
+    finally {
+        println("Thank you for entering a number.")
+        // finally 里的代码不受影响
+    }
+
+    println("num = $num")
+}
+```
+
+## 11.3 使用异常
+
+- ***要想自定义一个异常类型，只需继承自异常类即可***
+
+- 想要***抛出异常，使用 `throw` 关键字***
+
+> Kotlin 没有受检异常，所以**抛出任何异常类都不需要 `try catch`**
+
+> 又与 Java 不同，Kotlin 里面 `throw` 所在的函数不需要声明异常类型
+
+- **`throw` 位于 `try` 里面不会导致程序终止，位于 `try` 外面会终止程序，无论是自己抛出的还是函数里面抛出的**
+
+```kt
+fun main(args: Array<String>) {
+    try {
+        throw CostomException("This is a custom exception")
+    }
+    catch (e: CostomException) {
+        println(e.message)
+    }
+
+    throwEx()
+}
+
+fun throwEx(){
+    throw CostomException("This is a custom exception")
+}
+
+class CostomException(message: String) : Exception(message) 
+// 可以自定义属性
+```
+
+- 同时 ***`throw` 也是一个表达式，他返回一个 `Nothing` 类型***，这是一个很特殊的类型
+
+```kt
+fun main() {
+    val person = Person(null, 25)
+    val name = person.name ?: throw IllegalArgumentException("Name cannot be null")
+}
+
+data class Person(val name: String?, val age: Int?)
+```
+
+- ***`Nothing` 类型永远没有实例***，也就是你永远找不到它的实际值，所以***返回 `Nothing` 的函数***也就表示该函数永远找不到一个值去返回，也就是该函数***永远不返回（抛异常）***
+
+> 当函数返回 `Nothing` 类型时，相当于是提醒使用者该函数就用来抛异常
+
+```kt
+// Nothing
+public class Nothing private constructor()
+
+fun main() {
+    throwException()
+}
+
+fun throwException() : Nothing {
+    throw Exception("Something went wrong")
+}
+
+// 也挺有意思，永远不返回就表示返回 Nothing
+```
+
+- ***`Nothing` 是所有类型的子类***，没错你没听错，它是所有类型的子类
+
+> Java：靠！
+
+```kt
+fun main() {
+    println("String" is Any)
+    println(3 is Number)
+
+    println(Nothing is Any)
+    // 放心这里不会被编译，因为 Nothing 又不是单例，他就没有对象，怎么去比较
+}
+```
+
+> 这就很方便了，比如下面的
+
+```kt
+fun main(args: Array<String>) {
+    strNullOrNot(null)
+}
+
+fun strNullOrNot(str: String?): String {
+    if (str == null) {
+        throw IllegalArgumentException("String cannot be null")
+    } else {
+        return str
+    }
+}
+
+// 简化
+
+fun main(args: Array<String>) {
+    strNullOrNot(null)
+}
+
+fun strNullOrNot(str: String?): String = if (str == null) throw IllegalArgumentException("String cannot be null") else str
+
+// 这里返回 String? Unit 都可以，因为都是 Nothing 的父类
+```
+
+> `return` 的返回值也是 `Nothing` 类型
+
+- `Nothing` 是所有类型的子类一般情况下没有什么问题，因为你也找不到一个合适的值去付给其他变量
+
+- 可是如果当作泛型参数呢？***使用了协变的泛型类型的泛型参数都可以填上 `Nothing`***，这样就有了一个***可以给所有类型初始化的空列表***
+
+```kt
+fun main(args: Array<String>) {
+    val emptyList = listOf<Nothing>()
+    var strList: List<String> = emptyList
+    var intList: List<Int> = emptyList
+
+    // 一般都是 var ，否则的话一辈子也不能变了
+
+    println(strList)
+    println(intList)
+}
+
+// MutableList 这种可变集合是不协变的，所以休想创造一个 union 联合体那样的结构
+```
+
+```kt
+fun main(args: Array<String>) {
+    val x = null
+
+    // 还有就是，直接写 null 值推断出的是 Nothing? 类型，这个是不违反 Nothing 不能有实例的，因为是 null
+}
+```
