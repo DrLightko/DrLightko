@@ -3670,6 +3670,31 @@ class B : A() {
 
 > 还有一点，理解覆盖不要用字面上的 "覆盖" 来理解，比如一个子类覆盖了父类的属性，不要以为是父类的这个属性字段就变了，而是子类新建了一个同名属性，父类的属性永远可以通过 super 来访问
 
+- Kotlin 里面因为 ***`Unit` 是个类型，也是 `Any` 的子类***，所以***如果父类的返回值是 `Any`，那么子类是可以有返回值也可以是没有返回值的***
+
+> Java 是不可以的，因为 `void` 是真的不返回
+
+```kt
+open class Fu (open val name: String) {
+    open fun sayHello(): Any {
+        println("Hello, my name is $name")
+        return "Hello, my name is $name"
+    }
+}
+
+class Son (override val name: String) : Fu(name) {
+    override fun sayHello(): String {
+        return "Hello, my name is $name, and I'm a Son"
+    }
+}
+
+class Zi (override val name: String) : Fu(name) {
+    override fun sayHello(): Unit {
+        println("Hello, my name is $name, and I'm a Zi")
+    }
+}
+```
+
 ### 7.4.3 super
 
 - 如果子类继承了父类，子类里面的属性由子类的构造初始化，那么对于那些从父类继承而来的呢？JVM 认为应该是自己初始化自己。所以所有***子类在初始化对象的时候，都要显性或隐性的调用父类的构造***
@@ -5707,6 +5732,46 @@ public final class MainKt {
 - ***位于顶层的函数和属性，其位于 `文件名kt.class` 里，都是静态的***，无论字段还是访问器
 
 > 又多了一个不使用伴生对象的理由
+
+- 还有一件事，静态方法和属性能被继承吗？因为静态变量和方法存储于专门的空间，因此即便是继承了也无法访问 `super` `this`，这我们之前讲过
+
+- 还有，***多态也无法应用于静态成员，因为静态成员是静态绑定的***，多态的时候回去看变量的类型，而且基本上没人会去拿实例调用静态方法
+
+- 所以***静态成员也不能被覆盖***
+
+> 而且因为 Kotlin 奇怪的伴生对象的实现，你***没法在一个实例上调用类中的静态成员***，Java 是可以的
+
+```kt
+open class Fu {
+    companion object {
+        open fun hello() {
+            println("Hello from Fu")
+            // warning: 'open' has no effect on object.
+            // 这里提示你 open 在对象上没有效果，因为对象是静态的，所以 open 也没有意义
+        }
+
+        open val name: String = "Fu"
+    }
+}
+
+class Zi : Fu() {
+    companion object {
+        fun hello() {
+            println("Hello from Zi")
+            // 不能 override
+        }
+
+        val name: String = "Zi"
+    }
+}
+
+fun main(args: Array<String>) {
+    val f: Fu = Fu()
+
+    // f.hello() 不行的
+    Fu.hello()
+}
+```
 
 - 对象表达式和对象声明之间有一个重要的语义差别：
     1. ***对象表达式是在使用他们的地方立即执行（及初始化）的***
@@ -9618,6 +9683,13 @@ fun main() {
 
 - 一个 `list` 在声明之后长度和元素就是固定了的无法改变，而一个 ***`mutableList` 可以添加、删除元素***
 
+> 一个数组虽然声明后长度也不可变，但是可以修改元素的，一个 `list` 不仅是不可以改变长度，而且元素也不可变，而 `mutableList` 可以修改元素，也可以添加、删除元素
+
+|`List`|`Array`|`MutalbeList`|
+|-|-|-|
+|长度不可变|长度不可变|长度可变|
+|元素不可变|元素可变|元素可变|
+
 ```kt
 fun main() {
     val names = mutableListOf("Alice", "Bob", "Charlie").apply {
@@ -11261,3 +11333,355 @@ fun main(args: Array<String>) {
     // 还有就是，直接写 null 值推断出的是 Nothing? 类型，这个是不违反 Nothing 不能有实例的，因为是 null
 }
 ```
+
+
+# 第十二章：线程世界
+
+> 这章的内容很多，并且大部分比较抽象，包括 Java 里的多线程、同步、互斥锁等等，也有 Kotlin 里的协程、挂起函数，本章不会对每一个概念都做非常基础的理解，只讲解 API 的使用和简单的介绍，如果哪里有不懂的地方，可以参考官方文档或者其他资料
+
+## 12.1 线程的概念
+
+- ***进程（Process）是操作系统中正在运行的的一个任务***，现代的操作系统基本都可以***多任务并行***，这就像是你可以随意切换程序
+
+- ***线程（Thread）是进程中的一个独立立运行的任务，进程中的线程可以并行***
+
+- ***线程是 CPU 调度和分配的基本单位，进程是操作系统进行资源分配 (包括cpu、内存、磁盘IO等) 的最小单位***，CPU 是看不到其他的进程的，只有操作系统才能看到
+
+- ***进程拥有自己独立立的内存地址空间等资源，一个进程中的所有线程共享进程的内存地址空间等资源***
+
+> 注意，不要着急理解多核心 CPU 的调度，先假设这是单核心
+
+- 并行和并发都是同一时间运行多个任务，***并发 (Concurrent) 是逻辑上同时运行，但由于 CPU 的速度快，在感知上像是所有的任务都在同一时间运行着，实际上是依靠调度器切换来切换去的运行***
+
+![](https://i-blog.csdnimg.cn/blog_migrate/2190b36b6bb9edb821b825cf45f8bc32.png)
+
+- ***并行 (Parallel) 是物理上的同时运行，比如多核心 CPU 每一个核心运行着不同的任务***，本文中可能有些地方会把二者混淆请注意区分
+
+![](https://i-blog.csdnimg.cn/blog_migrate/abeb21004d0aed99d460ecfbab8aab73.png)
+
+> 那回过头来，我们为什么需要多线程呢？目前讲到的地方好像没有需要并行需求的啊？
+
+- 当我们编写图像界面的程序的时候，比如在 `main()` 方法里有一个耗时的计算操作，因为程序是一步一步执行的，所以当这个操作需要花费很长的时间，用户就会感觉到界面卡顿，这时候我们就可以使用多线程来解决这个问题，让程序的执行不被阻塞，让用户感觉不到卡顿
+
+- **多线程（Multi Threade）的出现，就是为了解决我们想让某些前台任务和后台任务同时运行的需求**
+
+## 12.2 创建线程
+
+> 本节先来介绍 Java 中的线程相关的 API，协程的放在后面
+
+- ***一个进程最起码有一个线程***（主线程，Main Thread），我们的 `main()` 就运行在主线程
+
+### 12.2.1 Thread
+
+- 要创建新的线程，可以***继承自 `Thread` 类，覆盖 `run()` 方法，`run()` 里面的代码就是一个线程要执行的任务***
+
+```kt
+fun main(args: Array<String>) {
+    
+    println("Main Thread is running")
+
+    val myThread1 = MyThread()
+    myThread1.run()
+
+    val myThread2 = MyThread()
+    myThread2.run()
+    
+    println("Main Thread is finished")
+}
+
+class MyThread : Thread() {
+    override fun run() {
+        println("MyThread is running")
+        for (i in 1..10) {
+            println(i)
+        }
+        println("MyThread is finished")
+    }
+}
+```
+
+> 但是可以看到这种方法并没有创建出我们预期中的两条线程同时运行的状态，而是一个接一个（串行，Serial）的执行
+
+- 去***开启一个线程，可以直接调用 `Thread` 类的 `start()` 方法***，这时候线程就会在内存中开辟一块自己的空间，然后执行 `run()` 方法，这时候他就跟 `main()` 方法所在的主线程一起并行运行了
+
+```kt
+fun main(args: Array<String>) {
+    
+    println("Main Thread is running")
+
+    val myThread1 = MyThread("MyThread1")
+    myThread1.start()
+
+    val myThread2 = MyThread("MyThread2")
+    myThread2.start()
+    
+    println("Main Thread is finished")
+
+    // main 方法在开启两条线程后就结束了
+    // 每一次打印的顺序都不一样，这是操作系统决定的
+}
+
+class MyThread (val tName: String = "MyThread") : Thread() {
+    override fun run() {
+        println("$tName is running")
+        for (i in 1..10) {
+            println("$tName is running $i")
+        }
+        println("$tName is finished")
+    }
+}
+```
+
+### 12.2.2 Runnable
+
+- 也可以***实现 `Runnable` 接口，覆盖 `run()` 方法，然后创建 `Thread` 对象，并传入 `Runnable` 对象，这样也可以创建线程***
+
+- ***`currrentThread().name` 可以获取当前线程的名字***
+
+```kt
+fun main(args: Array<String>) {
+    println("${Thread.currentThread().name} is running")
+
+    val mt1 = Thread(MyThread())
+    // Runnable 传入 Thread 的构造方法
+    mt1.start()
+
+    val mt2 = Thread(MyThread())
+    mt2.start()
+
+    println("${Thread.currentThread().name} is finished")
+}
+
+class MyThread : Runnable {
+    override fun run() {
+        println("Thread ${Thread.currentThread().name} is running")
+        println("Thread ${Thread.currentThread().name} is finished")
+    }
+}
+```
+
+- 我们***也可以使用匿名类实现 `Thread` 接口，然后调用 `start()` 方法***
+
+```kt
+Thread(object : Runnable {
+    override fun run() {
+        println("Hello World")
+    }
+}).start()
+
+// 因为 Runnable 接口只有一个方法，所以可以使用 Kotlin 的语法糖
+
+Thread(Runnable {
+    override fun run() {
+        println("Hello World")
+    }
+}).start()
+
+// 又可以再简化
+
+Thread {
+    println("Hello World")
+}.start()
+```
+
+- 当然 Kotlin 也提供了更简便的写法，***使用 `thread()` 函数，传入一个 lambda 表达式，这个 lambda 表达式就是线程要执行的任务，并且会立即执行***
+
+> 或者使用 Kotlin 对单方法接口的支持直接写也行
+
+```kt
+import kotlin.concurrent.thread
+
+// 导入 kotlin.concurrent.thread 才可以使用 thread 函数
+
+fun main() {
+    println(Thread.currentThread().name)
+
+    thread {
+        println(Thread.currentThread().name)
+    }
+
+    thread {
+        println(Thread.currentThread().name)
+    }
+}
+```
+
+```kt
+// 这是 thread 函数的源码，注意参数即可
+
+public fun thread(
+    start: Boolean = true, // 如果不想立即启动，修改此即可
+    isDaemon: Boolean = false,
+    contextClassLoader: ClassLoader? = null,
+    name: String? = null,
+    priority: Int = -1,
+    block: () -> Unit
+): Thread {
+    val thread = object : Thread() {
+        public override fun run() {
+            block()
+        }
+    }
+    if (isDaemon)
+        thread.isDaemon = true
+    if (priority > 0)
+        thread.priority = priority
+    if (name != null)
+        thread.name = name
+    if (contextClassLoader != null)
+        thread.contextClassLoader = contextClassLoader
+    if (start)
+        thread.start()
+    return thread
+}
+```
+
+## 12.3 线程的状态
+
+- 接下来我们看一下***线程的几种状态***
+
+```mermaid
+stateDiagram-v2
+    [*] --> New（初始状态）: 实例化
+    New（初始状态） --> Ready（就绪状态）: start()
+    Ready（就绪状态） --> Running（运行中）: 系统调度
+    Running（运行中） --> Blocked: 访问带锁的资源
+    Blocked --> Ready（就绪状态）: 拿到锁
+    Running（运行中） --> Waiting: 等待其他线程
+    Waiting --> Ready（就绪状态）: 被其他线程叫醒
+    Running（运行中） --> TimedWaiting: 等待
+    TimedWaiting --> Ready（就绪状态）: 超时或被通知叫醒
+    Running（运行中） --> Terminated: 执行完毕
+    Terminated --> [*]
+```
+
+1. ***`New`（初始状态）：线程刚被创建，尚未启动***
+2. ***`Runnable`（运行）：包括就绪（Ready）和运行中（Running）两种状态***。线程处于 Runnable 状态时，表示线程可以被调度运行，他**可能正在运行，也可能正在等待资源，这个是由操作系统随时决定的**，虚拟机是管不了的
+3. ***`Waiting`（等待）***：可以调用指定方法，让一个线程**进入等待状态，直到被其他线程唤醒**
+4. ***`Timed Waiting`（定时等待）***：可以让一个线程在指定时间内进入等待状态，在时间到达后自动唤醒，注意***唤醒后他进入的是就绪状态，不会立即执行***，所以**休眠时你给定的时间一定是小于等于（不太可能等于）实际休眠时间的**
+5. ***`Blocked`（阻塞）***：这个后面讲互斥锁的时候讲，当多个线程同时访问一个有锁的资源时，会进入此
+6. ***`Terminated`（终止）：线程已经执行完毕***，或者被提前终止，这个是看线程的 `run()` 方法是否执行完成，**当一个线程执行完毕后，他就死了永远不能复活**
+
+- **`Thread` 类有很多方法可以为我们使用**
+
+| `Thred` 构造方法|作用|
+|---|---|
+|`Thread()`|默认构造方法，创建一个线程，但没有指定线程的名字，线程的名字是自动生成的|
+|`Thread(Runnable target)`| 创建一个新的线程，并指定该线程的 `Runnable` 对象|
+|`Thread(String name)`| 创建一个新的线程，并指定该线程的名字|
+|`Thread(Runnable target, String name)`| 创建一个新的线程，并指定该线程的 `Runnable` 对象和名字|
+|`Thread(ThreadGroup group, String name)`| 创建一个新的线程，并指定该线程的名字和线程组|
+|`Thread(ThreadGroup group, Runnable target, String name)`| 创建一个新的线程，并指定该线程的 `Runnable` 对象、名字和线程组|
+
+| `Thread` 方法|作用|
+|---|---|
+|`getID`|获取线程的唯一标识符|
+|`getName`|获取线程的名字|
+|`getState`|获取线程的状态|
+|`getPriority`|获取线程的优先级|
+|`isAlive`|判断线程是否存活|
+|`isDaemon`|判断线程是否为守护线程|
+
+|`Thread` 状态切换|作用|
+|---|---|
+|`start()`|启动线程|
+|`run()`|线程执行体|
+|`sleep(long millis)`|线程休眠，让线程进入 `Timed Waiting` 状态，参数为休眠时间，单位为毫秒|
+|`yield()`|让出当前线程的执行权进入 `Ready` 状态，让其他线程有机会执行，但是一切都是操作系统说了算|
+|`wait()`|等到线程锁的时候再细说|
+|`join()`|让自己（也就是声明 `join()` 所在的代码块所在的线程）进入等待状态，直到被调用线程（`join()` 的接收者）执行完毕|
+|`interrupt()`|中断线程，后面再说|
+
+- ***使用静态方法 `Thread.currentThread()` 可以获取当前线程的实例***，下面是一个例子说明每个线程状态转换的过程
+
+```kt
+import java.time.LocalDateTime
+
+
+fun main() {
+    println("${Thread.currentThread().name} is ${Thread.currentThread().getState()} at ${LocalDateTime.now()}")
+    println()
+
+    val t1 = Thread {
+        println("${Thread.currentThread().name} is ${Thread.currentThread().getState()} at ${LocalDateTime.now()}")
+        Thread.sleep(1000)
+        // Java 这里是必须 try 的，之前讲过 Kotlin 没有受检异常
+        println("${Thread.currentThread().name} is going to finish at ${LocalDateTime.now()}")
+    }
+
+    val t2 = Thread {
+        println("${Thread.currentThread().name} is ${Thread.currentThread().getState()} at ${LocalDateTime.now()}")
+        Thread.sleep(2000)
+        println("${Thread.currentThread().name} is going to finish at ${LocalDateTime.now()}")
+    }
+
+    println("${t1.getName()} is ${t1.getState()} at ${LocalDateTime.now()}")
+    println("${t2.getName()} is ${t2.getState()} at ${LocalDateTime.now()}")
+    println()
+
+    t1.start()
+    t2.start()
+
+    println("${Thread.currentThread().name} ID is ${Thread.currentThread().getId()}")
+    println("${t1.getName()} ID is ${t1.getId()}")
+    println("${t2.getName()} ID is ${t2.getId()}")
+
+    println("${Thread.currentThread().name} is ${Thread.currentThread().getState()} at ${LocalDateTime.now()}")
+    t1.join()
+    t2.join()
+    // 试着去注释掉这两行 join() 看看会发生什么
+
+    println("${Thread.currentThread().name} is ${Thread.currentThread().getState()} at ${LocalDateTime.now()}")
+
+    println("${Thread.currentThread().name} is finished.")
+}
+```
+
+- ***`yield()` 和 `sleep()` 都是静态的，直接调用的时候是看你声明的位置而不是接收者***，也不建议调用实例上的 `yield()` 和 `sleep()`
+
+- 对于***单核 CPU ，实际上它每次只在运行同一个线程，通过操作系统不断切换制造出多核心的假象（还有超线程也是同样的道理），也就是并发***
+
+- 但是对于***多核心 CPU ，操作系统会自动分配线程到不同的核心上，让每个核心都有自己的线程，这就是并行***，是真正的物理上的同时运行
+
+- 也就说***同一个进程里的线程是可以存在于不同的 CPU 上的***
+
+> 这里不讨论用户态和内核态的概念，包括讲协程的时候也是，你记住 JVM 的调度是可以把同一进程下的线程调度到不同的 CPU 上的，具体系统的调度和调度策略可以自行了解查阅
+
+> 比如下面这段代码，根据你电脑核心数改变 `repeat()` 的参数，你就会发现你的 CPU 会满负荷运行，如果你再增加线程数的话也不会加快速度，反而因为连续的调度会降低性能，如果 Java 不是内核态的话，这段代码是不可以占满 CPU 的
+
+```kt
+fun main() {
+    repeat(12) { // 输入你电脑的 CPU 物理核心数
+        Thread {
+            for (i in 1L..100_1000L) {
+                test(i)
+            }
+        }.start()
+    }
+
+}
+
+fun test(num: Long): Boolean {
+    when {
+        num < 2 -> return false
+        else -> {
+            for (i in 2L..num) {
+                if (i == num) {
+                    return true
+                } else if (num % i == 0L) {
+                    return false
+                }
+            }
+        }
+    }
+    return true
+}
+```
+
+## 12.4 线程同步
+
+- 在多线程开发时，最难的就是**线程间对于共享资源的访问控制**
+
+- 线程同步是指***两条线程运行时需要互相根据对方的运行进度协调自身速度***
+
+- 线程同步的表现：***一条线程依赖于另一条线程的时候，两者之间能够保持同步***
