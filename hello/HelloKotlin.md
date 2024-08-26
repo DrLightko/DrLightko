@@ -951,6 +951,8 @@ class Test {
 }
 ```
 
+> Java 的垃圾分类就略过了，想必你也了解
+
 ### 3.7.2 const 修饰符和顶层声明
 
 - 之前说过 `val` 修饰的是一个常量，但***其实 `val`  表示的是你只能让它初始化一次 (只能指向一次对象)，但是可以通过修改它指向的对象修改它，或是自定义 getter***，并不代表 `val` 就是常量
@@ -3662,7 +3664,8 @@ open class A {
 }
 
 class B : A() {
-    override fun foo(i: Int) { /*……*/ }  // 不能有默认值
+    override fun foo(i: Int) { /*……*/ }  // 不能有默认值，否则会报错
+    // 可能是因为 Kotlin 本质实现还是 Java 里的重载吧
 }
 ```
 
@@ -11404,6 +11407,10 @@ class MyThread : Thread() {
 
 - 去***开启一个线程，可以直接调用 `Thread` 类的 `start()` 方法***，这时候线程就会在内存中开辟一块自己的空间，然后执行 `run()` 方法，这时候他就跟 `main()` 方法所在的主线程一起并行运行了
 
+> 何为开辟一块自己的空间？我们知道一个函数（方法）对应一个内存中的栈，那么开启一个新线程可以简单理解为新开了一块栈，这个栈内的函数在自己的空间内再一层层运行，如果不理解栈的概念可以看我的 C 入门
+
+> `main` 函数所在的函数栈执行完后（`main` 的最后一个语句结束了），主线程也就退出了，同样，自己开辟的线程在执行完 `run()` 方法后也就结束了
+
 ```kt
 fun main(args: Array<String>) {
     
@@ -11484,9 +11491,60 @@ Thread {
 }.start()
 ```
 
+- 相比直接使用 `Thread` 开线程，**继承 `Runnable` 可以实现多继承的优点**（因为它是接口），虽然麻烦了些
+
+```kt
+import kotlin.random.Random
+
+interface Person {
+    val age: Int
+    val name: String
+    fun sayHello(str: String = this.name, num: Int = this.age)
+}
+
+class Worker(override var age: Int, override var name: String) : Person, Runnable {
+    override fun sayHello(name: String, age: Int) {
+        println("old name: ${this.name}, age: ${this.age}")
+        this.name = name
+        this.age = age
+        println("new name: ${this.name}, age: ${this.age}")
+    }
+
+    override fun run() {
+        sayHello()
+        println("${Thread.currentThread().name}")
+        sayHello(Random.nextInt(0, 100).toString(), Random.nextInt(100, 200))
+    }
+}
+
+fun main() {
+    val worker = Worker(25, "John")
+    worker.run()
+    // 再次记住，直接 run 不会启动新的线程
+    Thread(worker).start()
+    // 当作 Runnable 传入 Thread 的构造方法启动后，run 里面仍然可以访问自己类的属性和方法
+
+    // 不同线程间可以通过相同的引用访问同一个实例，这里记住了
+}
+```
+
 - 当然 Kotlin 也提供了更简便的写法，***使用 `thread()` 函数，传入一个 lambda 表达式，这个 lambda 表达式就是线程要执行的任务，并且会立即执行***
 
-> 或者使用 Kotlin 对单方法接口的支持直接写也行
+> 或者使用 Kotlin 对单方法接口的支持直接写也行，注意 `thread() ` 位于协程里，后面再说，目前推荐下面一的方式
+
+```kt
+fun main() {
+    println(Thread.currentThread().name)
+
+    Thread {
+        println(Thread.currentThread().name)
+    }.start()
+
+    Thread {
+        println(Thread.currentThread().name)
+    }.start()
+}
+```
 
 ```kt
 import kotlin.concurrent.thread
@@ -11678,10 +11736,159 @@ fun test(num: Long): Boolean {
 }
 ```
 
-## 12.4 线程同步
+- 所以说，***一般有两种情况需要多线程：不阻碍前台常驻线程和需要发挥所有 CPU 核心的性能***
 
-- 在多线程开发时，最难的就是**线程间对于共享资源的访问控制**
+## 12.4 守护线程
+
+> 问一下，当 `main()` 方法结束后，虚拟机就结束了吗？
+
+- JVM 虚拟机判断自己结束的依据是：***所有的用户线程（User Thread）执行完毕后便结束自己的进程***
+
+- ***守护线程（Daemon Thread）指的是当其他线程结束后自己便自动退出的线程***，可以通过线程实例的 `setDaemon(true)` 来创建一个守护线程
+
+```kt
+fun main() {
+    val thread = Thread {
+        println("${Thread.currentThread().name} is running")
+        Thread.sleep(5000)
+        println("${Thread.currentThread().name} is done")
+    }
+
+    thread.setDaemon(true) // 可以观察注释掉这里以后的现象
+    thread.start()
+    println("Main thread is running")
+    Thread.sleep(2000)
+    println("Main thread is done")
+}
+```
+
+- ***`main()` 主线程也是用户线程***，他结束后并不影响其他的线程继续工作，虚拟机会等所有的用户线程都执行完后再结束
+
+- **`main()` 不能为守护线程**，因为你没法对一个已经运行的线程设置守护与否，***`setDaemon()` 必须发生在 `start()` 前***，但是我们做不到
+
+```kt
+fun main() {
+    val main = Thread.currentThread()
+    main.setDaemon(false)
+}
+
+// Exception in thread "main" java.lang.IllegalThreadStateException
+```
+
+## 12.5 线程同步
+
+- 在多线程开发时，最难的就是**线程间对于共享资源的访问控制**，为什么？看下面
+
+```kt
+var count = 0
+
+fun countPlus() {
+    count++
+}
+
+fun main() {
+    val t1 = Thread {
+        for (i in 1..1000) {
+            countPlus()
+        }
+    }
+
+    val t2 = Thread {
+        for (i in 1..1000) {
+            countPlus()
+        }
+    }
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    println("Final count is $count")
+}
+
+// 最后的结果一定不是 2000
+```
+
+> 为什么，因为两个线程都在访问的操作 `countPlus()` 不是原子性（Atomicity）的，原子性也就指的是不可被拆分的最小执行动作
+
+> 这两个线程都在访问同一个函数，有时候就会导致一个线程刚刚拿到的值，加了一，还没有写回去，另外一个线程拿到了原来的值加一放了进去覆盖了他本来要加一的值，导致加二变为了加一
+
+> 本文不愿意去讲 Java 的底层实现原理，因为毫无意义，这是简化过后的
 
 - 线程同步是指***两条线程运行时需要互相根据对方的运行进度协调自身速度***
 
 - 线程同步的表现：***一条线程依赖于另一条线程的时候，两者之间能够保持同步***
+
+> 很抽象没什么用
+
+- ***使用 `synchronized` 关键字可以让被修饰的函数在同一时间只能被所在实例所在的一个线程所使用，其他线程必须等待，直到该线程释放锁***
+
+- ***注意是锁住一个实例，该类可以有很多实例，每一个实例的 `synchronized` 锁只关心自己实例，并且保证来自不同线程但是对象都是自己实例的访问被自己所限制***
+
+> Kotlin 里面并没有这个关键字，取而代之的 `@Synchronized` 注释
+
+```kt
+var count = 0
+
+@Synchronized
+fun countPlus() {
+    count++
+}
+
+fun main() {
+    val t1 = Thread {
+        for (i in 1..1000) {
+            countPlus()
+        }
+    }
+
+    val t2 = Thread {
+        for (i in 1..1000) {
+            countPlus()
+            // 无论有多少个线程，只要他们访问的是同一个方法（这里是静态方法，具体后面讲），谁拿到锁才能用，其他线程必须等待有锁的线程释放锁
+        }
+    }
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    println("Final count is $count") // 2000
+}
+```
+
+- `@Synchronized` 除了可以锁住方法所在的类的对象，还可以有以下几点用法
+
+    1. ***锁住静态方法，也就是 Kotlin 里的顶层方法***，它锁住的是这个类的 `Class` 对象，就是我们之前在反射讲过的，因为一个类只有一个 `Class` 对象，***所以所有调用这个静态方法的地方都会线程同步***
+
+    ```kt
+    class Person {
+
+    companion object {
+        var count = 0
+
+        @JvmStatic
+        // 因为使用顶层方法不太直观，这里使用 @JvmStatic 注解表示该方法是真静态，这也是一种声明静态方法的手段
+        @Synchronized
+        fun counter() {
+            count++
+            println("${Thread.currentThread().name} called counter() $count times.")
+            }
+        }
+    }
+
+    fun main() {
+        for (i in 1..100) {
+            Thread {
+                for (j in 1..1000) {
+                    Person.counter()
+                }
+            }.start()
+        }
+    }
+    ```
+    2. 锁住普通类中的方法，会让
