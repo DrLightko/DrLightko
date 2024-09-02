@@ -318,6 +318,59 @@ num = 9.2
 |Int|32|-2,147,483,648 (-2^31)|2,147,483,647 (2^31- 1)|
 |Long|64|-9,223,372,036,854,775,808 (-2^63)|9,223,372,036,854,775,807 (2^63- 1)|
 
+```kt
+fun main() {
+    println(Int.MAX_VALUE)
+    println(Int.MIN_VALUE)
+    println(Int.SIZE_BYTES)
+    println(Int.SIZE_BITS)
+    println()
+
+    println(Byte.MAX_VALUE)
+    println(Byte.MIN_VALUE)
+    println(Byte.SIZE_BYTES)
+    println(Byte.SIZE_BITS)
+    println()
+
+    println(Short.MAX_VALUE)
+    println(Short.MIN_VALUE)
+    println(Short.SIZE_BYTES)
+    println(Short.SIZE_BITS)
+    println()
+
+    println(Long.MAX_VALUE)
+    println(Long.MIN_VALUE)
+    println(Long.SIZE_BYTES)
+    println(Long.SIZE_BITS)
+    println()
+
+    println(Float.MAX_VALUE)
+    println(Float.MIN_VALUE)
+    println(Float.SIZE_BYTES)
+    println(Float.SIZE_BITS)
+    println()
+
+    println(Double.MAX_VALUE)
+    println(Double.MIN_VALUE)
+    println(Double.SIZE_BYTES)
+    println(Double.SIZE_BITS)
+    println()
+
+
+
+    println(Char.MAX_VALUE)
+    println(Char.MIN_VALUE)
+    println(Char.SIZE_BYTES)
+    println(Char.SIZE_BITS)
+    println(Char.MAX_HIGH_SURROGATE)
+    println(Char.MAX_LOW_SURROGATE)
+    println(Char.MIN_HIGH_SURROGATE)
+    println(Char.MIN_LOW_SURROGATE)
+    println(Char.MIN_SURROGATE)
+    println()
+}
+```
+
 > 再说一遍，***一字节等于八位，1 byte = 8 bit，1 B = 8 b***，数据的存储详情见 C 入门
 
 > 这里基本上与 Java 无异
@@ -5584,7 +5637,7 @@ class Singleton private constructor() {
 }
 ```
 
-- 而且可以做到**带参数**的单例，成功解决了之前 `object` 的问题
+- 而且可以做到**带参数的单例**，成功解决了之前 `object` 的问题
 
 ```kt
 fun main() {
@@ -5743,7 +5796,7 @@ public final class MainKt {
 
 > 又多了一个不使用伴生对象的理由
 
-- 还有一件事，静态方法和属性能被继承吗？因为静态变量和方法存储于专门的空间，因此即便是继承了也无法访问 `super` `this`，这我们之前讲过
+- 还有一件事，**静态方法和属性能被继承吗**？因为静态变量和方法存储于专门的空间，因此即便是继承了也无法访问 `super` `this`，这我们之前讲过，即便是继承了也没什么用
 
 - 还有，***多态也无法应用于静态成员，因为静态成员是静态绑定的***，多态的时候回去看变量的类型，而且基本上没人会去拿实例调用静态方法
 
@@ -5984,8 +6037,8 @@ fun main() {
 fun main() {
 
     val mcs = MyClass()
-    println(mcs.name)
-    mcs.age = 12
+    println(mcs.name) // 记得我们说过的，访问变量就是 getter
+    mcs.age = 12      // 赋值就是 setter
     println(mcs.age)
 }
 
@@ -6000,6 +6053,8 @@ var MyClass.age: Int
 
 // 二者均没有幕后字段，编译后不会生成属性，至于幕后字段的限制见上文
 ```
+
+- **大部分时候扩展属性比扩展方法更方便，类似对变量的操作可以替代各种 `set get` 方法**，Kotlin 本身就对 Java 的一些工具方法设置了扩展属性，我们后面也能看到
 
 ### 7.9.3 中缀表达式
 
@@ -8213,7 +8268,7 @@ fun main() {
     for (field in fields) {
         println("field name: ${field.name}, type: ${field.type}")
         // println("field name: ${field.getName()}, type: ${field.getType()}")
-        // 都是可以的
+        // 这里使用的是 Kotlin 为 Java 方法设置的扩展属性方式，本质上完全一样，后文也会经常这样用，注意一下
     }
     println()
 
@@ -10460,6 +10515,29 @@ fun main(args: Array<String>) {
 }
 ```
 
+### 10.2.4 队列
+
+- Kotlin 推荐使用自己的 ***`ArrayDeque<T>` ，这是一个双端队列***，允许从开头或者末尾添加元素，所以也可以充当队列或是栈来使用，实际上是一个可调整大小的数组
+
+> 当然使用 Java 的集合框架也可以
+
+```kt
+fun main() {
+    val deque = ArrayDeque(listOf(1, 2, 3))
+
+    deque.addFirst(0)
+    deque.addLast(4)
+    println(deque) // [0, 1, 2, 3, 4]
+
+    println(deque.first()) // 0
+    println(deque.last()) // 4
+
+    deque.removeFirst()
+    deque.removeLast()
+    println(deque) // [1, 2, 3]
+}
+```
+
 ## 10.3 排序
 
 - 对集合来说，排序（sorting）是很重要的操作，我们在上面曾经讲过 **`compareTo()` 这个操作符重载方法，利用它可以对我们自定义的类使用 `>` `<` 之类的比较操作符**
@@ -10963,7 +11041,20 @@ fun main(args: Array<String>) {
 }
 ```
 
-> 注意编译的时候不要写，你在编译的时候输入的是编译器的命令行参数，只有在运行时才拿到的你的参数，***命令行参数以空格来区分***
+> 注意编译的时候不要写，你在编译的时候输入的是编译器的命令行参数，只有在运行时才拿到的你的参数，***命令行参数以空格来区分***，如果想要包含空格的话可以使用 `""` 双引号（Windows）
+
+> 不知道为什么，Kotlin 里面的 `main` 函数不能被重载，当然也不能覆盖了，可是编译以后的 `class` 说明本身是可以被重载的
+
+```java
+public final class MainKt {
+    public static final void main() {
+    }
+
+    public static void main(String[] args) {
+        main();
+    }
+}
+```
 
 - **Kotlin 没有原生的获取环境变量的方法，不过我们可以用 Java 里面的，完美兼容**
 
@@ -11705,6 +11796,26 @@ fun main() {
 
 - ***`yield()` 和 `sleep()` 都是静态的，直接调用的时候是看你声明的位置而不是接收者***，也不建议调用实例上的 `yield()` 和 `sleep()`
 
+- ***`sleep()` 让代码暂停***，位于它的代码不会立即执行，而是等待，***但是实际花费的时间一定是比声明的参数多的***，见上面的流程图
+
+```kt
+import kotlin.time.*
+
+fun main() {
+    val timeSource = TimeSource.Monotonic
+    val startTime = timeSource.markNow()
+
+    val t1 = Thread {
+        println("Start a Thread cost ${timeSource.markNow() - startTime} seconds")
+        val mark1 = timeSource.markNow()
+        Thread.sleep(1000)
+        println("Thread sleep 1 second actually cost ${timeSource.markNow() - mark1} seconds")
+    }
+
+    t1.start()
+}
+```
+
 - 对于***单核 CPU ，实际上它每次只在运行同一个线程，通过操作系统不断切换制造出多核心的假象（还有超线程也是同样的道理），也就是并发***
 
 - 但是对于***多核心 CPU ，操作系统会自动分配线程到不同的核心上，让每个核心都有自己的线程，这就是并行***，是真正的物理上的同时运行
@@ -11713,7 +11824,7 @@ fun main() {
 
 > 这里不讨论用户态和内核态的概念，包括讲协程的时候也是，你记住 JVM 的调度是可以把同一进程下的线程调度到不同的 CPU 上的，具体系统的调度和调度策略可以自行了解查阅
 
-> 比如下面这段代码，根据你电脑核心数改变 `repeat()` 的参数，你就会发现你的 CPU 会满负荷运行，如果你再增加线程数的话也不会加快速度，反而因为连续的调度会降低性能，如果 Java 不是内核态的话，这段代码是不可以占满 CPU 的
+> 比如下面这段代码，根据你电脑核心数改变 `repeat()` 的参数，你就会发现你的 CPU 会满负荷运行，如果你再增加线程数的话也不会加快速度，反而**因为连续的调度会降低性能**，如果 Java 不是内核态的话，这段代码是不可以占满 CPU 的
 
 ```kt
 fun main() {
@@ -11745,6 +11856,36 @@ fun test(num: Long): Boolean {
 ```
 
 - 所以说，***一般有两种情况需要多线程：不阻碍前台常驻线程和需要发挥所有 CPU 核心的性能***
+
+> 上面说了线程的调度全看操作系统，那就没什么办法手动干预下？
+
+- ***可以通过 `setPriority()` 设置线程的优先级，通过 `getPriority()` 获取线程的优先级，等级高优先调度***
+
+- ***默认优先级为 5 ，最低是 1 （Thread.MIN_PRIORITY），最高是 10 （Thread.MAX_PRIORITY），不保证百分百灵验***，最多是告诉使用者这个线程的优先级如何
+
+```kt
+fun main() {
+    val t1 = Thread {
+        println("My name is ${Thread.currentThread().name} and my priority is ${Thread.currentThread().getPriority()}")
+    }
+
+    val t2 = Thread {
+        println("My name is ${Thread.currentThread().name} and my priority is ${Thread.currentThread().getPriority()}")
+    }
+
+    val t3 = Thread {
+        println("My name is ${Thread.currentThread().name} and my priority is ${Thread.currentThread().getPriority()}")
+    }
+
+    t1.setPriority(Thread.MAX_PRIORITY)
+    t2.setPriority(Thread.MIN_PRIORITY)
+    t3.setPriority(Thread.NORM_PRIORITY)
+
+    t1.start()
+    t2.start()
+    t3.start()
+}
+```
 
 ## 12.4 守护线程
 
@@ -11783,9 +11924,71 @@ fun main() {
 // Exception in thread "main" java.lang.IllegalThreadStateException
 ```
 
-## 12.5 线程同步
+## 12.5 线程组
 
-### 12.5.1 概念
+- **线程组可以方便我们管理线程**，可以对线程进行分组，***使用 `ThreadGroup` 类创建一个线程组***
+
+```kt
+fun main() {
+    println("Thread name: ${Thread.currentThread().getName()}\tThread Group name: ${Thread.currentThread().getThreadGroup().getName()}")
+
+    val group = ThreadGroup("MyThreadGroup")
+    val thread1 = Thread(group, MyRunnable(), "MyThread - 1")
+    val thread2 = Thread(group, MyRunnable(), "MyThread - 2")
+
+    println(group.getParent())
+    group.setMaxPriority(Thread.NORM_PRIORITY)
+    // 所有子线程的最大优先级不超过这个
+    
+    thread1.start()
+    thread2.start()
+
+}
+
+class MyRunnable : Runnable {
+    override fun run() {
+        println("Thread name: ${Thread.currentThread().getName()}\tThread Group name: ${Thread.currentThread().getThreadGroup().getName()}")
+
+        // 线程实例通过 getThreadGroup 获取所在线程组
+    }
+}
+```
+
+- `main()` 方法也有自身的线程组，**每一个线程组实例可以通过 `getParent()` 获取父级的线程组**
+
+```mermaid
+---
+title: 线程组
+---
+flowchart LR
+System --> MainThreadGroup
+MainThreadGroup --> MyThreadGroup
+MainThreadGroup --> MainThread
+MyThreadGroup --> MyThread1
+MyThreadGroup --> MyThread2
+```
+
+- 线程组还可以统一管理子线程抛出的异常，***覆写 `uncaughtException()` 方法以处理异常***
+
+```kt
+fun main() {
+    val group = object : ThreadGroup("MyGroup") {
+        override fun uncaughtException(t: Thread, e: Throwable) {
+            println("${this.name} caught exception: $e in thread $t")
+        }
+    }
+
+
+    val t1 = Thread(group, Runnable {
+        throw RuntimeException("Exception in thread 1")
+    })
+    t1.start()
+}
+```
+
+## 12.6 线程同步
+
+### 12.6.1 内存模型
 
 - 我们知道，**方法或函数使用的内存区域叫栈（Stack），而创建对象使用的内存区域叫堆（Heap）**
   
@@ -11813,6 +12016,39 @@ class MyRunnable (val str: String) : Runnable {
 }
 ```
 
+```mermaid
+---
+title: Java 多线程内存模型
+---
+flowchart LR
+    subgraph 内存
+        direction LR
+        subgraph 栈
+            direction TB
+            subgraph Main
+                direction LR
+                t1[Thread]
+                ts1[Main Stack]
+            end
+            subgraph Thread1
+                direction LR
+                t2[Thread1]
+                subgraph 局部变量
+                    direction TB
+                    val1["val1 指向 obj1"]
+                    val2["val2 指向 obj2"]
+                end
+            end
+        end
+        subgraph Heap
+            direction TB
+            o1[成员变量]
+            obj1[obj1]
+            obj2[obj2]
+        end
+    end
+```
+
 ```kt
 fun main() {
     val obj = Any()
@@ -11826,7 +12062,8 @@ fun main() {
 
 
 class MyRunnable (val obj: Any) : Runnable {
-
+    // 这里 obj 本身是成员变量位于堆内，不同的对象拥有不同的
+    // 但是 obj 指向的堆内对象是同一个，是位于 main 方法里声明的那个，对象的引用可以在不同线程之间传递
     override fun run() {
         val obj = Any()
 
@@ -11836,7 +12073,54 @@ class MyRunnable (val obj: Any) : Runnable {
 }
 ```
 
-- 在读写变量的时候，CPU 会先把存在栈中的局部变量或堆中的成员变量读取一边，然后存到寄存器里，之后对寄存器中的这个值进行指定的操作，然后在写回去
+
+- **CPU 并不是直接使用内存进行读写，CPU 拥有缓存，每一次在对内存中的数据进行操作的时候，它会把数据传递过一层层缓存递给寄存器，然后对寄存器中的数据进行读写，之后再写回去**
+
+- **每一次线程获取的数据，不一定是缓存上的也不一定是主内存上的，不作保证**
+
+> 还有一个**缓存一致性**，不同寄存器之间也会互相访问，有兴趣的自己查阅吧
+
+```mermaid
+flowchart LR
+    subgraph CPU 与内存
+        direction LR
+        subgraph CPU
+            direction TB
+            subgraph CPU Core 1
+                direction LR
+                subgraph Thread1
+                end
+                subgraph 寄存器1
+                end
+                subgraph L1 L2 L3
+                end
+            end
+            subgraph CPU Core 2
+                direction LR
+                subgraph Thread2
+                end
+                subgraph 寄存器2
+                end
+                subgraph L1 L2 L3
+                end
+            end
+        end
+        subgraph RAM
+            direction LR
+            subgraph 栈
+                direction TB
+                subgraph Thread Stack 1
+                end
+                subgraph Thread Stack 2
+                end
+            end
+            subgraph 堆
+            end
+        end
+    end
+```
+
+- 那么有些时候 CPU 不会一遍又一遍的访问内存，会省事使用寄存器中的数据，***线程中的竞争问题就发生在 CPU 的数据和内存中的数据不同步的情况下***
 
 - 因为存在的延迟，所以就会导致一些情况下的***线程竞争（race condition）***，比如：
 
@@ -11873,21 +12157,27 @@ fun main() {
 // 最后的结果一定不是 2000
 ```
 
-> 为什么，因为两个线程都在访问的操作 `countPlus()` 不是***原子性（Atomicity）的，原子性也就指的是不可被拆分的最小执行动作***
-
-> 这两个线程都在访问同一个函数，有时候就会导致一个线程刚刚拿到的值，加了一，还没有写回去，另外一个线程拿到了原来的值加一放了进去覆盖了他本来要加一的值，导致加二变为了加一
+> 上面代码里这两个线程都在访问同一个函数，有时候就会导致一个线程刚刚拿到的值，加了一，还没有写回去，另外一个线程拿到了原来的值加一放了进去覆盖了他本来要加一的值，导致加二变为了加一
 
 > 本文不愿意去讲 Java 的底层实现原理，因为毫无意义，这又不是 CPP，这是简化过后的
 
-- 在多线程开发时，最难的就是**线程间对于共享资源的访问控制**
 
-- 线程同步是指***两条线程运行时需要互相根据对方的运行进度协调自身速度***
+- 多线程并发有三个特性：***原子性（Atomicity）、可见性（Visibility）、有序性（Ordering）***
+    - ***原子性也就指的是不可被拆分的最小执行动作***
+  
+    > 像是上文里的自增 `count++`，就不是原子性的，因为它需要 `1.拿到值 2.增加值 3.写回值` 三个操作，而 `count == 1` 就是原子性的，因为只有一个操作赋值
 
-- 线程同步的表现：***一条线程依赖于另一条线程的时候，两者之间能够保持同步***
+    - ***可见性是指一个线程修改了的值会立即在主内存中被其他线程更新到***
+    
+    > 上文里数据不一致就从堆中加载和保存不同步更新，导致不同的线程之间对于互相的操作没有可见性，这点我们会在后面的 `volatile` 中细讲
 
-> 很抽象没什么用不用理解
+    - ***有序性是指程序执行的顺序按照代码的先后顺序执行***，后面再说，这里只是一提
 
-### 12.5.2 synchronized
+- **多线程中最复杂的就是这些对于线程共享资源的访问和限制**
+
+### 12.6.2 synchronized
+
+#### 12.6.2.1 注解方式
 
 - ***使用 `synchronized` 关键字可以让被修饰的函数拥有线程锁，不同的线程只有拿到锁的才能执行该函数，其他线程必须等待锁被释放后才能执行***
 
@@ -12050,6 +12340,8 @@ fun main() {
 }
 ```
 
+#### 12.6.2.2 监视器对象
+
 - 还可以使用 ***`synchronized` 代码块，参数是监视者对象（Monitor Object）***，所谓**监视者监视多个线程同时执行 `synchronized` 代码块的时候，不同的监视者会让自己的线程只有一个可以获取倒锁，不同的监视者管理着不同的线程**
 
 ```kt
@@ -12126,6 +12418,18 @@ class Counter {
 ```
 
 > 再理解下监视器对象的意义
+
+```mermaid
+---
+title: Monitor Object
+---
+flowchart LR
+    Object1-- synchroized -->Thread1
+    Object1-- synchroized -->Thread2
+    Object2-- synchroized -->Thread3
+```
+
+> 如果对象不一样，Object2 是管不了 Thread 2 与自己的 Thread 3 有没有锁的
 
 ```kt
 fun main() {
@@ -12227,7 +12531,7 @@ class Counter {
 }
 ```
 
-> `synchronized` 代码块的参数可以是任意一个对象，比如 `Any()` `Unit` 都可以，但是最好不要用字符串，你不知道他会不会复用常量池里的已有的字符串，可能会有隐患
+> ***`synchronized` 代码块的参数可以是任意一个对象，比如 `Any()` `Unit` 都可以***，但是**最好不要用字符串，你不知道他会不会复用常量池里的已有的字符串，可能会有隐患**
 
 - 因为 **`synchronized` 锁住的是一个对象，而 `static synchronized` 锁住的是 `Class` 对象**，所以***可以存在两个线程同时访问 `synchronized` 和 `static synchronized` 的情况***
   
@@ -12280,4 +12584,482 @@ class Counter {
 
 // 结果可能会变化，多试几次应该会有不是 2000 的结果
 ```
+
+- 使用 `synchroized` 的代码块的方式，***只有写在 `synchroized` 里面的才会有锁，外部的不会同步***
+
+```kt
+
+fun main() {
+    val counter = Counter()
+    val t1 = Thread {
+        for (i in 1..10_0000) {
+            counter.increment()
+        }
+    }
+    val t2 = Thread {
+        for (i in 1..10_0000) {
+            counter.increment()
+        }
+    }
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+
+
+    counter.print()
+}
+
+
+class Counter {
+    private var count = 0
+    private var c = 0
+
+    fun increment() {
+        synchronized(this) {
+            count++
+        }
+        c++
+    }
+
+    fun print() {
+        println("Count: $count, c: $c")
+    }
+}
+```
+
+#### 12.6.2.3 wait notify
+
+- ***使用 `wait()` 对拥有锁的对象主动释放锁，`notify()` 唤醒等待的线程去争取锁，`notifyAll()` 唤醒所有等待的线程去争取锁***
+
+- ***当多个线程访问同一个监视器对象的 `synchroized` 锁的时候，争取不到的会进入同步队列（Synchronize Queue），变为阻塞状态直到锁被释放，再去争取，争取不到的继续等***
+
+- ***当调用 `wait()` 的时候，当前执行线程会放弃锁，进入等待队列（Wait Queue），直到其他的线程调用 `notify()` 或者 `notifyAll()`，才会进入同步队列，排队等待获取锁***
+
+> **一定注意 `notify()` 唤醒后进入的是同步队列还要等**
+
+- 注意，***`wait()` `notify()` `notifyAll()` 只能在监视器对象上调用，而这个对象只能是 Java 的 `Object`***，Kotlin 的 `Any` 不行，而且***只能在 `synchroized` 代码块里面调用***，外面是没有意义的
+
+> 相比 `Thread.sleep()` 是一个静态方法，这个 `Object().wait()` 更强调监视器对象的概念
+
+```kt
+// 一个例子讲解 wait notify 
+
+
+fun main() {
+    val emails = EMails()
+
+    val t1 = Thread {
+        for (i in 1..10) {
+            emails.addEmail("email$i@gmail.com")
+        }
+        println("${Thread.currentThread().name} has added emails done")
+    }
+
+    val t2 = Thread {
+        for (i in 1..10) {
+            println(emails.getEmails())
+        }
+        println("${Thread.currentThread().name} has fetched emails done")
+    }
+
+    t1.start()
+    t2.start()
+}
+
+class EMails {
+    private val inbox = mutableListOf<String>()
+    private val maxEmails = 3
+    private val lock = Object()
+
+    fun addEmail(email: String) {
+        synchronized(lock) {
+            while (inbox.size >= maxEmails) {
+                println("Inbox is full, waiting for space")
+                lock.wait()
+            }
+            inbox.add(email)
+            lock.notifyAll()
+        }
+    }
+
+    fun getEmails(): String {
+        synchronized(lock) {
+            while (inbox.isEmpty()) {
+                println("Inbox is empty, waiting for emails")
+                lock.wait()
+            }
+            val result = inbox.removeLast()
+            lock.notifyAll()
+            return result
+        }
+    }
+}
+```
+
+- **`wait()` 除了有无参的版本，还有带参的版本，带参的版本是指定等待时间，过了指定时间后自动唤醒**
+
+- 如果***想要中断一个线程，可以使用 `interrupt()` 方法，这个方法不会立即中断线程，但是修改目标线程的 `isInterrupt` 属性***，可以在对应的地方捕获并终止
+
+```kt
+fun main() {
+    val t1 = Thread {
+        var count = 0
+
+        for (i in 1..1_0000_0000) {
+            if (Thread.currentThread().isInterrupted) {
+                break
+            }
+            count = i
+        }
+
+        println("Thread 1 finished, $count")
+    }
+
+    t1.start()
+    Thread.sleep(1)
+    t1.interrupt()
+}
+
+// 也可以这样
+
+fun main() {
+    val runnable = object : Runnable {
+        var exit = false
+        private var count = 0
+
+        override fun run() {
+            for (i in 1..1_0000_0000) {
+                if (exit) {
+                    break
+                }
+
+                count = i
+            }
+
+            println("Thread finished. Count: $count")
+        }
+    }
+
+    val t1 = Thread(runnable)
+    t1.start()
+
+    Thread.sleep(1)
+    runnable.exit = true
+}
+```
+
+> 不建议使用 `stop` `suspend` `resume` 等等被废弃的方法
+
+- 只有以下几种情况持有锁的线程会释放锁： 
+    1. **当前线程的同步方法、代码块执行结束的时候释放**
+    2. **当前线程在同步方法、同步代码块中遇到 `break` `return` 终于该代码块或者方法的时候释放**
+    3. **当前线程出现未处理的 `error` 或者 `exception` 导致异常结束的时候释放**
+    4. ***调用 `obj.wait()` 会立即释放锁，当前线程暂停，释放锁，以便其他线程可以执行 `obj.notify()`，但是 `notify()` 不会立刻立刻释放 `sycronized(obj)`中的 `obj` 锁，必须要等 `notify()` 所在线程执行完 `synchronized(obj)` 块中的所有代码才会释放这把锁。而 `yield()`,`sleep()`不会释放锁***
+
+    > 记住 `sleep` `yield` 不会放锁，虽然线程已不再执行
+
+
+### 12.6.3 volatile
+
+- `volatile` 关键字是 Java 语言提供的一种**轻量级同步机制**，可以保证***多个线程对某个变量的修改立即可见***，即**一个线程修改了某个变量的值，其他线程立即可以看到这个修改**
+
+> Kotlin 没有 `volatile` 关键字，有 ***`@Volatile` 注解，注意只能用来修饰属性***
+
+```kt
+class Counter {
+    @Volatile
+    var count = 0
+}
+```
+
+> 可以看上面的内存模型图，**`volatile` 变量的读写操作会立即对主内存同步，保证每一条线程的可见性**，但是***并不保证原子性***，比如 `count++` 不是原子操作，中间有其他线程抢占了 CPU，导致 `count` 不是原来的 `count + 1`
+
+### 12.6.4 指令重排和先行发生
+
+```kt
+b = a + c   // 1
+c = a + b   // 2
+
+d = e + f   // 3
+e = f + d   // 4
+```
+
+> 上面的代码，如果正常执行的话是一行行的往下执行，但是编译器看到 2 依赖 1，4 依赖 3，但是 1 并不依赖 3，所以编译后的结果可能是
+
+```kt
+b = a + c   // 1
+d = e + f   // 3
+
+c = a + b   // 2
+e = f + d   // 4
+```
+
+- 这就叫***指令重排（Instruction Reorder）***，是编译器为了优化代码而进行的一种优化，**编译器可以对指令进行重排，使得程序的执行顺序与代码顺序不一致**
+
+- 正常情况下这不是事，但是如果指令重排发生在多线程环境下？
+
+- 假设这样一种情况，两个线程自己都有一份数据的备份再缓存上，因为不保证一定会写回或读取主内存，所以会导致可见性问题
+
+```kt
+data class Exchanger(
+    var name: String?,
+    var age: Int?
+) {
+    fun setExchanger(ex: Exchanger) {
+        while (name == null || age == null) {
+            // 不保证这里明明是空的，但是自己的内存拷贝是有东西的，导致最后两个线程的数据不统一
+        }
+        this.name = ex.name
+        this.age = ex.age
+    }
+
+    fun getExchanger(): Exchanger {
+        val result = Exchanger(name, age)
+        this.name = null
+        this.age = null
+        return result
+    }
+}
+```
+
+- 解决办法是可以声明 `volatile`，保证写操作会写入主内存，读操作会使用主内存的
+
+> 可以不声明所以的变量都为 `volatile`，**只要有一个 `volatile` 变量被读写，所有对这个线程可见的变量都会写入或读取到主内存**
+
+```kt
+class Message(var str: String?) {
+    @Volatile
+    var flag: Boolean = false
+    
+    fun setMeg(s: String) {
+        str = s         // 1
+        flag = true     // 2
+    }
+    
+    fun getMeg(): String? {
+        return if (flag) {
+            str
+        } else {
+            null
+        }
+    }
+}
+```
+
+- 问题是如果指令重排发生了，1 和 2 调换，2 的位置会被写入到主内存，但是 1 的位置可不一定，导致 2 之后的线程读取到的数据可能是 1 之前的，导致数据不一致
+
+- 所以 Java 有一个***先行发生（happens-before guarantee）的概念，保证指令重排不会发生在有 `volatile` 和 `synchronized` 的地方***
+
+- 所有**位于 `volatile` 变量读写之前的指令，都不会被重排到后面，位于 `volatile` 变量读写之后的指令，也不会被重排到前面**
+
+```kt
+class ValueExchanger {
+    private var a = 0
+    private var b = 0
+
+    fun exchangeFrom(value: ValueExchanger) {
+        // this.a = value.a
+        synchronized(this) {
+            this.a = value.a
+            this.b = value.b
+        }
+        // this.b = value.b
+        // 不会移出外面
+    }
+    
+    fun exchangeTo(value: ValueExchanger) {
+        synchronized(this) {
+            value.a = this.a
+            value.b = this.b
+            // println("Success") 也不会发生
+        }
+        println("Success")
+    }
+}
+```
+
+- 所有**位于 `synchronized` 代码块里面的代码，都不会因为指令重排移到外面，位于 `synchronized` 代码块外面的代码，也不会因为指令重排移到里面**
+
+> 说实话，这个 `volatile` 很多时候是替代不了 `synchronized` 的，它的优点是性能好一些，可能用的比较多的地方是线程安全的单例和禁止指令重排
+
+```kt
+class Singlaton {
+    private var instance: Singlaton? = null
+
+    fun getInstance(): Singlaton {
+        if (instance == null) {
+            synchronized(this::class) {
+                if (instance == null) {
+                    instance = Singlaton()
+                }
+            }
+        }
+        
+        return instance!!
+    }
+}
+```
+
+### 12.6.5 竞争条件
+
+> 本文不想去分辨静态条件（race condition）和数据竞争（data rece），因为在我看来分辨了也没用，感兴趣的可以自行了解
+
+- 那我们这一节讲了这么多，就是为了一开始的一个问题，下面的输出并不是我们认为的那样
+
+```kt
+fun main() {
+    val counter = Counter()
+    val t1 = Thread {
+        for (i in 1..100_0000) {
+            counter.increment()
+        }
+    }
+
+    val t2 = Thread {
+        for (i in 1..100_0000) {
+            counter.increment()
+        }
+    }
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    println("Final count: ${counter.getResult()}")
+}
+
+class Counter {
+    private var count = 0
+
+    fun increment() { count++ }
+
+    fun getResult() = count
+}
+```
+
+- 通过前面的文章我们知道，这是两个线程不同的可见性和原子性操作导致的
+
+- ***对于多个线程同时读写的情况，就会发生线程间的竞争，解决办法就是使用 `synchronized` 代码块锁住共享资源***
+
+```kt
+fun main() {
+    val counter = Counter()
+    val t1 = Thread {
+        for (i in 1..100_0000) {
+            counter.increment()
+        }
+    }
+
+    val t2 = Thread {
+        for (i in 1..100_0000) {
+            counter.increment()
+        }
+    }
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    println("Final count: ${counter.getResult()}")
+}
+
+class Counter {
+    private var count = 0
+
+    fun increment() {
+        synchronized(this) {
+            count++
+        }
+    }
+
+    fun getResult() = count
+}
+```
+
+- 但是***对于一个线程读，一个线程写，是不会发生竞争的***
+
+```kt
+fun main() {
+    val counter = Counter()
+    val t1 = Thread {
+        for (i in 1..1_0000) {
+            counter.increment()
+        }
+    }
+
+    val t2 = Thread {
+        for (i in 1..100) {
+            Thread.sleep(1)
+        }
+        println("Count: ${counter.getResult()}")
+    }
+
+    t1.start()
+    t2.start()
+}
+
+class Counter {
+    private var count = 0
+
+    fun increment() {
+        count++
+    }
+
+    fun getResult() = count
+}
+```
+
+> 这是因为常见的竞争发生在两个线程同时写入的时候互相覆盖，导致最后的结果不是期望的结果，但是单线程写入是没有问题的，可能唯一的问题是第二个读取的线程可能可见性有些问题，可以通过 `volatile` 关键字解决
+
+- 两个线程，一读一写，一写一读，同样没问题
+
+```kt
+fun main() {
+    val counter1 = Counter()
+    val counter2 = Counter()
+
+    val t1 = Thread(MyRunnable(counter1, counter2))
+    val t2 = Thread(MyRunnable(counter2, counter1))
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    println("Final count 1: ${counter1.getResult()}")
+    println("Final count 2: ${counter2.getResult()}")
+}
+
+class MyRunnable(
+    val writeCounter: Counter,
+    val readCounter: Counter
+) : Runnable {
+    override fun run() {
+        for (i in 1..10_0000) {
+            writeCounter.increment()
+            readCounter.getResult()
+        }
+    }
+}
+
+class Counter {
+    private var count = 0
+
+    fun increment() {
+        count++
+    }
+
+    fun getResult() = count
+}
+```
+
+### 12.6.6 多线程并发工具类
+
+#### 12.6.7 Atomic 类
 
