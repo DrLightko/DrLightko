@@ -581,7 +581,7 @@ bool = false
 
 > 在 JVM 上，存储为 `Char` 的字符表示 16 位 `Unicode` 字符 `char`
 
-> 在JVM 平台，当需要可空引用时字符会是装箱的 Java 类，类似于数字。 装箱操作不保留同一性
+> 在JVM 平台，当需要可空引用时字符会是装箱的 Java 类，类似于数字，装箱操作不保留同一性
 
 ```kt
 val c: Char = '永'
@@ -7020,7 +7020,66 @@ sealed class Color {
 
 > 在 Kotlin 1.3 之前，使用 `inline` 去声明内联类，1.5 ***引入了 `value` 关键字，但是现在使用 `value` 仍需要加上 `@JvmInline` 的注解***，否则编译不通过（非 JVM 平台可以不写，比如 Native）。`inline class` 仍然可以用但是不排除被废弃的可能，`value` 未来仍可能添加新特性
 
-- 假设这样一个场景，我们需要一个函数接受一个 `Double` 类型表示时间的参数，但是不去做任何的注解的话，调用者并不知道传入的时间是什么单位，秒、毫秒、分还是小时。这是我们可能会创建一个数据类去规定这个类他具体的单位，但是创建一个类会带来额外的内存消耗以及读取时间，从极致性能角度上讲的话并不划算，所以 `Kotlin`引入了一个新的特性叫做***内联值类***（inline value class）
+- 很多语言里都有***值类型和引用类型的区别，对于值类型，在赋值、传参、返回时都会进行值拷贝，对于引用类型，在赋值、传参、返回时都会进行引用传递***
+
+```c
+#include <stdio.h>
+
+struct test {
+    int a;
+    char b;
+    double c;
+};
+
+int main() {
+    struct test t = {10, 'a', 3.1415926};
+
+    struct test k = t;
+    // 简单的理解为深拷贝和浅拷贝的区别也可以
+
+    t.a = 20;
+
+    printf("t.a = %d, k.a = %d\n", t.a, k.a);
+    printf("t.b = %c, k.b = %c\n", t.b, k.b);
+    printf("t.c = %f, k.c = %f\n", t.c, k.c);
+
+    return 0;
+}
+```
+
+- 那这样子的话 **Kotlin 里的基本类型就可看作是值类型**，而***其他的都是引用类型***，**引用类型的赋值是传递地址的引用，值类型会直接复制自己的全部**
+
+```kt
+fun main() {
+    val n1: Int = 10
+    val n2: Int = n1
+
+    println(n1 == n2)
+    println(n1 === n2)
+    // depreciated
+    // Kotlin 马上要禁用基本类型之间的比较，因为基本类型是值类型，比较的是值而不是地址，如果可以的话就太可笑了，虽然结果的地址是一样的
+
+    val s1: String = "Hello"
+    val s2: String = "Hello"
+
+    println(s1 == s2)
+    println(s1 === s2)
+
+    val m1: Int? = 10
+    val m2: Int? = 12
+    println(m1 == m2)
+    println(m1 === m2)
+    // 同理提醒要废弃，但是结果说明二者地址是不一样的，编译后的结果也说明了
+
+    data class Person(val name: String, val age: Int)
+    val p1: Person = Person("John", 25)
+    val p2: Person = Person("John", 25)
+    println(p1 == p2)
+    println(p1 === p2)
+}
+```
+
+> 那 Kotlin 有没有类似其他语言的 `struct` 呢，有内联类
 
 - ***使用 `value` 关键字声明一个内联类***，注意该类***有且只能有一个有字段值的只读属性（只能是 `val`），并且在主构造中声明***，**可以有没有幕后字段的属性、方法、init 代码块和次级构造函数**
 
@@ -7085,6 +7144,8 @@ fun main() {
 
 > 内联类的这个概念仍不完善，就目前来讲没啥用，他最多在需要内联类的参数上优化，其他地方基本没用，还可能会带来性能的更多消耗，内联类仍会被创建，并且拥有一对拆箱装箱方法
 
+> 还是期待未来类似 `struct` 的结构
+
 ```kt
 @JvmInline
 value class MyInt(val value: Int)
@@ -7126,16 +7187,15 @@ fun main() {
 - 因为内联类既可以表示为基础类型有可以表示为包装器，***引用相等 `===` 对于内联类***而言毫无意义，因此这也***是被禁止的***
 
 ```kt
-@JvmInline
-value class MyInt(val value: Int)
-
 fun main() {
-    val myInt = MyInt(10)
-    val myInt2 = MyInt(20)
-    println(myInt === myInt2)
-
-    // Identity equality for arguments of types 'MyInt' and 'MyInt' is prohibited.
+    val p1 = Person("Alice")
+    val p2 = p1
+    println(p1 == p2)
+    // println(p1 === p2) 编译不通过，因为内联类不允许引用相等
 }
+
+@JvmInline
+value class Person(val name: String)
 ```
 
 - 可以看到在底层接受内联的参数的函数后面会加上一个独特的哈希值，这是为了避免在声明多个名称不同但是属性相同的内联类时，由于编译后会被化为同样的参数类型，命名会冲突的问题，同时 Java 也不能去调用接受内联参数的函数除非你手动加上 `@JvmName` 注解
@@ -11437,7 +11497,7 @@ fun main(args: Array<String>) {
 
 
 
-# 第十二章：走进线程世界
+# 第十二章：线程和并发
 
 > 这章的内容很多，并且大部分比较抽象，包括 Java 里的多线程、同步、互斥锁等等，也有 Kotlin 里的协程、挂起函数，本章不会对每一个概念都做非常基础的理解，只讲解 API 的使用和简单的介绍，如果哪里有不懂的地方，可以参考官方文档或者其他资料
 
@@ -12217,6 +12277,8 @@ fun main() {
 
 - 所谓 ***`synchronized` 锁住的是一个对象，如果一个方法是 `synchronized` 的，那么当一个线程拿到这个对象的锁时，他就能访问这个对象的成员，无论是不是 `synchronized` 的***
 
+> ***`synchroized` 是可重入锁***，这个我们还会讲
+
 ```kt
 fun main() {
     val counter = Counter()
@@ -12249,6 +12311,7 @@ class Counter {
     fun increment() {
         synchronized(this) {
             incrementAndGet()
+            // 如果 synchronized 不是可重入的，这里线程一获得 Counter 的锁，然后有去获得锁，可是锁已经被拿走了（自己），所以就会一直拿不到锁，卡死在这里
         }
     }
 
@@ -13061,5 +13124,384 @@ class Counter {
 
 ### 12.6.6 多线程并发工具类
 
-#### 12.6.7 Atomic 类
+#### 12.6.6.1 Atomic 类
+
+- Java 中的对象锁其实是有四种状态的，简单来说是：
+    1. ***无锁状态，任何线程都可以访问***
+    2. ***偏向锁状态，加锁解锁不会带来太多消耗，一般单个线程使用***
+    3. ***轻量级锁状态，多个线程不断自旋试图获取锁***
+    4. ***重量级锁状，多个线程竞争，会互相阻塞***
+   
+- 还有悲观锁和乐观锁的概念，***悲观锁指的是每一次都进行加锁，不管有几个线程，而乐观锁是假设没有冲突，每次不加锁，如果有冲突就使用一种叫 CAS（Compare-And-Swap） 的机制来保证线程安全***
+
+- JDK 1.6 以前，`synchroized` 一直是重量锁，导致性能很差，***1.6 以后引入了四种锁状态，只有不断的锁升级才会到重量级***
+
+- **所谓 CAS ，就是一种乐观锁的实现，他在读写值的时候不会加锁，但是在读写之前会先去存储对象的旧值，然后写入的时候比较下旧值和新值是否没变，如果变了，说明有线程在自己读写的过程中访问变量了，他就重新读值，然后再去比较，这也叫自旋（Spinning）**
+
+- Java 为了兼顾性能和原子性可见性操作，为我们提供了 ***原子类，原子类的操作都是原子性（线程安全）*** 的，同时比 `synchroized` 性能好
+
+- 先来看***原子基本类型，有 `AtomicBoolean` `AtomicInteger` `AtomicLong` 三种***，后两者支持算术运算
+
+```java
+// 常见操作
+
+public final int get() // 获取当前值
+public final int getAndSet(int newValue) // 获取当前值，并设置新值
+public final int getAndIncrement()// 获取当前值，并自增
+public final int getAndDecrement() // 获取当前值，并自减
+public final int getAndAdd(int delta) // 获取当前值，并加上预期值
+boolean compareAndSet(int expect, int update) // 如果输入值（update）等于预期值，将该值设置为输入值
+public final void lazySet(int newValue) // 最终设置为 newValue，使用 lazySet 设置之后可能导致其他线程在之后的一小段时间内还是可以读到旧的值
+```
+```kt
+import java.util.concurrent.atomic.AtomicInteger
+
+fun main() {
+    val atomic = AtomicInteger(0)
+
+    val t1 = Thread {
+        for (i in 1..100_0000) {
+            atomic.incrementAndGet()
+        }
+    }
+
+    val t2 = Thread {
+        for (i in 1..100_0000) {
+            atomic.incrementAndGet()
+        }
+    }
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    println(atomic.get())
+}
+```
+
+- 还有 ***引用类型 `AtomicReference` 仅维护对象引用，
+`AtomicMarkableReference` 维护对象引用和一个布尔值标记，
+`AtomicStampedReference` 维护对象引用和一个整数戳***
+
+- ***`AtomicStampedReference` 就可以解决 CAS 中的 ABA 问题***
+
+> ABA 是指在 CAS 的过程中，另外的线程把旧值改掉了，然后再把新值改回成旧值，虽然 CAS 会认为这个对象没有变，但其实是改变过的
+
+> 要是不好理解的话，我们这么说，线程 T1 读取某个共享变量的值 A，T1 被挂起，线程 T2 将该变量的值从 A 修改为 B，然后又修改回 A，T1 恢复执行，并尝试使用 CAS 操作将变量从 A 修改为新值，CAS 操作成功，因为变量的当前值仍然是 A，但此时变量的状态已经发生了变化
+
+```kt
+import java.util.concurrent.atomic.AtomicStampedReference
+
+fun main() {
+    val initialRef = "A"
+    val initialStamp = 0
+    val atomicStampedRef: AtomicStampedReference<String?> = AtomicStampedReference(initialRef, initialStamp)
+
+    // 模拟 ABA 问题
+    val t1 = Thread {
+        val reference = atomicStampedRef.getReference()
+        val stamp = atomicStampedRef.getStamp()
+
+        // 模拟线程挂起
+        Thread.sleep(100)
+
+        // 尝试将值从 A 修改为 C，并检查戳
+        if (atomicStampedRef.compareAndSet(reference, "C", stamp, stamp + 1)) {
+            println("Thread 1: Updated A to C")
+        } else {
+            println("Thread 1: Failed to update A to C")
+        }
+    }
+
+    val t2 = Thread {
+        // 模拟 ABA 操作
+        Thread.sleep(50)
+        atomicStampedRef.compareAndSet(atomicStampedRef.getReference(), "B", atomicStampedRef.getStamp(), atomicStampedRef.getStamp() + 1)
+        println("Thread 2: Updated A to B")
+
+        atomicStampedRef.compareAndSet(atomicStampedRef.getReference(), "A", atomicStampedRef.getStamp(), atomicStampedRef.getStamp() + 1)
+        println("Thread 2: Updated B to A")
+    }
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+
+    println("Final reference: ${atomicStampedRef.getReference()}, Final stamp: ${atomicStampedRef.getStamp()}")
+}
+```
+
+- 还有***原子数组类型***，相比普通的原子基本类型，***他们还保证自己元素的原子性而不仅仅是引用的原子性，有 `AtomicIntegerArray` `AtomicLongArray` `AtmoicReferenceArray` 三种***
+
+- 还有三个用于更新字段的原子类型，`AtomicIntegerFieldUpdater` `AtmoicLongFieldUpdater` `AtomicRefrenceFieldUpdater` ，基于反射实现，限制如下：
+    1. 因为对象的属性修改类型原子类都是抽象类，所以每次使用都必须使用静态方法 newUpdater() 创建一个更新器，并且需要设置想要更新的类和属性
+    2. 字段必须是 `volatile` 类型的
+    3. 不能作用于静态变量
+    4. 不能作用于常量
+
+#### 12.6.6.2 并发集合
+
+- Java 为我们提供了线程安全的并发集合，有 `ConcurrentHashMap` `ConcurrentLinkedQueue` `CopyOnWriteArrayList` 等等，这些集合都实现了 `java.util.Collection` 接口，并且都提供了线程安全的操作，包括 `add` `remove` `contains` `size` 等等
+
+```kt
+import java.util.concurrent.ConcurrentHashMap
+
+fun main() {
+    val sharedMap = ConcurrentHashMap<String, String>()
+
+    val t1 = Thread(MyRunnable(sharedMap))
+    val t2 = Thread(MyRunnable(sharedMap))
+
+    t1.start()
+    t2.start()
+}
+
+class MyRunnable(val sharedMap: ConcurrentHashMap<String, String>) : Runnable {
+    override fun run() {
+        for (i in 1..100_0000) {
+            if (sharedMap.containsKey("key")) {
+                val str = sharedMap.remove("key")
+                // 这里如果 map 检测到有两个线程访问自己，这个值就会是 null
+                if (str == null) {
+                    println("Iterator $i key was null")
+                }
+            }
+            sharedMap["key"] = "value$i"
+        }
+    }
+}
+```
+
+### 12.6.7 Lock 接口
+
+- Java 还提供了 `Lock` 接口，相比 `synchroized` 这是一个 API，提供了一些更高级的功能和方法
+
+- ***`Lock` 的常用实现类是 `RentrantLock`，这是一个可重入锁，也就是一个线程在加锁的情况下可以再次加锁，想要释放锁只有把自己都加过的锁释放了才行***
+
+- ***在 `Lock` 对象上使用 `lock()` 方法即可加锁，其他线程无法访问，而使用 `unlock()` 即可释放锁，需要注意的是建议把 `lock` 放进 `try finally` 里面，以保证发生异常也可以捕捉并正常释放锁***
+
+> **`unlock` 放在 `finally` 里面，但是 `lock` 放在 `try` 里面的第一行或是放在外面的第一行应该都是可以的**，保证他是第一个就行
+
+```kt
+import java.util.concurrent.locks.ReentrantLock
+
+fun main() {
+    val counter = Counter()
+
+    val t1 = Thread {
+        for (i in 1..100_0000) {
+            counter.increment()
+        }
+    }
+
+    val t2 = Thread {
+        for (i in 1..100_0000) {
+            counter.increment()
+        }
+    }
+
+
+    t1.start()
+    t2.start()
+    
+    t1.join()
+    t2.join()
+
+    println("Final count: ${counter.get()}")
+}
+
+class Counter {
+    private var count = 0
+    private val lock = ReentrantLock()
+    // private val lock = ReentrantLock(true)
+    // 这里的参数可以是布尔值，表示公平锁与否，公平锁意为先来先服务，非公平锁则是按照请求的顺序来处理。默认为非公平锁
+
+    fun increment() {
+        try {
+            lock.lock()
+            count++
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    fun get() = count
+}
+```
+
+- 以下是 `ReentrantLock` 的常用方法
+
+```kt
+lock.tryLock()
+// 尝试获取锁
+// 尝试获取锁，如果锁可用则返回 true，否则返回 false。此方法不会阻塞
+
+lock.tryLock(long time, TimeUnit unit)
+// 带超时的尝试获取锁
+// 尝试在给定的时间内获取锁，如果在指定时间内锁可用则返回 true，否则返回 false。此方法会阻塞，但有时间限制
+
+lock.lockInterruptibly()
+// 可中断的获取锁
+// 获取锁，除非当前线程被中断。如果锁可用，则获取锁并立即返回；如果锁不可用，则当前线程将阻塞，直到锁可用或被中断
+
+lock.holdCount
+// 获取持有次数
+// 查询当前线程持有此锁的次数
+
+lock.isHeldByCurrentThread
+// 判断当前线程是否持有锁
+// 查询当前线程是否持有此锁
+
+lock.isLocked
+// 判断锁是否被任意线程持有
+// 查询此锁是否由任何线程持有
+
+lock.isFair
+// 判断锁是否为公平锁 
+// 查询此锁是否为公平锁
+```
+
+- 就像 `synchroized` 的 `wait` `notify` 一样，***`Lock` 也有 `Condition` 接口，可以用来实现等待/通知机制，`Condition` 接口有 `await` `signal` `signalAll` 三个方法，分别表示等待、通知和通知所有线程***，不一样的是它可以实现手动选择唤醒，而不是 `notify()` 的随机唤醒
+  
+- ***使用 `newCondition()` 创建一个监视者，`await` `signal` `signalAll` 必须在 `lock()` 和 `unlock()` 之间使用，调用 `await()` 会释放锁，并且终止下面代码的执行进入等待队列，调用 `signal()` 唤醒一个等待线程，调用 `signalAll()` 唤醒所有等待线程，不同的监视者对象可以唤醒不同的线程***
+
+```kt
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
+
+fun main() {
+    val buffer = BoundedBuffer()
+
+    // 生产者线程
+    val producer = Thread {
+        for (i in 1..10) {
+            buffer.put("Item $i")
+            Thread.sleep(100) // 模拟生产时间
+        }
+    }
+
+    // 消费者线程
+    val consumer = Thread {
+        for (i in 1..10) {
+            buffer.take()
+            Thread.sleep(150) // 模拟消费时间
+        }
+    }
+
+    producer.start()
+    consumer.start()
+
+    producer.join()
+    consumer.join()
+}
+
+class BoundedBuffer {
+    private val lock: Lock = ReentrantLock() // 创建一个可重入锁
+    private val notFull: Condition = lock.newCondition() // 创建一个表示“不满”的条件
+    private val notEmpty: Condition = lock.newCondition() // 创建一个表示“不空”的条件
+
+    private val buffer = mutableListOf<String>() // 缓冲区
+    private val maxSize = 5 // 缓冲区最大容量
+
+    // 生产者方法：向缓冲区添加元素
+    fun put(item: String) {
+        lock.lock() // 获取锁
+        try {
+            while (buffer.size == maxSize) {
+                println("Buffer is full, waiting...")
+                notFull.await() // 如果缓冲区满，则等待
+            }
+            buffer.add(item) // 添加元素到缓冲区
+            println("Produced: $item")
+            notEmpty.signal() // 唤醒一个等待的消费者线程
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+        } finally {
+            lock.unlock() // 释放锁
+        }
+    }
+
+    // 消费者方法：从缓冲区移除元素
+    fun take(): String {
+        lock.lock() // 获取锁
+        return try {
+            while (buffer.isEmpty()) {
+                println("Buffer is empty, waiting...")
+                notEmpty.await() // 如果缓冲区空，则等待
+            }
+            val item = buffer.removeAt(0) // 移除并获取元素
+            println("Consumed: $item")
+            notFull.signal() // 唤醒一个等待的生产者线程
+            item
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            ""
+        } finally {
+            lock.unlock() // 释放锁
+        }
+    }
+}
+```
+
+- `synchronized` 和 `lock` 有什么区别你？
+    1. `synchronized` 只能修饰一个方法，而 `lock` 可以在不同的函数里调用
+    2. `lock` 也拥有跟 `synchronized` 相同的 `happens before guarantee`
+    3. `synchronized` 永远是可重入的，而 `lock` 是可以实现一个不可重入的实现类的
+    4. `synchronized` 无法保证公平不公平锁，而 `lock` 可以
+   
+### 12.6.8 线程死锁
+
+- ***如果两个线程同时想要别的资源，可是自己锁着别人的资源，自己又不释放，所以同步控制时请杜绝线程死锁***
+
+```kt
+fun main() {
+    // 创建两个对象，作为锁
+    val lock1 = Object()
+    val lock2 = Object()
+
+    // 线程1：先获取 lock1，然后尝试获取 lock2
+    val thread1 = Thread {
+        synchronized(lock1) {
+            println("Thread 1 acquired lock1")
+            Thread.sleep(100) // 模拟一些工作
+            synchronized(lock2) {
+                println("Thread 1 acquired lock2")
+                // 这里不会被执行，因为线程2已经持有了 lock2
+            }
+        }
+    }
+
+    // 线程2：先获取 lock2，然后尝试获取 lock1
+    val thread2 = Thread {
+        synchronized(lock2) {
+            println("Thread 2 acquired lock2")
+            Thread.sleep(100) // 模拟一些工作
+            synchronized(lock1) {
+                println("Thread 2 acquired lock1")
+                // 这里不会被执行，因为线程1已经持有了 lock1
+            }
+        }
+    }
+
+    // 启动两个线程
+    thread1.start()
+    thread2.start()
+
+    // 等待两个线程结束
+    thread1.join()
+    thread2.join()
+
+    println("Main thread finished")
+    // 永远不会被打印
+}
+```
+
+> 介绍一个方便的工具：`jconsole`，如果配置了 JDK 可以直接在命令行打开，位于 `JDK/bin` 下面，可以很方便的查看线程运行情况，类加载和线程是否死锁
+
+## 12.7 线程池
 
