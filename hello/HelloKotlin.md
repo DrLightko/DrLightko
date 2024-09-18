@@ -47,7 +47,7 @@ kotlinc
  
 5. 因为这是 JatBrains 的语言，所以建议使用 [IntelliJ IDEA](https://www.jetbrains.com/idea/download/)（其他的IDE使用体验均不如它）来开发，或者 [VSCode](https://code.visualstudio.com/) 免费开源，再或是 Notepad++
  
-> 如果使用 VSCode 一定要找一个好用一点的插件，体验还是不如 IntelliJ ，这是我目前用的[插件](https://marketplace.visualstudio.com/items?itemName=mathiasfrohlich.Kotlin)
+> 如果使用 VSCode 一定要找一个好用一点的插件，整体体验还是不如 IntelliJ，JetBrains 罪大恶极
 
 
 
@@ -984,25 +984,35 @@ val x: String? = y as? String
 
 - 在 Kotlin 里面也大致相同，***定义在类里面很好方法同一级的叫成员变量 (属性)，定义在方法、函数内部或流程控制语句内部的叫本地变量 (局部变量)，成员变量有效范围是整个类范围 (包括方法内)，本地变量出了所在的花括号就失效了***
 
-- 同样的，***本地优先，函数参数 > 函数内本地变量 > 类属性***
+- 同样的，如果变量名相同，则***本地优先，函数参数 > 函数内本地变量 > 类属性***
 
 ```kt
 fun main() {
-    val num: Int = 10
-
-    var test1: Test = Test()
-    test1.test_func(num)
+    val test = Test(10)
+    test.print(20)
 }
 
+class Test (var i: Int = 0) {
+    fun print(i: Int) {
+        for (i in 1..1) {
+            println("i in for is $i")
+            // for 内部的本地变量 i
+        }
+        
+        println("i in function before val is $i")
+        // 函数参数
 
-class Test {
-    val num: Int = 20
+        val i = 40
 
-    fun test_func(num: Int) {
-        val num: Int = num + 30
+        println("i in function after val is $i")
+        // 函数本地变量，覆盖了函数参数
+        func()
+    }
 
-        println(num)    //
-        println(this.num)
+    fun func() {
+        i--
+        println("i in class is $i")
+        // 类属性
     }
 }
 ```
@@ -7020,7 +7030,7 @@ sealed class Color {
 
 > 在 Kotlin 1.3 之前，使用 `inline` 去声明内联类，1.5 ***引入了 `value` 关键字，但是现在使用 `value` 仍需要加上 `@JvmInline` 的注解***，否则编译不通过（非 JVM 平台可以不写，比如 Native）。`inline class` 仍然可以用但是不排除被废弃的可能，`value` 未来仍可能添加新特性
 
-- 很多语言里都有***值类型和引用类型的区别，对于值类型，在赋值、传参、返回时都会进行值拷贝，对于引用类型，在赋值、传参、返回时都会进行引用传递***
+- 很多语言里都有***值类型和引用类型的区别，对于值类型（Value Type），在赋值、传参、返回时都会进行值拷贝，对于引用类型（Reference Type），在赋值、传参、返回时都会进行引用传递***
 
 ```c
 #include <stdio.h>
@@ -7048,6 +7058,10 @@ int main() {
 ```
 
 - 那这样子的话 **Kotlin 里的基本类型就可看作是值类型**，而***其他的都是引用类型***，**引用类型的赋值是传递地址的引用，值类型会直接复制自己的全部**
+
+- 任何变量总会关联一个值，只是在使用时，对***有些变量，我们将直接取用这个值本身，这被称为值类型变量***，而对另一些变量，我们把***这个值作为索引、取用这个索引指示的数据，这被称为引用类型变量***。***值类型变量通常在线程栈上分配，每个变量都有自己的数据副本；引用类型变量通常在进程堆中分配，多个变量可引用同一数据对象，对一个变量执行的操作可能会影响其他变量***
+
+> 这是一段华为仓颉文档里的一段，我认为说的很好，而且明确了值类型是在线程栈，引用类型是在进程堆，看过后面第十二章的内存模型后你就知道为什么说的好了
 
 ```kt
 fun main() {
@@ -13505,3 +13519,104 @@ fun main() {
 
 ## 12.7 线程池
 
+> 因为一个线程死亡后就无法再次利用，如果要使用很多的线程，就只能一个一个的新建，这样不方便管理，并且连续的线程启动和结束很耗内存，有没有办法可以再次利用线程呢？
+
+- Java 为我们提供了***线程池（Thread Pool），这是一个方便集中管理、复用线程的线程框架***，通过使用线程池，我们**指定的任务只会在限定的线程内执行，每一个线程可以执行很多个任务**，相比新建线程来说大大方便了使用
+
+```mermaid
+---
+title: Java Thread Pool
+---
+flowchart
+    subgraph Thread Pool
+        direction TB
+        subgraph BlockingQueue
+            Task5
+            Task4
+            Task3
+            Task2
+            Task1
+        end
+        Thread1 --> Task1
+        Thread2 --> Task2
+        Thread3 --> Task3
+    end
+```
+
+- 通过**线程池的方式，向一个任务队列提交你要执行的任务，线程池里的线程各自领取任务并执行**，线程池主要是使用 Java `java.util.concurrent` 下面的 `Executor` 和它的实现类来实现的
+
+```kt
+import java.util.concurrent.Executors
+
+fun main() {
+    val threadPool = Executors.newFixedThreadPool(4)
+}
+```
+
+- **`Executors` 接口和它的实现类继承图如下**：
+
+```mermaid
+---
+title: Java Executors
+---
+classDiagram
+    class Executor
+    <<interface>> Executor
+    class ExecutorService
+    <<interface>> ExecutorService
+    class ThreadPoolExecutor
+    class AbstractExecutorService
+    <<abstract>> AbstractExecutorService
+    class ScheduledExecutorService
+    <<interface>> ScheduledExecutorService
+    class ScheduledThreadPoolExecutor
+    Executor <|-- ExecutorService
+    ExecutorService <|-- AbstractExecutorService
+    AbstractExecutorService <|-- ThreadPoolExecutor
+    ExecutorService <|-- ScheduledExecutorService
+    ScheduledExecutorService <|-- ScheduledThreadPoolExecutor
+    ThreadPoolExecutor <|-- ScheduledThreadPoolExecutor
+```
+
+- **创建一个线程池，可以使用 `ThreadPoolExecutor` 的构造方法**，它的参数如下
+
+```kt
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+
+fun main() {
+    val corePoolSize = 10
+    // 线程池的核心线程数
+    val maximumPoolSize = 20
+    // 线程池的最大线程数，如果任务较多可以新增这些数量的线程用于处理
+    val keepAliveTime = 3L
+    // 最大线程空闲后的存活时间，如果多生成的线程空闲时间超过这个值，线程会被回收
+    val timeUnit = TimeUnit.SECONDS
+    // 时间单位，指定上一个参数的单位
+    val workQueue = ArrayBlockingQueue<Runnable>(128)
+    // 任务队列，用于存放等待执行的任务，有多种实现，这里使用的是 `ArrayBlockingQueue`，更多内容可以看 `https://blog.csdn.net/xiaojin21cen/article/details/87363143`
+
+    val threadPool = ThreadPoolExecutor(
+        corePoolSize,
+        maximumPoolSize,
+        keepAliveTime,
+        timeUnit,
+        workQueue
+    )
+
+    threadPool.execute(MyRunnable("Task - 1"))
+    threadPool.execute(MyRunnable("Task - 2"))
+    threadPool.execute(MyRunnable("Task - 3"))
+
+    threadPool.shutdown()
+}
+
+class MyRunnable(val str: String) : Runnable {
+    override fun run() {
+        println("${Thread.currentThread().name} - $str")
+    }
+}
+```
+
+- 使用线程池的 `excute` 方法，参数为 `Runnable` 对象，可以向线程池提交任务，
