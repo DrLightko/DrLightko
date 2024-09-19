@@ -856,6 +856,8 @@ val num: Int? = null
 
 > 实际上只有一个 `Any` 类，这个 `Any?` 只是说你在声明类型的时候使用问号说明这个引用变量可能为空，看起来这个 `Any?` 像是一个新类
 
+> `?` 只是标记引用变量是否可为空，而不代表类型本身
+
 ```kt
 val any1 = Any()
 println(any1)
@@ -886,7 +888,9 @@ val num: Int? = 2
 println(num?.plus(1))
 ```
 
-> 如果***变量不为空就返回正常结果，否则返回 `null`***
+- 使用 ***`?.` 如果结果变量不为空就返回正常结果，否则返回 `null`***
+
+> `a?.b?.c` 这样的链式调用，如果 `a`、`b`、`c` 有一个为空，那么整个链式调用都会返回 `null`
 
 - 另外***还有一种 `!!.` 的写法，这叫非空断言，这样的话编译器如果遇到 null 空引用就会抛空指针异常了***
 
@@ -5998,7 +6002,9 @@ fun MyClass.getItsName(dog: Dog) {
 
 > 这一切限制都是为了保证基类不受影响，所以用扩展方法的时候请慎用，不要随意使用，否则会破坏代码完整性
 
-- 还***可以扩展可空的方法调用***，这样即使源类没有可空方法，但是使用一个 `null` 的对象仍可以正常调用，不过要做好非空判断
+- 还***可以扩展可空的方法调用***，这样**即使源类没有可空方法，但是使用一个 `null` 的对象仍可以正常调用**，不过要做好非空判断
+
+> 官方叫 ***可空接收者的扩展***
 
 > 因为一般可空的对象要想调用非空的方法，必须加上 `?.` 安全调用，这里设置一个可以接受可空对象的方法就不需要了
 
@@ -13515,6 +13521,8 @@ fun main() {
 }
 ```
 
+- 上文的这个例子是最简单的死锁，只需要交换下上锁的顺序就能解决，实际上还有很多种复杂的死锁情况，需要我们多加注意
+
 > 介绍一个方便的工具：`jconsole`，如果配置了 JDK 可以直接在命令行打开，位于 `JDK/bin` 下面，可以很方便的查看线程运行情况，类加载和线程是否死锁
 
 ## 12.7 线程池
@@ -13619,4 +13627,157 @@ class MyRunnable(val str: String) : Runnable {
 }
 ```
 
-- 使用线程池的 `excute` 方法，参数为 `Runnable` 对象，可以向线程池提交任务，
+- 除了使用 `ThreadPoolExecutor`，还有 **`Executors` 的工厂方法 `newFixedThreadPool` `newSingleThreadExecutor`**，前者生成了一个指定线程（corePoolSize 和 maximumPoolSize）的线程池，后者生成了一个单线程的线程
+
+```kt
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+
+fun main() {
+    val threadPool = Executors.newFixedThreadPool(1) as ThreadPoolExecutor
+    //val threadPool = Executors.newSingleThreadExecutor()
+    // 这二者的效果都是单线程的
+
+    threadPool.execute(MyRunnable("Task - 1"))
+    threadPool.execute(MyRunnable("Task - 2"))
+    threadPool.execute(MyRunnable("Task - 3"))
+
+    threadPool.shutdown()
+}
+
+class MyRunnable(val str: String) : Runnable {
+    override fun run() {
+        println("${Thread.currentThread().name} - $str")
+    }
+}
+```
+
+- 还有 ***`ScheduledThreadPoolExecutor` 类，与上面区别是它可以指定任务的执行时间或间隔，而 `ThreadPoolExecutor` 则会尽可能立即执行***，这里先介绍后者
+
+- ***`shotdown()` 方法用于关闭线程池***，如果线程池里的线程还没执行完任务，则会等待线程池里的线程执行完任务，再关闭线程池
+
+> 还有 `shutdownNow()`
+
+- ***使用线程池的 `excute` 方法，参数为 `Runnable` 对象，可以向线程池提交任务***，任务的执行和线程池里的线程没有直接关系
+
+- 还有一个 ***`submit` 方法，也可以接受 `Runnalbe` 对象，但是会返回一个 `Future` 对象，可以用来获取任务的执行结果***，`Future` 对象有 `cancel` `isCancelled` `isDone` `get` `get(long timeout, TimeUnit unit)` 方法，可以对任务进行取消、判断是否完成、获取执行结果，也可以设置超时取消时间
+
+```kt
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+
+
+fun main() {
+    val threadPool = Executors.newSingleThreadExecutor()
+
+    val future: Future<*> = threadPool.submit(MyRunnable("Task - 1"))
+
+    println(future.isDone())
+
+    try {
+        println(future.get())
+        // get 能获取任务的返回值，并且获取不到的话会一直阻塞的等待，但是 Runnable 里的 run 方法没有返回值，所以这里是 null
+    }
+    catch (e: InterruptedException) {
+    }
+    catch (e: ExecutionException) {
+    }
+
+    println(future.isDone())
+
+    threadPool.shutdown()
+}
+
+class MyRunnable(val str: String) : Runnable {
+    override fun run() {
+        println("${Thread.currentThread().name} - $str")
+    }
+}
+```
+
+- 跟 `Runnable` 相对的还有一个 ***`Callable` 接口，它的 `call()` 方法可以返回值***，因此也可以作为参数传递给 `submit()` 方法获取 `Future`
+
+```kt
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+
+
+fun main() {
+    val threadPool = Executors.newSingleThreadExecutor()
+
+    val future: Future<*> = threadPool.submit(MyCallable("Task - 1"))
+
+    println(future.isDone())
+
+    try {
+        println(future.get())
+    }
+    catch (e: InterruptedException) {
+    }
+    catch (e: ExecutionException) {
+    }
+
+    println(future.isDone())
+
+    threadPool.shutdown()
+}
+
+class MyCallable(val str: String) : Callable<String> {
+    override fun call(): String = "${Thread.currentThread().name} - $str"
+
+    // Callable 方法是泛型的，这里只是省事，实际上可以返回任何类型的值
+}
+
+/**
+ * ```java
+ * public interface Callable<V> {
+ *     V call() throws Exception;
+ * }
+ * ```
+ */
+```
+
+> 本来这一章还是打算继续写下去的，奈何了，唉，推荐大家可以看一下这位的视频 [Java concurrency and multithreading](https://www.youtube.com/watch?v=mTGdtC9f4EU&list=PLL8woMHwr36EDxjUoCzboZjedsnhLP1j4&pp=iAQB) ，来自 [Jakob Jenkov](https://jenkov.com/)，该讲的都讲了，而且逻辑图很清晰
+
+## 12.8 协程
+
+> 讲了一大堆 Java 的东西，是时候讲一下 Kotlin 的东西了，协程
+
+> 其实 Java 也有这个概念，叫虚拟线程（Virtual Threaded）或者叫轻量级线程（Lightweight Thread），Kotlin 里面的协程不是什么高级的东西，本质上就是一个轻量的线程框架，就是比 Java 的那个方便了些，在逻辑层面并不是什么很高深的东西，这一点请大家记住
+
+> 因此理解协程，用线程的方式最好，不要给自己套上几层迷雾
+
+### 12.8.1 概念
+
+> 待办，crossinline 的另一个用法，线程间间接调用 return ；协程里的异常处理
+
+
+
+# 第十三章：其他相关
+
+## 13.0 前文的一些补充
+
+### 13.0.1 空安全
+
+- 当最开始的时候，我就说过 Kotlin 的空安全，在 Kotlin 里面只有以下几种情况会发生 `NullPointerException`
+
+    1. `throw NullPointerException`
+    2. `!!`
+    3. 父类初始化里调用了可以被继承的成员
+    4. 泄露的 `this`
+    5. 与 Java 互操作访问了空对象
+
+### 13.0.2 字符串
+
+## 13.1 注解
+
+## 13.2 和 Java 互操作
+
+## 13.3 标准库
+
+### 13.3.1 IO
+
+### 13.3.2 时间
