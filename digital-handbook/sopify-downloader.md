@@ -84,12 +84,14 @@ main
 * Savify 仓库已多年未更新，并且Spotify API需要会员才能用，下面目前还能用的新办法：
 
 * 网页推荐 [Spotidown](https://spotidown.co/)，无套路无需登录可直接下载专辑、播放列表等等，下载内容可打包zip，音质320有元数据，曲库多甚至有声书都可以下，一次最多可下100首，魔法不强求但最好有
-      - 缺点：原理应该是从其他平台下载，会有MTV版本或是错版，需校验
+- 缺点：原理应该是从其他平台下载，会有MTV版本或是错版，需校验
 
 * 推荐 Telegram 机器人如下：
-      - [Music Hunter](https://t.me/MusicsHuntersbot)，稳定使用，可下载播放列表和专辑，质量高有元数据，但曲库有欠缺，可搭配上文网页一起使用
-      - [Music Bot](https://t.me/Music163DownBot)，支持多平台曲库，国内五大和Spotify Apple都有，曲库多，质量高，但不支持播放列表和专辑，只能一首一首下载，支持搜索，建议用于难找的个别歌曲
-      - [CloudMusicDownloader](https://t.me/Music163bot)，专精网易云，下载默认无损，不支持播放例表和专辑，可补充使用
+1. [Music Hunter](https://t.me/MusicsHuntersbot)，稳定使用，可下载播放列表和专辑，质量高有元数据，但曲库有欠缺，可搭配上文网页一起使用
+2. [Music Bot](https://t.me/Music163DownBot)，支持多平台曲库，国内五大和Spotify Apple都有，曲库多，质量高，但不支持播放列表和专辑，只能一首一首下载，支持搜索，建议用于难找的个别歌曲
+3. [CloudMusicDownloader](https://t.me/Music163bot)，专精网易云，下载默认无损，不支持播放例表和专辑，可补充使用
+
+* 安卓推荐 [SpotiFLAC](https://github.com/spotiflacapp/SpotiFLAC-Mobile)，需要注意的是软件本体下载下来无法下载歌曲，需要下载[Extension](https://github.com/spotiflacapp/SpotiFLAC-Extension)导入后使用，但是下载质量的确高，并且支持 Youtube, Spotify, Tidal, Deezer, Qobuz 等等平台，最高都可以无损，下载下来的文件质量也高。无需魔法，但是不是需要人机验证。支持专辑和播放列表，唯一注意的是下载哪个平台的歌就用那个扩展，不然可能会缺歌或是缺元数据等等，但总体上**高度推荐**，而且这种分开使用的方式应该能用很长一段时间 
 
 
 就这样吧，等什么时候又不能用了再更新新办法，现在想下载歌曲真难
