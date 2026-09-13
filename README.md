@@ -14,6 +14,8 @@
 
 - [Windows 常用微软商店软件提取](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/WindowsApps.md)
 
+- [四大音乐平台比较以及歌单同步](https://github.com/DrLightko/DrLightko/blob/main/digital-handbook/four_music_platform_compare.md)
+
 ## ⌨️ Hello 系列
 
 - [🐍 HelloPython 入门](https://github.com/DrLightko/DrLightko/blob/main/hello/HelloPy.md)
